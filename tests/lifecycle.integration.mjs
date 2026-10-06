@@ -139,6 +139,26 @@ test("repository validates lifecycle states and blocks direct status changes", a
 
     await assert.rejects(
       () =>
+        records.create(
+          record(
+            "published-direct",
+            "published",
+          ),
+        ),
+      PersistenceConflictError,
+    );
+
+    await assert.rejects(
+      () =>
+        pool.query(
+          "UPDATE civic_registry_records SET status = 'under_review' WHERE registry_id = $1 AND id = 'guarded'",
+          [config.registry.id],
+        ),
+      /publication lifecycle service/i,
+    );
+
+    await assert.rejects(
+      () =>
         records.update({
           ...draft,
           status: "under_review",
@@ -464,10 +484,24 @@ test("due processor fails stale schedules instead of forcing publication", async
         now: "2026-01-01T04:00:00.000Z",
       });
 
-    await pool.query(
-      "UPDATE civic_registry_records SET status = 'draft', updated_at = '2026-01-01T12:00:00.000Z' WHERE registry_id = $1 AND id = 'stale'",
-      [config.registry.id],
-    );
+    const privileged = await pool.connect();
+
+    try {
+      await privileged.query("BEGIN");
+      await privileged.query(
+        "SELECT set_config('civic_registry.lifecycle_transition', 'allowed', true)",
+      );
+      await privileged.query(
+        "UPDATE civic_registry_records SET status = 'published', updated_at = '2026-01-01T12:00:00.000Z' WHERE registry_id = $1 AND id = 'stale'",
+        [config.registry.id],
+      );
+      await privileged.query("COMMIT");
+    } catch (error) {
+      await privileged.query("ROLLBACK");
+      throw error;
+    } finally {
+      privileged.release();
+    }
 
     const result =
       await lifecycle.processDueSchedules({
@@ -495,7 +529,7 @@ test("due processor fails stale schedules instead of forcing publication", async
           "stale",
         )
       )?.status,
-      "draft",
+      "published",
     );
   } finally {
     await pool.end();
