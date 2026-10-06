@@ -11,6 +11,7 @@ import {
   PostgresIngestionService,
   PostgresRegistryConfigRepository,
   PostgresSourceRefreshService,
+  runMigrations,
   type SourceRefreshClaim,
 } from "@civic-registry/database";
 import {
@@ -179,6 +180,8 @@ async function main(): Promise<void> {
     });
 
   try {
+    await runMigrations(pool);
+
     const service =
       new PostgresSourceRefreshService(
         pool,
