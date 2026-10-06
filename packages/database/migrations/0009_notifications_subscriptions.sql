@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS civic_registry_notification_deliveries (
   ),
   target JSONB NOT NULL,
   status TEXT NOT NULL CHECK (
-    status IN ('pending', 'processing', 'sent', 'failed')
+    status IN ('pending', 'processing', 'sent', 'failed', 'suppressed')
   ),
   attempts INTEGER NOT NULL DEFAULT 0 CHECK (
     attempts >= 0
