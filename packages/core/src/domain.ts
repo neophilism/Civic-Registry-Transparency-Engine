@@ -221,12 +221,38 @@ export interface Tag {
   description?: string;
 }
 
+export const RECORD_VERSION_OPERATIONS = [
+  "baseline",
+  "created",
+  "updated",
+  "deleted",
+] as const;
+
+export type RecordVersionOperation =
+  (typeof RECORD_VERSION_OPERATIONS)[number];
+
 export interface RecordVersion {
   id: EntityId;
+  registryId: string;
   recordId: EntityId;
   version: number;
+  operation: RecordVersionOperation;
+  visibility: Visibility;
   createdAt: ISODateTime;
   actorId?: EntityId;
   reason?: string;
   snapshot: RegistryRecord;
+}
+
+export interface AuditEvent {
+  id: EntityId;
+  registryId: string;
+  subjectType: string;
+  subjectId: EntityId;
+  eventType: string;
+  occurredAt: ISODateTime;
+  visibility: Visibility;
+  actorId?: EntityId;
+  reason?: string;
+  metadata?: Record<string, JsonFieldValue>;
 }
