@@ -96,6 +96,25 @@ export default async function RegistryPage({
         </form>
       </section>
 
+      <section className="section-block">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Transparency metrics</p>
+            <h2>Explore registry analytics</h2>
+          </div>
+          <Link
+            className="metric"
+            href={
+              "/registries/" +
+              encodeURIComponent(definition.id) +
+              "/analytics"
+            }
+          >
+            View analytics →
+          </Link>
+        </div>
+      </section>
+
       <section
         className="section-block"
         aria-labelledby="record-types-heading"
