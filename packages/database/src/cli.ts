@@ -32,6 +32,9 @@ import {
 import {
   PostgresIngestionService,
 } from "./ingestion.ts";
+import {
+  PostgresNotificationService,
+} from "./notifications.ts";
 
 async function migrate(): Promise<void> {
   const pool = createDatabasePool();
@@ -371,6 +374,58 @@ async function ingest(
   }
 }
 
+
+async function runNotifications(
+  registryId: string | undefined,
+): Promise<void> {
+  const pool = createDatabasePool();
+
+  try {
+    await runMigrations(pool);
+    const configs =
+      new PostgresRegistryConfigRepository(pool);
+    const service =
+      new PostgresNotificationService(pool);
+    const results: Record<
+      string,
+      Awaited<ReturnType<
+        PostgresNotificationService["run"]
+      >>
+    > = {};
+
+    if (registryId) {
+      results[registryId] =
+        await service.run(registryId);
+    } else {
+      const installed = await configs.list();
+
+      for (const config of installed) {
+        if (
+          config.notifications?.enabled === true
+        ) {
+          results[config.registry.id] =
+            await service.run(
+              config.registry.id,
+            );
+        }
+      }
+    }
+
+    console.log(
+      JSON.stringify(
+        {
+          command: "notifications-run",
+          registries: results,
+        },
+        null,
+        2,
+      ),
+    );
+  } finally {
+    await pool.end();
+  }
+}
+
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
 
@@ -410,8 +465,13 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === "notifications-run") {
+    await runNotifications(args[0]);
+    return;
+  }
+
   throw new Error(
-    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex|publish-due|reconcile-deadlines|ingest> [arguments]",
+    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex|publish-due|reconcile-deadlines|ingest|notifications-run> [arguments]",
   );
 }
 
