@@ -76,22 +76,36 @@ test("database triggers capture direct SQL revisions and ignore internal-only re
     assert.equal(initial[0].operation, "created");
     assert.equal(initial[0].version, 1);
 
-    await pool.query(
-      `
-        UPDATE civic_registry_records
-        SET
-          fields = jsonb_set(
-            fields,
-            '{summary}',
-            to_jsonb('Updated through direct SQL'::text)
-          ),
-          status = 'withdrawn',
-          updated_at = '2026-02-01T00:00:00.000Z'
-        WHERE registry_id = $1
-          AND id = 'example-report'
-      `,
-      [config.registry.id],
-    );
+    const privileged = await pool.connect();
+
+    try {
+      await privileged.query("BEGIN");
+      await privileged.query(
+        "SELECT set_config('civic_registry.lifecycle_transition', 'allowed', true)",
+      );
+      await privileged.query(
+        `
+          UPDATE civic_registry_records
+          SET
+            fields = jsonb_set(
+              fields,
+              '{summary}',
+              to_jsonb('Updated through direct SQL'::text)
+            ),
+            status = 'withdrawn',
+            updated_at = '2026-02-01T00:00:00.000Z'
+          WHERE registry_id = $1
+            AND id = 'example-report'
+        `,
+        [config.registry.id],
+      );
+      await privileged.query("COMMIT");
+    } catch (error) {
+      await privileged.query("ROLLBACK");
+      throw error;
+    } finally {
+      privileged.release();
+    }
 
     const afterUpdate = await history.listVersions(
       config.registry.id,
