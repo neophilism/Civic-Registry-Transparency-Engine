@@ -8,10 +8,13 @@ import {
   getPresentationConfig,
 } from "./validation.ts";
 import type {
+  CompiledDeadlineCalendarConfig,
+  CompiledDeadlineEngineConfig,
   CompiledDisclosureConfig,
   CompiledPublicationLifecycleConfig,
   CompiledRecordTypeConfig,
   CompiledRegistryConfig,
+  DeadlineEngineConfig,
   DisclosureConfig,
   FormControlType,
   FormFieldConfig,
@@ -128,6 +131,78 @@ function compileRecordType(
     detailFields,
     defaultSort,
     formFields: recordType.fields.map(compileFormField),
+  };
+}
+
+const DEFAULT_DEADLINE_CALENDAR: CompiledDeadlineCalendarConfig = {
+  definition: {
+    id: "default",
+    label: "Default calendar",
+  },
+  weekendDays: new Set([0, 6]),
+  excludedDates: new Set(),
+};
+
+function compileDeadlines(
+  definition: DeadlineEngineConfig,
+): CompiledDeadlineEngineConfig {
+  const calendarsById = new Map<
+    string,
+    CompiledDeadlineCalendarConfig
+  >();
+
+  calendarsById.set(
+    DEFAULT_DEADLINE_CALENDAR.definition.id,
+    DEFAULT_DEADLINE_CALENDAR,
+  );
+
+  for (const calendar of definition.calendars ?? []) {
+    calendarsById.set(calendar.id, {
+      definition: calendar,
+      weekendDays: new Set(
+        calendar.weekendDays ?? [0, 6],
+      ),
+      excludedDates: new Set(
+        calendar.excludedDates ?? [],
+      ),
+    });
+  }
+
+  const definitionsById = new Map(
+    definition.definitions.map((deadline) => [
+      deadline.id,
+      deadline,
+    ]),
+  );
+
+  return {
+    definition,
+    calendarsById,
+    definitionsById,
+    getDefinition(deadlineTypeId: string) {
+      const deadline =
+        definitionsById.get(deadlineTypeId);
+
+      if (!deadline) {
+        throw new Error(
+          `Unknown deadline type: ${deadlineTypeId}.`,
+        );
+      }
+
+      return deadline;
+    },
+    getCalendar(calendarId?: string) {
+      const id = calendarId ?? "default";
+      const calendar = calendarsById.get(id);
+
+      if (!calendar) {
+        throw new Error(
+          `Unknown deadline calendar: ${id}.`,
+        );
+      }
+
+      return calendar;
+    },
   };
 }
 
@@ -264,6 +339,9 @@ export function compileRegistryConfig(
           config.publicationLifecycle,
         )
       : undefined;
+  const deadlines = config.deadlines
+    ? compileDeadlines(config.deadlines)
+    : undefined;
   const disclosure = compileDisclosure(
     config.disclosure,
   );
@@ -274,6 +352,7 @@ export function compileRegistryConfig(
     recordTypesById,
     relationshipTypesById,
     publicationLifecycle,
+    deadlines,
     disclosure,
     getRecordType(recordTypeId: string) {
       const recordType = recordTypesById.get(recordTypeId);

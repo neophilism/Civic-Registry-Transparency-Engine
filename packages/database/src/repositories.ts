@@ -13,6 +13,10 @@ import {
 } from "@civic-registry/search";
 import type { Pool, QueryResultRow } from "pg";
 
+import type {
+  DeadlineReconciler,
+} from "./deadlines.ts";
+
 export interface RecordCreateOptions {
   bootstrapLifecycle?: boolean;
 }
@@ -247,13 +251,16 @@ export class PostgresRegistryConfigRepository
 export class PostgresRecordRepository implements RecordRepository {
   private readonly pool: Pool;
   private readonly configs: RegistryConfigRepository;
+  private readonly deadlines?: DeadlineReconciler;
 
   constructor(
     pool: Pool,
     configs: RegistryConfigRepository,
+    deadlines?: DeadlineReconciler,
   ) {
     this.pool = pool;
     this.configs = configs;
+    this.deadlines = deadlines;
   }
 
   private async validate(record: RegistryRecord): Promise<RegistryConfigFile> {
@@ -349,7 +356,15 @@ export class PostgresRecordRepository implements RecordRepository {
             sql,
             values,
           );
-        return mapRecord(result.rows[0]);
+        const created = mapRecord(result.rows[0]);
+        await this.deadlines?.reconcileRecord(
+          created.registryId,
+          created.id,
+          {
+            now: created.updatedAt,
+          },
+        );
+        return created;
       }
 
       const client = await this.pool.connect();
@@ -371,7 +386,15 @@ export class PostgresRecordRepository implements RecordRepository {
             values,
           );
         await client.query("COMMIT");
-        return mapRecord(result.rows[0]);
+        const created = mapRecord(result.rows[0]);
+        await this.deadlines?.reconcileRecord(
+          created.registryId,
+          created.id,
+          {
+            now: created.updatedAt,
+          },
+        );
+        return created;
       } catch (error) {
         await client.query("ROLLBACK");
         throw error;
@@ -546,7 +569,15 @@ export class PostgresRecordRepository implements RecordRepository {
       );
     }
 
-    return mapRecord(result.rows[0]);
+    const updated = mapRecord(result.rows[0]);
+    await this.deadlines?.reconcileRecord(
+      updated.registryId,
+      updated.id,
+      {
+        now: updated.updatedAt,
+      },
+    );
+    return updated;
   }
 
   async delete(

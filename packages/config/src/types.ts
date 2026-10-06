@@ -61,6 +61,88 @@ export interface PublicationLifecycleConfig {
   scheduledPublication?: ScheduledPublicationConfig;
 }
 
+export type DeadlineOffsetUnit =
+  | "hours"
+  | "calendarDays"
+  | "businessDays"
+  | "weeks";
+
+export interface DeadlineOffsetConfig {
+  value: number;
+  unit: DeadlineOffsetUnit;
+}
+
+export interface DeadlineCalendarConfig {
+  id: string;
+  label?: string;
+  weekendDays?: number[];
+  excludedDates?: string[];
+}
+
+export type DeadlineAnchorConfig =
+  | {
+      kind: "createdAt";
+    }
+  | {
+      kind: "publishedAt";
+    }
+  | {
+      kind: "field";
+      fieldId: string;
+    }
+  | {
+      kind: "statusEntered";
+      statusId: string;
+    }
+  | {
+      kind: "manual";
+    };
+
+export interface DeadlineDefinitionConfig {
+  id: string;
+  label: string;
+  description?: string;
+  recordTypeIds?: string[];
+  anchor: DeadlineAnchorConfig;
+  offset: DeadlineOffsetConfig;
+  warningOffset?: DeadlineOffsetConfig;
+  calendarId?: string;
+  dateOnlyAnchorTime?: "start" | "end";
+  pauseWhileStatuses?: string[];
+  completeWhenStatuses?: string[];
+  cancelWhenStatuses?: string[];
+  publiclyVisible?: boolean;
+}
+
+export interface DeadlineEngineConfig {
+  calendars?: DeadlineCalendarConfig[];
+  definitions: DeadlineDefinitionConfig[];
+}
+
+export interface CompiledDeadlineCalendarConfig {
+  definition: DeadlineCalendarConfig;
+  weekendDays: ReadonlySet<number>;
+  excludedDates: ReadonlySet<string>;
+}
+
+export interface CompiledDeadlineEngineConfig {
+  definition: DeadlineEngineConfig;
+  calendarsById: ReadonlyMap<
+    string,
+    CompiledDeadlineCalendarConfig
+  >;
+  definitionsById: ReadonlyMap<
+    string,
+    DeadlineDefinitionConfig
+  >;
+  getDefinition(
+    deadlineTypeId: string,
+  ): DeadlineDefinitionConfig;
+  getCalendar(
+    calendarId?: string,
+  ): CompiledDeadlineCalendarConfig;
+}
+
 export type WithheldRecordBehavior =
   | "hidden"
   | "placeholder";
@@ -92,6 +174,7 @@ export interface RegistryConfigFileV1 {
   schemaVersion: typeof REGISTRY_CONFIG_SCHEMA_VERSION;
   registry: RegistryDefinition;
   publicationLifecycle?: PublicationLifecycleConfig;
+  deadlines?: DeadlineEngineConfig;
   disclosure?: DisclosureConfig;
   presentation?: RegistryPresentationConfig;
 }
@@ -158,6 +241,7 @@ export interface CompiledRegistryConfig {
   recordTypesById: ReadonlyMap<string, CompiledRecordTypeConfig>;
   relationshipTypesById: ReadonlyMap<string, RelationshipTypeDefinition>;
   publicationLifecycle?: CompiledPublicationLifecycleConfig;
+  deadlines?: CompiledDeadlineEngineConfig;
   disclosure: CompiledDisclosureConfig;
   getRecordType(recordTypeId: string): CompiledRecordTypeConfig;
   getField(recordTypeId: string, fieldId: string): FieldDefinition;

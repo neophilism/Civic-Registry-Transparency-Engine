@@ -28,6 +28,10 @@ import type {
   SearchRequest,
   SearchResponse,
 } from "@civic-registry/search";
+import {
+  presentDeadline,
+  type PresentedDeadline,
+} from "@civic-registry/deadlines";
 
 import { getRepositories } from "./database.ts";
 
@@ -555,6 +559,69 @@ export async function searchPublicRecords(
         : [];
     }),
   };
+}
+
+
+export async function getPublicDeadlines(
+  registry: CompiledRegistryConfig,
+  record: RegistryRecord,
+  now = new Date().toISOString(),
+): Promise<PresentedDeadline[]> {
+  if (!registry.deadlines) return [];
+
+  const { deadlines, disclosure } =
+    getRepositories();
+  const disclosureBundle =
+    await disclosure.getRecordBundle(
+      registry.definition.id,
+      record.id,
+    );
+
+  if (
+    disclosureBundle.record?.disposition ===
+    "withheld"
+  ) {
+    return [];
+  }
+
+  const instances = await deadlines.listForRecord(
+    registry.definition.id,
+    record.id,
+    {
+      limit: 500,
+    },
+  );
+
+  return instances
+    .flatMap((deadline) => {
+      const definition =
+        registry.deadlines?.definitionsById.get(
+          deadline.deadlineTypeId,
+        );
+
+      if (
+        !definition ||
+        definition.publiclyVisible !== true
+      ) {
+        return [];
+      }
+
+      return [
+        presentDeadline(
+          deadline,
+          definition,
+          registry.deadlines!.getCalendar(
+            definition.calendarId,
+          ),
+          now,
+        ),
+      ];
+    })
+    .sort(
+      (left, right) =>
+        left.dueAt.localeCompare(right.dueAt) ||
+        left.label.localeCompare(right.label),
+    );
 }
 
 

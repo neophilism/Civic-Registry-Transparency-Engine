@@ -16,23 +16,26 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 11 — Disclosure and redaction controls**
+**PR 12 — Configurable deadline engine**
 
 The engine now includes configurable publication lifecycle, immutable history,
-evidence traceability, relationships, and public search.
+disclosure/redaction controls, evidence traceability, relationships, public
+search, and deadline tracking.
 
-PR 11 adds non-destructive disclosure controls with:
+PR 12 adds:
 
-- whole-record withholding;
-- field-level redaction/withholding;
-- safe public record projections;
-- separate public-safe search fields/indexes;
-- document disclosure and sanitized-artifact references;
-- document redaction metadata;
-- disclosure-aware relationships, evidence, and history;
-- immutable disclosure audit events.
+- configurable calendar-day, business-day, hour, and week deadlines;
+- reusable business-day calendars and excluded dates;
+- created/publication/field/status-entry/manual anchors;
+- warning windows and derived due-soon/overdue urgency;
+- lifecycle-driven pause, tolling, completion, and cancellation;
+- manual keyed deadline instances;
+- automatic record/lifecycle reconciliation;
+- registry-wide CLI reconciliation;
+- immutable deadline audit events;
+- public deadline API and record-page presentation.
 
-See [Disclosure and redaction](docs/DISCLOSURE-REDACTION.md).
+See [Configurable deadline engine](docs/DEADLINES.md).
 
 ## Local development
 

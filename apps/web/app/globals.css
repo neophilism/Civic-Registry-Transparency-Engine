@@ -1563,3 +1563,90 @@ h3 {
     grid-template-columns: 1fr;
   }
 }
+
+
+.deadline-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.deadline-card {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: var(--paper);
+}
+
+.deadline-card__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.deadline-card__heading h3,
+.deadline-card__heading p {
+  margin: 0;
+}
+
+.deadline-card__heading p {
+  margin-top: 0.3rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.deadline-pill {
+  flex: 0 0 auto;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.deadline-pill--overdue,
+.deadline-pill--due_soon {
+  border-color: var(--accent);
+}
+
+.deadline-pill--completed,
+.deadline-pill--cancelled,
+.deadline-pill--paused {
+  color: var(--muted);
+}
+
+.deadline-metadata {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(10rem, 1fr)
+  );
+  gap: 0.65rem 1rem;
+  margin: 0;
+}
+
+.deadline-metadata div {
+  min-width: 0;
+}
+
+.deadline-metadata dt {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.deadline-metadata dd {
+  margin: 0.2rem 0 0;
+}
+
+@media (max-width: 760px) {
+  .deadline-card__heading {
+    flex-direction: column;
+  }
+}

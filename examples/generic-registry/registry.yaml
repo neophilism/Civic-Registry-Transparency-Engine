@@ -170,6 +170,53 @@ publicationLifecycle:
       - publisher
 
 
+deadlines:
+  calendars:
+    - id: federal_business
+      label: Federal business days
+      weekendDays:
+        - 0
+        - 6
+      excludedDates:
+        - "2026-01-01"
+        - "2026-12-25"
+
+  definitions:
+    - id: review_due
+      label: Review due
+      description: Example public deadline calculated from the configured publication-date field.
+      recordTypeIds:
+        - document
+      anchor:
+        kind: field
+        fieldId: published_on
+      offset:
+        value: 20
+        unit: businessDays
+      warningOffset:
+        value: 5
+        unit: businessDays
+      calendarId: federal_business
+      dateOnlyAnchorTime: end
+      pauseWhileStatuses:
+        - withdrawn
+      completeWhenStatuses:
+        - archived
+      publiclyVisible: true
+
+    - id: manual_response
+      label: Manual response deadline
+      description: Example internal deadline whose anchor is supplied when the obligation is created.
+      recordTypeIds:
+        - document
+      anchor:
+        kind: manual
+      offset:
+        value: 10
+        unit: businessDays
+      calendarId: federal_business
+      publiclyVisible: false
+
 disclosure:
   withheldRecordBehavior: placeholder
   defaultRedactionText: "[REDACTED]"
