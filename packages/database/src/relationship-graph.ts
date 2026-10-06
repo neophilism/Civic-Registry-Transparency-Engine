@@ -178,7 +178,7 @@ export class PostgresRelationshipGraphRepository {
 
     if (statusIds.length > 0) {
       values.push(statusIds);
-      const statusParameter = `${values.length}`;
+      const statusParameter = `$${values.length}`;
       where.push(
         `from_record.status = ANY(${statusParameter}::text[])`,
       );
@@ -257,7 +257,7 @@ export class PostgresRelationshipGraphRepository {
     if (statusIds.length > 0) {
       rootValues.push(statusIds);
       rootWhere.push(
-        `status = ANY(${rootValues.length}::text[])`,
+        `status = ANY($${rootValues.length}::text[])`,
       );
     }
 
@@ -365,7 +365,7 @@ export class PostgresRelationshipGraphRepository {
     if (statusIds.length > 0) {
       values.push(statusIds);
       where.push(
-        `status = ANY(${values.length}::text[])`,
+        `status = ANY($${values.length}::text[])`,
       );
     }
 
