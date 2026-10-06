@@ -630,6 +630,16 @@ export async function getPublicEvidence(
     return presentCitation(
       {
         ...item,
+        source:
+          projection.disclosure.disposition ===
+          "disclosed"
+            ? item.source
+            : item.source
+              ? {
+                  ...item.source,
+                  canonicalUrl: undefined,
+                }
+              : undefined,
         document: projection.document,
         documentDisclosure:
           projection.disclosure,
