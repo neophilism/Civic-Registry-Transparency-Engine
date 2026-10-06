@@ -17,6 +17,7 @@
     "db:migrate": "node packages/database/src/cli.ts migrate",
     "db:seed": "node packages/database/src/cli.ts seed",
     "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm db:migrate && pnpm test:db && pnpm build",
-    "db:reindex": "node packages/database/src/cli.ts reindex"
+    "db:reindex": "node packages/database/src/cli.ts reindex",
+    "db:publish-due": "node packages/database/src/cli.ts publish-due"
   }
 }

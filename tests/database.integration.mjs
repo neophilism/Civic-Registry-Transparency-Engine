@@ -81,7 +81,10 @@ test("PostgreSQL repositories support registry, record, and relationship lifecyc
       "Public Document Catalog",
     );
 
-    const organization = await records.create(makeRecord());
+    const organization = await records.create(
+      makeRecord(),
+      { bootstrapLifecycle: true },
+    );
     assert.equal(
       organization.fields.name,
       "Integration Test Agency",
@@ -105,6 +108,8 @@ test("PostgreSQL repositories support registry, record, and relationship lifecyc
       createdAt: "2026-01-01T00:01:00.000Z",
       updatedAt: "2026-01-01T00:01:00.000Z",
       publishedAt: "2026-01-01T00:01:00.000Z",
+    }, {
+      bootstrapLifecycle: true,
     });
 
     const relationship = await relationships.create({

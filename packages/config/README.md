@@ -14,6 +14,9 @@ modifying engine code.
 - relationship types;
 - default record type;
 - public-by-default behavior;
+- configurable publication lifecycle statuses and transitions;
+- role and approval requirements;
+- scheduled-publication rules;
 - list/detail field presentation;
 - default sort behavior.
 
@@ -47,6 +50,20 @@ registry:
           label: Published on
           type: date
           sortable: true
+
+publicationLifecycle:
+  initialStatusId: draft
+  statuses:
+    - id: draft
+      label: Draft
+    - id: published
+      label: Published
+      publiclyVisible: true
+      marksPublished: true
+  transitions:
+    - fromStatusId: draft
+      toStatusId: published
+      allowedRoles: [publisher]
 
 presentation:
   recordTypes:

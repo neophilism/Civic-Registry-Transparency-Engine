@@ -13,9 +13,14 @@ import {
 } from "@civic-registry/search";
 import type { Pool, QueryResultRow } from "pg";
 
+export interface RecordCreateOptions {
+  bootstrapLifecycle?: boolean;
+}
+
 export interface RecordListOptions {
   recordTypeId?: string;
   status?: string;
+  statuses?: string[];
   visibility?: RegistryRecord["visibility"];
   limit?: number;
   offset?: number;
@@ -37,7 +42,10 @@ export interface RegistryConfigRepository {
 }
 
 export interface RecordRepository {
-  create(record: RegistryRecord): Promise<RegistryRecord>;
+  create(
+    record: RegistryRecord,
+    options?: RecordCreateOptions,
+  ): Promise<RegistryRecord>;
   get(registryId: string, recordId: string): Promise<RegistryRecord | null>;
   list(
     registryId: string,
@@ -248,57 +256,118 @@ export class PostgresRecordRepository implements RecordRepository {
     }
 
     assertValidRegistryRecord(record, config.registry);
+
+    const compiled = compileRegistryConfig(config);
+    const lifecycle = compiled.publicationLifecycle;
+
+    if (
+      lifecycle &&
+      !lifecycle.statusesById.has(record.status)
+    ) {
+      throw new PersistenceConflictError(
+        `Status ${record.status} is not configured in the publication lifecycle for registry ${record.registryId}.`,
+      );
+    }
+
     return config;
   }
 
-  async create(record: RegistryRecord): Promise<RegistryRecord> {
+  async create(
+    record: RegistryRecord,
+    options: RecordCreateOptions = {},
+  ): Promise<RegistryRecord> {
     const config = await this.validate(record);
+    const compiled = compileRegistryConfig(config);
+    const lifecycle = compiled.publicationLifecycle;
+
+    if (
+      lifecycle &&
+      !options.bootstrapLifecycle &&
+      record.status !==
+        lifecycle.definition.initialStatusId
+    ) {
+      throw new PersistenceConflictError(
+        `New records in registry ${record.registryId} must begin in lifecycle status ${lifecycle.definition.initialStatusId}.`,
+      );
+    }
+
     const searchText = buildRecordSearchText(
       record,
-      compileRegistryConfig(config),
+      compiled,
     );
+    const sql = `
+      INSERT INTO civic_registry_records (
+        registry_id,
+        id,
+        record_type_id,
+        fields,
+        status,
+        visibility,
+        external_identifiers,
+        tags,
+        created_at,
+        updated_at,
+        published_at,
+        search_text
+      )
+      VALUES (
+        $1, $2, $3, $4::jsonb, $5, $6, $7::jsonb,
+        $8::text[], $9::timestamptz, $10::timestamptz,
+        $11::timestamptz, $12
+      )
+      RETURNING *
+    `;
+    const values = [
+      record.registryId,
+      record.id,
+      record.recordTypeId,
+      JSON.stringify(record.fields),
+      record.status,
+      record.visibility,
+      JSON.stringify(record.externalIdentifiers ?? []),
+      record.tags ?? [],
+      record.createdAt,
+      record.updatedAt,
+      record.publishedAt ?? null,
+      searchText,
+    ];
 
     try {
-      const result = await this.pool.query<RecordRow>(
-        `
-          INSERT INTO civic_registry_records (
-            registry_id,
-            id,
-            record_type_id,
-            fields,
-            status,
-            visibility,
-            external_identifiers,
-            tags,
-            created_at,
-            updated_at,
-            published_at,
-            search_text
-          )
-          VALUES (
-            $1, $2, $3, $4::jsonb, $5, $6, $7::jsonb,
-            $8::text[], $9::timestamptz, $10::timestamptz,
-            $11::timestamptz, $12
-          )
-          RETURNING *
-        `,
-        [
-          record.registryId,
-          record.id,
-          record.recordTypeId,
-          JSON.stringify(record.fields),
-          record.status,
-          record.visibility,
-          JSON.stringify(record.externalIdentifiers ?? []),
-          record.tags ?? [],
-          record.createdAt,
-          record.updatedAt,
-          record.publishedAt ?? null,
-          searchText,
-        ],
-      );
+      if (!options.bootstrapLifecycle) {
+        const result =
+          await this.pool.query<RecordRow>(
+            sql,
+            values,
+          );
+        return mapRecord(result.rows[0]);
+      }
 
-      return mapRecord(result.rows[0]);
+      const client = await this.pool.connect();
+
+      try {
+        await client.query("BEGIN");
+        await client.query(
+          `
+            SELECT set_config(
+              'civic_registry.lifecycle_bootstrap',
+              'allowed',
+              true
+            )
+          `,
+        );
+        const result =
+          await client.query<RecordRow>(
+            sql,
+            values,
+          );
+        await client.query("COMMIT");
+        return mapRecord(result.rows[0]);
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new PersistenceConflictError(
@@ -341,7 +410,27 @@ export class PostgresRecordRepository implements RecordRepository {
     if (options.recordTypeId) {
       addFilter("record_type_id", options.recordTypeId);
     }
+    if (options.status && options.statuses?.length) {
+      throw new PersistenceConflictError(
+        "Record list options cannot combine status and statuses.",
+      );
+    }
+
     if (options.status) addFilter("status", options.status);
+
+    if (options.statuses?.length) {
+      values.push([
+        ...new Set(
+          options.statuses
+            .map((status) => status.trim())
+            .filter(Boolean),
+        ),
+      ]);
+      where.push(
+        `status = ANY($${values.length}::text[])`,
+      );
+    }
+
     if (options.visibility) {
       addFilter("visibility", options.visibility);
     }
@@ -368,9 +457,30 @@ export class PostgresRecordRepository implements RecordRepository {
 
   async update(record: RegistryRecord): Promise<RegistryRecord> {
     const config = await this.validate(record);
+    const compiled = compileRegistryConfig(config);
+
+    if (compiled.publicationLifecycle) {
+      const existing = await this.get(
+        record.registryId,
+        record.id,
+      );
+
+      if (!existing) {
+        throw new PersistenceNotFoundError(
+          `Record ${record.registryId}/${record.id} does not exist.`,
+        );
+      }
+
+      if (existing.status !== record.status) {
+        throw new PersistenceConflictError(
+          "Status changes for lifecycle-managed registries must use the publication lifecycle service.",
+        );
+      }
+    }
+
     const searchText = buildRecordSearchText(
       record,
-      compileRegistryConfig(config),
+      compiled,
     );
 
     const result = await this.pool.query<RecordRow>(

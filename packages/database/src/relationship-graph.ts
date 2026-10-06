@@ -18,6 +18,7 @@ export interface RelationshipGraphQuery {
   rootRecordId: string;
   depth?: number;
   relationshipTypeIds?: string[];
+  statusIds?: string[];
   direction?: RelationshipTraversalDirection;
   visibility?: Visibility;
   maxNodes?: number;
@@ -172,6 +173,19 @@ export class PostgresRelationshipGraphRepository {
       );
     }
 
+    const statusIds = uniqueStrings(query.statusIds);
+
+    if (statusIds.length > 0) {
+      values.push(statusIds);
+      const statusParameter = `$${values.length}`;
+      where.push(
+        `from_record.status = ANY(${statusParameter}::text[])`,
+      );
+      where.push(
+        `to_record.status = ANY(${statusParameter}::text[])`,
+      );
+    }
+
     const result = await this.pool.query<EdgeRow>(
       `
         SELECT rel.*
@@ -211,6 +225,15 @@ export class PostgresRelationshipGraphRepository {
       rootValues.push(query.visibility);
       rootWhere.push(
         `visibility = $${rootValues.length}`,
+      );
+    }
+
+    const statusIds = uniqueStrings(query.statusIds);
+
+    if (statusIds.length > 0) {
+      rootValues.push(statusIds);
+      rootWhere.push(
+        `status = ANY($${rootValues.length}::text[])`,
       );
     }
 
@@ -298,6 +321,13 @@ export class PostgresRelationshipGraphRepository {
       values.push(query.visibility);
       where.push(
         `visibility = $${values.length}`,
+      );
+    }
+
+    if (statusIds.length > 0) {
+      values.push(statusIds);
+      where.push(
+        `status = ANY($${values.length}::text[])`,
       );
     }
 

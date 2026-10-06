@@ -6,6 +6,7 @@ import {
 
 import {
   REGISTRY_CONFIG_SCHEMA_VERSION,
+  type PublicationLifecycleConfig,
   type RegistryConfigFile,
   type RegistryPresentationConfig,
 } from "./types.ts";
@@ -259,6 +260,487 @@ function validatePresentation(
   return issues;
 }
 
+const CONFIG_IDENTIFIER_PATTERN =
+  /^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$/;
+
+function validateRoleList(
+  issues: ConfigValidationIssue[],
+  path: string,
+  value: unknown,
+  options: { required?: boolean } = {},
+): string[] {
+  if (value === undefined && !options.required) return [];
+
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    !value.every(
+      (role) =>
+        typeof role === "string" &&
+        role.trim().length > 0,
+    )
+  ) {
+    issues.push({
+      path,
+      code: "invalid_role_list",
+      message:
+        "Role lists must be non-empty arrays of non-empty strings.",
+    });
+    return [];
+  }
+
+  const roles = value.map((role) => role.trim());
+  const unique = new Set(roles);
+
+  if (unique.size !== roles.length) {
+    issues.push({
+      path,
+      code: "duplicate_role",
+      message: "Role lists cannot contain duplicate roles.",
+    });
+  }
+
+  return roles;
+}
+
+function validatePublicationLifecycle(
+  lifecycle: unknown,
+): ConfigValidationIssue[] {
+  const issues: ConfigValidationIssue[] = [];
+
+  if (lifecycle === undefined) return issues;
+
+  if (!isPlainObject(lifecycle)) {
+    return [
+      {
+        path: "publicationLifecycle",
+        code: "invalid_publication_lifecycle",
+        message: "publicationLifecycle must be an object.",
+      },
+    ];
+  }
+
+  const statusIds = new Set<string>();
+  const statusPublic = new Map<string, boolean>();
+  const statusTerminal = new Map<string, boolean>();
+
+  if (
+    !Array.isArray(lifecycle.statuses) ||
+    lifecycle.statuses.length === 0
+  ) {
+    issues.push({
+      path: "publicationLifecycle.statuses",
+      code: "missing_lifecycle_statuses",
+      message:
+        "publicationLifecycle.statuses must contain at least one status.",
+    });
+  } else {
+    lifecycle.statuses.forEach((candidate, index) => {
+      const path = `publicationLifecycle.statuses[${index}]`;
+
+      if (!isPlainObject(candidate)) {
+        issues.push({
+          path,
+          code: "invalid_lifecycle_status",
+          message: "Each lifecycle status must be an object.",
+        });
+        return;
+      }
+
+      const id = candidate.id;
+      const label = candidate.label;
+
+      if (
+        typeof id !== "string" ||
+        !CONFIG_IDENTIFIER_PATTERN.test(id)
+      ) {
+        issues.push({
+          path: `${path}.id`,
+          code: "invalid_lifecycle_status_id",
+          message:
+            "Status ids must be lowercase configuration identifiers.",
+        });
+      } else if (statusIds.has(id)) {
+        issues.push({
+          path: `${path}.id`,
+          code: "duplicate_lifecycle_status",
+          message: `Duplicate lifecycle status: ${id}.`,
+        });
+      } else {
+        statusIds.add(id);
+      }
+
+      if (
+        typeof label !== "string" ||
+        label.trim().length === 0
+      ) {
+        issues.push({
+          path: `${path}.label`,
+          code: "invalid_lifecycle_status_label",
+          message: "Status labels must be non-empty strings.",
+        });
+      }
+
+      for (const booleanField of [
+        "publiclyVisible",
+        "marksPublished",
+        "terminal",
+      ] as const) {
+        if (
+          candidate[booleanField] !== undefined &&
+          typeof candidate[booleanField] !== "boolean"
+        ) {
+          issues.push({
+            path: `${path}.${booleanField}`,
+            code: "invalid_lifecycle_boolean",
+            message: `${booleanField} must be a boolean when provided.`,
+          });
+        }
+      }
+
+      if (
+        candidate.marksPublished === true &&
+        candidate.publiclyVisible !== true
+      ) {
+        issues.push({
+          path: `${path}.marksPublished`,
+          code: "published_status_not_public",
+          message:
+            "A status that marks publication must also set publiclyVisible: true.",
+        });
+      }
+
+      if (typeof id === "string") {
+        statusPublic.set(
+          id,
+          candidate.publiclyVisible === true,
+        );
+        statusTerminal.set(
+          id,
+          candidate.terminal === true,
+        );
+      }
+    });
+  }
+
+  if (
+    typeof lifecycle.initialStatusId !== "string" ||
+    !statusIds.has(lifecycle.initialStatusId)
+  ) {
+    issues.push({
+      path: "publicationLifecycle.initialStatusId",
+      code: "unknown_initial_status",
+      message:
+        "initialStatusId must reference a configured lifecycle status.",
+    });
+  }
+
+  const transitionKeys = new Set<string>();
+  const transitions = new Map<
+    string,
+    {
+      approval: boolean;
+    }
+  >();
+
+  if (!Array.isArray(lifecycle.transitions)) {
+    issues.push({
+      path: "publicationLifecycle.transitions",
+      code: "invalid_lifecycle_transitions",
+      message: "publicationLifecycle.transitions must be an array.",
+    });
+  } else {
+    lifecycle.transitions.forEach((candidate, index) => {
+      const path =
+        `publicationLifecycle.transitions[${index}]`;
+
+      if (!isPlainObject(candidate)) {
+        issues.push({
+          path,
+          code: "invalid_lifecycle_transition",
+          message: "Each lifecycle transition must be an object.",
+        });
+        return;
+      }
+
+      const fromStatusId = candidate.fromStatusId;
+      const toStatusId = candidate.toStatusId;
+
+      if (
+        typeof fromStatusId !== "string" ||
+        !statusIds.has(fromStatusId)
+      ) {
+        issues.push({
+          path: `${path}.fromStatusId`,
+          code: "unknown_transition_status",
+          message:
+            "fromStatusId must reference a configured lifecycle status.",
+        });
+      }
+
+      if (
+        typeof toStatusId !== "string" ||
+        !statusIds.has(toStatusId)
+      ) {
+        issues.push({
+          path: `${path}.toStatusId`,
+          code: "unknown_transition_status",
+          message:
+            "toStatusId must reference a configured lifecycle status.",
+        });
+      }
+
+      if (
+        typeof fromStatusId === "string" &&
+        fromStatusId === toStatusId
+      ) {
+        issues.push({
+          path,
+          code: "self_lifecycle_transition",
+          message:
+            "A lifecycle transition cannot transition a status to itself.",
+        });
+      }
+
+      if (
+        typeof fromStatusId === "string" &&
+        statusTerminal.get(fromStatusId) === true
+      ) {
+        issues.push({
+          path: `${path}.fromStatusId`,
+          code: "terminal_status_transition",
+          message:
+            "Terminal lifecycle statuses cannot have outgoing transitions.",
+        });
+      }
+
+      if (
+        typeof candidate.label !== "undefined" &&
+        (typeof candidate.label !== "string" ||
+          candidate.label.trim().length === 0)
+      ) {
+        issues.push({
+          path: `${path}.label`,
+          code: "invalid_transition_label",
+          message:
+            "Transition labels must be non-empty strings when provided.",
+        });
+      }
+
+      validateRoleList(
+        issues,
+        `${path}.allowedRoles`,
+        candidate.allowedRoles,
+      );
+
+      let hasApproval = false;
+
+      if (candidate.approval !== undefined) {
+        hasApproval = true;
+
+        if (!isPlainObject(candidate.approval)) {
+          issues.push({
+            path: `${path}.approval`,
+            code: "invalid_transition_approval",
+            message: "approval must be an object.",
+          });
+        } else {
+          const roles = validateRoleList(
+            issues,
+            `${path}.approval.approverRoles`,
+            candidate.approval.approverRoles,
+            { required: true },
+          );
+          const rawMinApprovals =
+            candidate.approval.minApprovals;
+          const minApprovals =
+            rawMinApprovals === undefined
+              ? 1
+              : rawMinApprovals;
+
+          if (
+            typeof minApprovals !== "number" ||
+            !Number.isInteger(minApprovals) ||
+            minApprovals < 1
+          ) {
+            issues.push({
+              path: `${path}.approval.minApprovals`,
+              code: "invalid_min_approvals",
+              message:
+                "minApprovals must be a positive integer.",
+            });
+          }
+
+          if (
+            candidate.approval.requesterCannotApprove !==
+              undefined &&
+            typeof candidate.approval
+              .requesterCannotApprove !== "boolean"
+          ) {
+            issues.push({
+              path:
+                `${path}.approval.requesterCannotApprove`,
+              code: "invalid_approval_boolean",
+              message:
+                "requesterCannotApprove must be a boolean when provided.",
+            });
+          }
+        }
+      }
+
+      if (
+        typeof fromStatusId === "string" &&
+        typeof toStatusId === "string"
+      ) {
+        const key = `${fromStatusId}->${toStatusId}`;
+
+        if (transitionKeys.has(key)) {
+          issues.push({
+            path,
+            code: "duplicate_lifecycle_transition",
+            message:
+              `Duplicate lifecycle transition: ${key}.`,
+          });
+        } else {
+          transitionKeys.add(key);
+          transitions.set(key, {
+            approval: hasApproval,
+          });
+        }
+      }
+    });
+  }
+
+  const schedule = lifecycle.scheduledPublication;
+
+  if (schedule !== undefined) {
+    if (!isPlainObject(schedule)) {
+      issues.push({
+        path: "publicationLifecycle.scheduledPublication",
+        code: "invalid_scheduled_publication",
+        message: "scheduledPublication must be an object.",
+      });
+    } else {
+      if (
+        schedule.enabled !== undefined &&
+        typeof schedule.enabled !== "boolean"
+      ) {
+        issues.push({
+          path:
+            "publicationLifecycle.scheduledPublication.enabled",
+          code: "invalid_schedule_boolean",
+          message: "enabled must be a boolean when provided.",
+        });
+      }
+
+      const fromStatusIds = schedule.fromStatusIds;
+
+      if (
+        !Array.isArray(fromStatusIds) ||
+        fromStatusIds.length === 0 ||
+        !fromStatusIds.every(
+          (statusId) => typeof statusId === "string",
+        )
+      ) {
+        issues.push({
+          path:
+            "publicationLifecycle.scheduledPublication.fromStatusIds",
+          code: "invalid_schedule_sources",
+          message:
+            "fromStatusIds must be a non-empty array of status ids.",
+        });
+      } else {
+        const unique = new Set(fromStatusIds);
+
+        if (unique.size !== fromStatusIds.length) {
+          issues.push({
+            path:
+              "publicationLifecycle.scheduledPublication.fromStatusIds",
+            code: "duplicate_schedule_source",
+            message:
+              "fromStatusIds cannot contain duplicates.",
+          });
+        }
+
+        for (const statusId of fromStatusIds) {
+          if (!statusIds.has(statusId)) {
+            issues.push({
+              path:
+                "publicationLifecycle.scheduledPublication.fromStatusIds",
+              code: "unknown_schedule_status",
+              message:
+                `Unknown scheduled-publication source status: ${statusId}.`,
+            });
+          }
+        }
+      }
+
+      const targetStatusId = schedule.targetStatusId;
+
+      if (
+        typeof targetStatusId !== "string" ||
+        !statusIds.has(targetStatusId)
+      ) {
+        issues.push({
+          path:
+            "publicationLifecycle.scheduledPublication.targetStatusId",
+          code: "unknown_schedule_target",
+          message:
+            "targetStatusId must reference a configured lifecycle status.",
+        });
+      } else if (
+        statusPublic.get(targetStatusId) !== true
+      ) {
+        issues.push({
+          path:
+            "publicationLifecycle.scheduledPublication.targetStatusId",
+          code: "schedule_target_not_public",
+          message:
+            "Scheduled publication must target a publicly visible lifecycle status.",
+        });
+      }
+
+      validateRoleList(
+        issues,
+        "publicationLifecycle.scheduledPublication.allowedRoles",
+        schedule.allowedRoles,
+      );
+
+      if (
+        Array.isArray(fromStatusIds) &&
+        typeof targetStatusId === "string"
+      ) {
+        for (const fromStatusId of fromStatusIds) {
+          const transition =
+            transitions.get(
+              `${fromStatusId}->${targetStatusId}`,
+            );
+
+          if (!transition) {
+            issues.push({
+              path:
+                "publicationLifecycle.scheduledPublication",
+              code: "missing_schedule_transition",
+              message:
+                `Scheduled publication requires a configured transition from ${fromStatusId} to ${targetStatusId}.`,
+            });
+          } else if (transition.approval) {
+            issues.push({
+              path:
+                "publicationLifecycle.scheduledPublication",
+              code: "approval_gated_schedule_transition",
+              message:
+                `Scheduled publication transition ${fromStatusId}->${targetStatusId} cannot require approval. Complete approval before entering a schedulable status.`,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return issues;
+}
+
 export function validateRegistryConfig(
   value: unknown,
 ): ConfigValidationIssue[] {
@@ -287,6 +769,11 @@ export function validateRegistryConfig(
 
   if (registryIssues.length === 0) {
     issues.push(
+      ...validatePublicationLifecycle(
+        value.publicationLifecycle,
+      ),
+    );
+    issues.push(
       ...validatePresentation(
         value.presentation,
         value.registry as RegistryDefinition,
@@ -314,4 +801,11 @@ export function getPresentationConfig(
   value: RegistryConfigFile,
 ): RegistryPresentationConfig {
   return value.presentation ?? {};
+}
+
+
+export function getPublicationLifecycleConfig(
+  value: RegistryConfigFile,
+): PublicationLifecycleConfig | undefined {
+  return value.publicationLifecycle;
 }

@@ -91,6 +91,7 @@ async function setup() {
       type: "policy",
       date: "2026-02-10",
     }),
+    { bootstrapLifecycle: true },
   );
 
   await records.create(
@@ -101,6 +102,7 @@ async function setup() {
       type: "notice",
       date: "2026-03-15",
     }),
+    { bootstrapLifecycle: true },
   );
 
   await records.create(
@@ -112,6 +114,7 @@ async function setup() {
       date: "2026-04-01",
       visibility: "private",
     }),
+    { bootstrapLifecycle: true },
   );
 
   return {

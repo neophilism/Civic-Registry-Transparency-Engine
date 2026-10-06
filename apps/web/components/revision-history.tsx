@@ -92,7 +92,7 @@ export function RevisionHistory({
                   <h4>{revision.record.title}</h4>
                 </div>
                 <span className="status-pill">
-                  {revision.record.status}
+                  {revision.record.statusLabel}
                 </span>
               </div>
 

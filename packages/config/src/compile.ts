@@ -8,10 +8,12 @@ import {
   getPresentationConfig,
 } from "./validation.ts";
 import type {
+  CompiledPublicationLifecycleConfig,
   CompiledRecordTypeConfig,
   CompiledRegistryConfig,
   FormControlType,
   FormFieldConfig,
+  PublicationLifecycleConfig,
   RecordTypePresentationConfig,
   RegistryConfigFile,
 } from "./types.ts";
@@ -127,6 +129,84 @@ function compileRecordType(
   };
 }
 
+function transitionKey(
+  fromStatusId: string,
+  toStatusId: string,
+): string {
+  return `${fromStatusId}->${toStatusId}`;
+}
+
+function compilePublicationLifecycle(
+  definition: PublicationLifecycleConfig,
+): CompiledPublicationLifecycleConfig {
+  const statusesById = new Map(
+    definition.statuses.map((status) => [
+      status.id,
+      status,
+    ]),
+  );
+  const transitionsByKey = new Map(
+    definition.transitions.map((transition) => [
+      transitionKey(
+        transition.fromStatusId,
+        transition.toStatusId,
+      ),
+      transition,
+    ]),
+  );
+  const transitionsFromStatus = new Map<
+    string,
+    PublicationLifecycleConfig["transitions"]
+  >();
+
+  for (const transition of definition.transitions) {
+    const existing =
+      transitionsFromStatus.get(
+        transition.fromStatusId,
+      ) ?? [];
+    transitionsFromStatus.set(
+      transition.fromStatusId,
+      [...existing, transition],
+    );
+  }
+
+  const publicStatusIds = new Set(
+    definition.statuses
+      .filter((status) => status.publiclyVisible === true)
+      .map((status) => status.id),
+  );
+
+  return {
+    definition,
+    statusesById,
+    transitionsByKey,
+    transitionsFromStatus,
+    publicStatusIds,
+    getStatus(statusId: string) {
+      const status = statusesById.get(statusId);
+
+      if (!status) {
+        throw new Error(
+          `Unknown publication lifecycle status: ${statusId}.`,
+        );
+      }
+
+      return status;
+    },
+    getTransition(
+      fromStatusId: string,
+      toStatusId: string,
+    ) {
+      return transitionsByKey.get(
+        transitionKey(fromStatusId, toStatusId),
+      );
+    },
+    isPublicStatus(statusId: string) {
+      return publicStatusIds.has(statusId);
+    },
+  };
+}
+
 export function compileRegistryConfig(
   value: unknown,
 ): CompiledRegistryConfig {
@@ -151,12 +231,19 @@ export function compileRegistryConfig(
       (relationshipType) => [relationshipType.id, relationshipType],
     ),
   );
+  const publicationLifecycle =
+    config.publicationLifecycle
+      ? compilePublicationLifecycle(
+          config.publicationLifecycle,
+        )
+      : undefined;
 
   return {
     schemaVersion: config.schemaVersion,
     definition: config.registry,
     recordTypesById,
     relationshipTypesById,
+    publicationLifecycle,
     getRecordType(recordTypeId: string) {
       const recordType = recordTypesById.get(recordTypeId);
 

@@ -98,6 +98,7 @@ test("summary presentation follows configured list fields", () => {
   assert.equal(presented.title, "Example entry");
   assert.equal(presented.summary, "Example summary");
   assert.equal(presented.recordTypeName, "Entry");
+  assert.equal(presented.statusLabel, "published");
   assert.deepEqual(
     presented.fields.map((field) => [
       field.id,

@@ -204,6 +204,23 @@ test("the checked-in example compiles without application code", async () => {
   assert.equal(compiled.definition.id, "public-document-catalog");
   assert.equal(compiled.recordTypesById.size, 2);
   assert.equal(compiled.relationshipTypesById.size, 1);
+  assert.ok(compiled.publicationLifecycle);
+  assert.equal(
+    compiled.publicationLifecycle.definition.initialStatusId,
+    "draft",
+  );
+  assert.equal(
+    compiled.publicationLifecycle.getStatus("published").label,
+    "Published",
+  );
+  assert.equal(
+    compiled.publicationLifecycle.isPublicStatus("approved"),
+    false,
+  );
+  assert.equal(
+    compiled.publicationLifecycle.isPublicStatus("published"),
+    true,
+  );
   assert.equal(
     compiled.getRecordType("document").defaultSort?.fieldId,
     "published_on",

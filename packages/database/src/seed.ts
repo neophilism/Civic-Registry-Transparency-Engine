@@ -136,7 +136,9 @@ export async function seedRegistry(
       await records.update(record);
       recordsUpdated += 1;
     } else {
-      await records.create(record);
+      await records.create(record, {
+        bootstrapLifecycle: true,
+      });
       recordsCreated += 1;
     }
   }

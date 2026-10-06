@@ -26,7 +26,7 @@ import type {
   SearchResponse,
 } from "@civic-registry/search";
 
-import { getRepositories } from "./database";
+import { getRepositories } from "./database.ts";
 
 export interface PublicRegistry {
   config: CompiledRegistryConfig;
@@ -51,6 +51,66 @@ export interface PublicRelationshipResult {
 export interface PublicRelationshipGraphResult {
   graph: PresentedRelationshipGraph;
   truncated: boolean;
+}
+
+function publicStatusIds(
+  registry: CompiledRegistryConfig,
+): string[] | undefined {
+  const lifecycle = registry.publicationLifecycle;
+
+  if (!lifecycle) return undefined;
+
+  return [...lifecycle.publicStatusIds];
+}
+
+function lifecycleStatusAtEvent(
+  event: {
+    occurredAt: string;
+    version?: number;
+  },
+  versions: Array<{
+    version: number;
+    createdAt: string;
+    snapshot: RegistryRecord;
+  }>,
+): string | undefined {
+  if (event.version !== undefined) {
+    return versions.find(
+      (version) => version.version === event.version,
+    )?.snapshot.status;
+  }
+
+  const eventTime = Date.parse(event.occurredAt);
+  let selected:
+    | {
+        version: number;
+        createdAt: string;
+        snapshot: RegistryRecord;
+      }
+    | undefined;
+
+  for (const version of versions) {
+    const versionTime = Date.parse(version.createdAt);
+    const selectedTime = selected
+      ? Date.parse(selected.createdAt)
+      : Number.NEGATIVE_INFINITY;
+
+    if (
+      versionTime <= eventTime &&
+      (
+        !selected ||
+        versionTime > selectedTime ||
+        (
+          versionTime === selectedTime &&
+          version.version > selected.version
+        )
+      )
+    ) {
+      selected = version;
+    }
+  }
+
+  return selected?.snapshot.status;
 }
 
 export async function listPublicRegistries(): Promise<
@@ -81,10 +141,24 @@ export async function listPublicRecords(
   registryId: string,
   recordTypeId: string,
 ): Promise<RegistryRecord[]> {
-  const { records } = getRepositories();
+  const { configs, records } = getRepositories();
+  const config = await configs.get(registryId);
+
+  if (!config) return [];
+
+  const registry = compileRegistryConfig(config);
+  const statuses = publicStatusIds(registry);
+
+  if (
+    registry.publicationLifecycle &&
+    statuses?.length === 0
+  ) {
+    return [];
+  }
 
   return records.list(registryId, {
     recordTypeId,
+    statuses,
     visibility: "public",
     limit: 100,
   });
@@ -94,10 +168,28 @@ export async function getPublicRecord(
   registryId: string,
   recordId: string,
 ): Promise<RegistryRecord | null> {
-  const { records } = getRepositories();
-  const record = await records.get(registryId, recordId);
+  const { configs, records } = getRepositories();
+  const [config, record] = await Promise.all([
+    configs.get(registryId),
+    records.get(registryId, recordId),
+  ]);
 
-  if (!record || record.visibility !== "public") {
+  if (
+    !config ||
+    !record ||
+    record.visibility !== "public"
+  ) {
+    return null;
+  }
+
+  const registry = compileRegistryConfig(config);
+
+  if (
+    registry.publicationLifecycle &&
+    !registry.publicationLifecycle.isPublicStatus(
+      record.status,
+    )
+  ) {
     return null;
   }
 
@@ -114,12 +206,26 @@ export async function listPublicRelationships(
   } = {},
 ): Promise<PublicRelationshipResult> {
   const { relationshipGraph } = getRepositories();
+  const statuses = publicStatusIds(registry);
+
+  if (
+    registry.publicationLifecycle &&
+    statuses?.length === 0
+  ) {
+    return {
+      relationships: [],
+      groups: [],
+      truncated: false,
+    };
+  }
+
   const raw = await relationshipGraph.getGraph({
     registryId: record.registryId,
     rootRecordId: record.id,
     depth: 1,
     relationshipTypeIds: options.relationshipTypeIds,
     visibility: "public",
+    statusIds: statuses,
     maxNodes: options.maxNodes ?? 101,
   });
 
@@ -184,12 +290,22 @@ export async function getPublicRelationshipGraph(
   } = {},
 ): Promise<PublicRelationshipGraphResult | null> {
   const { relationshipGraph } = getRepositories();
+  const statuses = publicStatusIds(registry);
+
+  if (
+    registry.publicationLifecycle &&
+    statuses?.length === 0
+  ) {
+    return null;
+  }
+
   const raw = await relationshipGraph.getGraph({
     registryId: registry.definition.id,
     rootRecordId: recordId,
     depth: options.depth,
     relationshipTypeIds: options.relationshipTypeIds,
     visibility: "public",
+    statusIds: statuses,
     maxNodes: options.maxNodes ?? 100,
   });
 
@@ -207,9 +323,28 @@ export async function searchPublicRecords(
     Partial<Pick<SearchRequest, "registryId" | "visibility">>,
 ): Promise<SearchResponse> {
   const { search } = getRepositories();
+  const lifecycle = registry.publicationLifecycle;
+  let statuses = request.statuses;
+
+  if (lifecycle) {
+    const publiclyVisible = lifecycle.publicStatusIds;
+    const requested = request.statuses ?? [];
+
+    statuses =
+      requested.length > 0
+        ? requested.filter((status) =>
+            publiclyVisible.has(status),
+          )
+        : [...publiclyVisible];
+
+    if (statuses.length === 0) {
+      statuses = ["__no_public_lifecycle_status__"];
+    }
+  }
 
   return search.search(registry, {
     ...request,
+    statuses,
     registryId: registry.definition.id,
     visibility: "public",
   });
@@ -264,16 +399,39 @@ export async function getPublicHistory(
     ),
   ]);
 
-  return {
-    events: events.map((event) =>
-      presentHistoryEvent(
-        event,
-        record,
-        registry,
-      ),
+  const lifecycle = registry.publicationLifecycle;
+  const publicVersions = lifecycle
+    ? versions.filter((version) =>
+        lifecycle.isPublicStatus(
+          version.snapshot.status,
+        ),
+      )
+    : versions;
+  const presentedEvents = events.map((event) =>
+    presentHistoryEvent(
+      event,
+      record,
+      registry,
     ),
+  );
+  const publicEvents = lifecycle
+    ? presentedEvents.filter((event) => {
+        const status = lifecycleStatusAtEvent(
+          event,
+          versions,
+        );
+
+        return (
+          status !== undefined &&
+          lifecycle.isPublicStatus(status)
+        );
+      })
+    : presentedEvents;
+
+  return {
+    events: publicEvents,
     revisions: presentRecordRevisions(
-      versions,
+      publicVersions,
       registry,
     ),
   };

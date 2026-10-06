@@ -87,6 +87,19 @@ function fieldLabel(
   return fieldId;
 }
 
+function statusLabel(
+  registry: CompiledRegistryConfig,
+  statusId: string | undefined,
+): string | undefined {
+  if (!statusId) return undefined;
+
+  return (
+    registry.publicationLifecycle?.statusesById.get(
+      statusId,
+    )?.label ?? statusId
+  );
+}
+
 function relationshipLabel(
   registry: CompiledRegistryConfig,
   event: AuditEvent,
@@ -146,6 +159,14 @@ export function presentHistoryEvent(
   const toStatus = stringValue(
     event.metadata?.toStatus,
   );
+  const fromStatusLabel = statusLabel(
+    registry,
+    fromStatus,
+  );
+  const toStatusLabel = statusLabel(
+    registry,
+    toStatus,
+  );
   const fieldId = stringValue(
     event.metadata?.fieldId,
   );
@@ -177,20 +198,20 @@ export function presentHistoryEvent(
     case "record.published":
       label = "Record published";
       detail = fromStatus
-        ? `Status changed from ${fromStatus} to ${toStatus ?? "published"}.`
+        ? `Status changed from ${fromStatusLabel} to ${toStatusLabel ?? "Published"}.`
         : undefined;
       break;
     case "record.withdrawn":
       label = "Record withdrawn";
       detail = fromStatus
-        ? `Status changed from ${fromStatus} to ${toStatus ?? "withdrawn"}.`
+        ? `Status changed from ${fromStatusLabel} to ${toStatusLabel ?? "Withdrawn"}.`
         : undefined;
       break;
     case "record.status_changed":
       label = "Record status changed";
       detail =
         fromStatus || toStatus
-          ? `Status changed from ${fromStatus ?? "unknown"} to ${toStatus ?? "unknown"}.`
+          ? `Status changed from ${fromStatusLabel ?? "unknown"} to ${toStatusLabel ?? "unknown"}.`
           : undefined;
       break;
     case "record.visibility_changed":
@@ -261,6 +282,95 @@ export function presentHistoryEvent(
           )} was removed.`
         : "A whole-record citation was removed.";
       break;
+    case "lifecycle.transition_requested": {
+      const from = statusLabel(
+        registry,
+        stringValue(event.metadata?.fromStatusId),
+      );
+      const to = statusLabel(
+        registry,
+        stringValue(event.metadata?.toStatusId),
+      );
+      const approvals = numberValue(
+        event.metadata?.requiredApprovals,
+      );
+      label = "Lifecycle transition requested";
+      detail =
+        from && to
+          ? `Requested transition from ${from} to ${to}${approvals ? ` requiring ${approvals} approval${approvals === 1 ? "" : "s"}` : ""}.`
+          : undefined;
+      break;
+    }
+    case "lifecycle.transition_approved": {
+      const to = statusLabel(
+        registry,
+        stringValue(event.metadata?.toStatusId),
+      );
+      label = "Lifecycle transition approved";
+      detail = to
+        ? `Approved transition to ${to}.`
+        : undefined;
+      break;
+    }
+    case "lifecycle.transition_rejected": {
+      const to = statusLabel(
+        registry,
+        stringValue(event.metadata?.toStatusId),
+      );
+      label = "Lifecycle transition rejected";
+      detail = to
+        ? `Rejected transition to ${to}.`
+        : undefined;
+      break;
+    }
+    case "lifecycle.transition_executed": {
+      const from = statusLabel(
+        registry,
+        stringValue(event.metadata?.fromStatusId),
+      );
+      const to = statusLabel(
+        registry,
+        stringValue(event.metadata?.toStatusId),
+      );
+      label = "Lifecycle transition executed";
+      detail =
+        from && to
+          ? `Transitioned from ${from} to ${to}.`
+          : undefined;
+      break;
+    }
+    case "lifecycle.publication_scheduled": {
+      const target = statusLabel(
+        registry,
+        stringValue(event.metadata?.targetStatusId),
+      );
+      const scheduledFor = stringValue(
+        event.metadata?.scheduledFor,
+      );
+      label = "Publication scheduled";
+      detail =
+        target && scheduledFor
+          ? `Scheduled transition to ${target} for ${scheduledFor}.`
+          : undefined;
+      break;
+    }
+    case "lifecycle.publication_schedule_cancelled":
+      label = "Scheduled publication cancelled";
+      break;
+    case "lifecycle.publication_schedule_failed":
+      label = "Scheduled publication failed";
+      break;
+    case "lifecycle.publication_schedule_executed": {
+      const target = statusLabel(
+        registry,
+        stringValue(event.metadata?.targetStatusId),
+      );
+      label = "Scheduled publication executed";
+      detail = target
+        ? `Scheduled transition to ${target} completed.`
+        : undefined;
+      break;
+    }
     default:
       label = event.eventType
         .replaceAll(".", " ")
@@ -334,8 +444,12 @@ function fieldChanges(
     changes.push({
       key: "status",
       label: "Status",
-      before: previous.status,
-      after: current.status,
+      before:
+        statusLabel(registry, previous.status) ??
+        previous.status,
+      after:
+        statusLabel(registry, current.status) ??
+        current.status,
     });
   }
 
