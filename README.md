@@ -16,24 +16,29 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 18 — Cryptographic audit integrity**
+**PR 19 — Open Legal Interpretations reference application**
 
-The engine now adds cryptographic tamper evidence on top of the database-enforced
-immutable history introduced in PR 9.
+The first thin domain application now runs on the reusable engine without adding
+legal-specific concepts to core packages.
 
-PR 18 adds:
+PR 19 adds:
 
-- a registry-wide SHA-256 chain over record revisions and audit events;
-- deterministic PR-18 baseline commitments for existing immutable history;
-- registry-scoped serialized append ordering;
-- independent chain/source verification;
-- protected integrity-ledger and chain-head storage;
-- Ed25519-signed external checkpoints;
-- optional signed SHA-256 binding of physical backup files;
-- CLI verification/checkpoint tooling; and
-- a restricted administrator integrity dashboard.
+- a complete Open Legal Interpretations registry configuration;
+- legal-interpretation, issuing-body, and legal-authority record schemas;
+- authority, issuing-body, supersession, and related-opinion relationships;
+- publication/withdrawal/supersession lifecycle configuration;
+- disclosure/redaction behavior;
+- public declassification/release-review deadlines;
+- synthetic source/document/evidence fixtures;
+- a CSV ingestion profile and fixture;
+- a dedicated public reference-app landing page;
+- one-command seed/import scripts; and
+- PostgreSQL end-to-end proof that search, relationships, deadlines, evidence,
+  and cryptographic integrity work through existing engine primitives.
 
-See [Cryptographic audit integrity](docs/AUDIT-INTEGRITY.md).
+All included interpretation data is explicitly synthetic demonstration data.
+
+See [Open Legal Interpretations](docs/OPEN-LEGAL-INTERPRETATIONS.md).
 
 ## Local development
 
