@@ -186,6 +186,15 @@ export class PostgresRegistryConfigRepository
         JSON.stringify(config),
       ],
     );
+
+    await this.pool.query(
+      `
+        UPDATE civic_registry_records
+        SET fields = fields
+        WHERE registry_id = $1
+      `,
+      [config.registry.id],
+    );
   }
 
   async get(registryId: string): Promise<RegistryConfigFile | null> {
