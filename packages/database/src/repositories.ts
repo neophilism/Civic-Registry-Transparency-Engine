@@ -17,8 +17,18 @@ import type {
   DeadlineReconciler,
 } from "./deadlines.ts";
 
+export interface RecordWriteContext {
+  actorId?: string;
+  reason?: string;
+}
+
 export interface RecordCreateOptions {
   bootstrapLifecycle?: boolean;
+  context?: RecordWriteContext;
+}
+
+export interface RecordUpdateOptions {
+  context?: RecordWriteContext;
 }
 
 export interface RecordListOptions {
@@ -56,7 +66,10 @@ export interface RecordRepository {
     registryId: string,
     options?: RecordListOptions,
   ): Promise<RegistryRecord[]>;
-  update(record: RegistryRecord): Promise<RegistryRecord>;
+  update(
+    record: RegistryRecord,
+    options?: RecordUpdateOptions,
+  ): Promise<RegistryRecord>;
   delete(registryId: string, recordId: string): Promise<boolean>;
 }
 
@@ -248,6 +261,25 @@ export class PostgresRegistryConfigRepository
   }
 }
 
+async function setHistoryContext(
+  client: import("pg").PoolClient,
+  context: RecordWriteContext | undefined,
+): Promise<void> {
+  if (!context) return;
+
+  await client.query(
+    `
+      SELECT
+        set_config('civic_registry.actor_id', $1, true),
+        set_config('civic_registry.reason', $2, true)
+    `,
+    [
+      context.actorId?.trim() ?? "",
+      context.reason?.trim() ?? "",
+    ],
+  );
+}
+
 export class PostgresRecordRepository implements RecordRepository {
   private readonly pool: Pool;
   private readonly configs: RegistryConfigRepository;
@@ -350,7 +382,10 @@ export class PostgresRecordRepository implements RecordRepository {
     ];
 
     try {
-      if (!options.bootstrapLifecycle) {
+      if (
+        !options.bootstrapLifecycle &&
+        !options.context
+      ) {
         const result =
           await this.pool.query<RecordRow>(
             sql,
@@ -371,15 +406,23 @@ export class PostgresRecordRepository implements RecordRepository {
 
       try {
         await client.query("BEGIN");
-        await client.query(
-          `
-            SELECT set_config(
-              'civic_registry.lifecycle_bootstrap',
-              'allowed',
-              true
-            )
-          `,
+        await setHistoryContext(
+          client,
+          options.context,
         );
+
+        if (options.bootstrapLifecycle) {
+          await client.query(
+            `
+              SELECT set_config(
+                'civic_registry.lifecycle_bootstrap',
+                'allowed',
+                true
+              )
+            `,
+          );
+        }
+
         const result =
           await client.query<RecordRow>(
             sql,
@@ -392,6 +435,7 @@ export class PostgresRecordRepository implements RecordRepository {
           created.id,
           {
             now: created.updatedAt,
+            context: options.context,
           },
         );
         return created;
@@ -502,7 +546,10 @@ export class PostgresRecordRepository implements RecordRepository {
     return result.rows.map(mapRecord);
   }
 
-  async update(record: RegistryRecord): Promise<RegistryRecord> {
+  async update(
+    record: RegistryRecord,
+    options: RecordUpdateOptions = {},
+  ): Promise<RegistryRecord> {
     const config = await this.validate(record);
     const compiled = compileRegistryConfig(config);
 
@@ -530,51 +577,90 @@ export class PostgresRecordRepository implements RecordRepository {
       compiled,
     );
 
-    const result = await this.pool.query<RecordRow>(
-      `
-        UPDATE civic_registry_records
-        SET
-          record_type_id = $3,
-          fields = $4::jsonb,
-          status = $5,
-          visibility = $6,
-          external_identifiers = $7::jsonb,
-          tags = $8::text[],
-          created_at = $9::timestamptz,
-          updated_at = $10::timestamptz,
-          published_at = $11::timestamptz,
-          search_text = $12
-        WHERE registry_id = $1 AND id = $2
-        RETURNING *
-      `,
-      [
-        record.registryId,
-        record.id,
-        record.recordTypeId,
-        JSON.stringify(record.fields),
-        record.status,
-        record.visibility,
-        JSON.stringify(record.externalIdentifiers ?? []),
-        record.tags ?? [],
-        record.createdAt,
-        record.updatedAt,
-        record.publishedAt ?? null,
-        searchText,
-      ],
-    );
+    const values = [
+      record.registryId,
+      record.id,
+      record.recordTypeId,
+      JSON.stringify(record.fields),
+      record.status,
+      record.visibility,
+      JSON.stringify(record.externalIdentifiers ?? []),
+      record.tags ?? [],
+      record.createdAt,
+      record.updatedAt,
+      record.publishedAt ?? null,
+      searchText,
+    ];
+    const sql = `
+      UPDATE civic_registry_records
+      SET
+        record_type_id = $3,
+        fields = $4::jsonb,
+        status = $5,
+        visibility = $6,
+        external_identifiers = $7::jsonb,
+        tags = $8::text[],
+        created_at = $9::timestamptz,
+        updated_at = $10::timestamptz,
+        published_at = $11::timestamptz,
+        search_text = $12
+      WHERE registry_id = $1 AND id = $2
+      RETURNING *
+    `;
 
-    if (!result.rows[0]) {
-      throw new PersistenceNotFoundError(
-        `Record ${record.registryId}/${record.id} does not exist.`,
-      );
+    let updated: RegistryRecord;
+
+    if (options.context) {
+      const client = await this.pool.connect();
+
+      try {
+        await client.query("BEGIN");
+        await setHistoryContext(
+          client,
+          options.context,
+        );
+        const result =
+          await client.query<RecordRow>(
+            sql,
+            values,
+          );
+
+        if (!result.rows[0]) {
+          throw new PersistenceNotFoundError(
+            `Record ${record.registryId}/${record.id} does not exist.`,
+          );
+        }
+
+        updated = mapRecord(result.rows[0]);
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    } else {
+      const result =
+        await this.pool.query<RecordRow>(
+          sql,
+          values,
+        );
+
+      if (!result.rows[0]) {
+        throw new PersistenceNotFoundError(
+          `Record ${record.registryId}/${record.id} does not exist.`,
+        );
+      }
+
+      updated = mapRecord(result.rows[0]);
     }
 
-    const updated = mapRecord(result.rows[0]);
     await this.deadlines?.reconcileRecord(
       updated.registryId,
       updated.id,
       {
         now: updated.updatedAt,
+        context: options.context,
       },
     );
     return updated;
