@@ -181,6 +181,16 @@ export interface NotificationConfig {
   retryBaseSeconds?: number;
 }
 
+export interface CompiledNotificationConfig {
+  definition: NotificationConfig;
+  enabled: boolean;
+  eventTypes: ReadonlySet<NotificationEventType>;
+  allowedChannels: ReadonlySet<NotificationChannel>;
+  deadlineApproachingDays: number;
+  maxDeliveryAttempts: number;
+  retryBaseSeconds: number;
+}
+
 export interface RegistryConfigFileV1 {
   schemaVersion: typeof REGISTRY_CONFIG_SCHEMA_VERSION;
   registry: RegistryDefinition;
@@ -255,6 +265,7 @@ export interface CompiledRegistryConfig {
   publicationLifecycle?: CompiledPublicationLifecycleConfig;
   deadlines?: CompiledDeadlineEngineConfig;
   disclosure: CompiledDisclosureConfig;
+  notifications: CompiledNotificationConfig;
   getRecordType(recordTypeId: string): CompiledRecordTypeConfig;
   getField(recordTypeId: string, fieldId: string): FieldDefinition;
 }
