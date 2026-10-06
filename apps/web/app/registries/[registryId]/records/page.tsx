@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { presentRecordSummary } from "@civic-registry/registry";
 
 import { Breadcrumbs } from "../../../../components/breadcrumbs";
+import { Pagination } from "../../../../components/pagination";
 import { RecordCard } from "../../../../components/record-card";
+import { SearchControls } from "../../../../components/search-controls";
 import {
   getPublicRegistry,
-  listPublicRecords,
+  searchPublicRecords,
 } from "../../../../lib/public-registry";
-import { presentRecordSummary } from "@civic-registry/registry";
+import {
+  firstSearchValue,
+  parsePublicSearchRequest,
+  type PublicSearchParams,
+} from "../../../../lib/search-params";
 
 export const dynamic = "force-dynamic";
 
@@ -16,15 +23,7 @@ interface RecordsPageProps {
   params: Promise<{
     registryId: string;
   }>;
-  searchParams: Promise<{
-    type?: string | string[];
-  }>;
-}
-
-function getRequestedType(
-  value: string | string[] | undefined,
-): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
+  searchParams: Promise<PublicSearchParams>;
 }
 
 export async function generateMetadata({
@@ -37,7 +36,7 @@ export async function generateMetadata({
 
   if (!registry) return { title: "Registry not found" };
 
-  const requestedType = getRequestedType(query.type);
+  const requestedType = firstSearchValue(query.type);
   const type = requestedType
     ? registry.config.recordTypesById.get(requestedType)
     : undefined;
@@ -59,7 +58,7 @@ export default async function RecordsPage({
 
   if (!registry) notFound();
 
-  const requestedType = getRequestedType(query.type);
+  const requestedType = firstSearchValue(query.type);
   const fallbackType =
     registry.config.definition.defaultRecordTypeId ??
     registry.config.definition.recordTypes[0]?.id;
@@ -78,13 +77,21 @@ export default async function RecordsPage({
     );
   }
 
-  const records = await listPublicRecords(
-    registryId,
+  const request = parsePublicSearchRequest(
+    registry.config,
+    query,
     recordTypeId,
   );
-  const presented = records.map((record) =>
+  const result = await searchPublicRecords(
+    registry.config,
+    request,
+  );
+  const presented = result.hits.map(({ record }) =>
     presentRecordSummary(record, registry.config),
   );
+  const basePath = `/registries/${encodeURIComponent(
+    registryId,
+  )}/records`;
 
   return (
     <main className="page-shell">
@@ -123,15 +130,42 @@ export default async function RecordsPage({
               key={type.id}
               className={active ? "is-active" : undefined}
               aria-current={active ? "page" : undefined}
-              href={`/registries/${encodeURIComponent(
-                registryId,
-              )}/records?type=${encodeURIComponent(type.id)}`}
+              href={`${basePath}?type=${encodeURIComponent(type.id)}`}
             >
               {type.pluralName}
             </Link>
           );
         })}
+        <Link
+          href={`/registries/${encodeURIComponent(
+            registryId,
+          )}/search`}
+        >
+          Search all types
+        </Link>
       </nav>
+
+      <section
+        className="section-block section-block--search"
+        aria-labelledby="search-heading"
+      >
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Discovery</p>
+            <h2 id="search-heading">
+              Search and filter
+            </h2>
+          </div>
+        </div>
+
+        <SearchControls
+          registry={registry.config}
+          recordType={recordType}
+          facets={result.facets}
+          params={query}
+          action={basePath}
+        />
+      </section>
 
       <section
         className="section-block"
@@ -141,27 +175,41 @@ export default async function RecordsPage({
           <div>
             <p className="eyebrow">Publicly visible</p>
             <h2 id="records-heading">
-              {presented.length}{" "}
-              {presented.length === 1 ? "record" : "records"}
+              {result.total}{" "}
+              {result.total === 1 ? "record" : "records"}
             </h2>
           </div>
+          {firstSearchValue(query.q) ? (
+            <span className="metric">
+              Query: “{firstSearchValue(query.q)}”
+            </span>
+          ) : null}
         </div>
 
         {presented.length > 0 ? (
-          <div className="record-list">
-            {presented.map((record) => (
-              <RecordCard
-                key={record.id}
-                record={record}
-              />
-            ))}
-          </div>
+          <>
+            <div className="record-list">
+              {presented.map((record) => (
+                <RecordCard
+                  key={record.id}
+                  record={record}
+                />
+              ))}
+            </div>
+            <Pagination
+              basePath={basePath}
+              params={query}
+              page={result.page}
+              pageSize={result.pageSize}
+              total={result.total}
+            />
+          </>
         ) : (
           <div className="empty-state empty-state--inline">
-            <h3>No public records yet</h3>
+            <h3>No matching public records</h3>
             <p>
-              This record type is configured, but no records with
-              public visibility are currently available.
+              Try removing a filter, broadening the date range,
+              or using fewer search terms.
             </p>
           </div>
         )}
