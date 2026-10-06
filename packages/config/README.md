@@ -17,6 +17,8 @@ modifying engine code.
 - configurable publication lifecycle statuses and transitions;
 - role and approval requirements;
 - scheduled-publication rules;
+- public disclosure and redaction defaults;
+- whole-record withholding behavior;
 - list/detail field presentation;
 - default sort behavior.
 
