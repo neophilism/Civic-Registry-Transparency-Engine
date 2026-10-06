@@ -4,11 +4,14 @@ import {
 } from "@civic-registry/config";
 import type {
   RegistryRecord,
-  Relationship,
 } from "@civic-registry/core";
 import {
-  presentRecordSummary,
-  type PresentedRecordSummary,
+  groupPresentedRelationships,
+  presentRelationship,
+  presentRelationshipGraph,
+  type PresentedRelationship,
+  type PresentedRelationshipGraph,
+  type PresentedRelationshipGroup,
 } from "@civic-registry/registry";
 import type {
   SearchRequest,
@@ -21,10 +24,15 @@ export interface PublicRegistry {
   config: CompiledRegistryConfig;
 }
 
-export interface PublicRelationship {
-  relationship: Relationship;
-  label: string;
-  relatedRecord: PresentedRecordSummary;
+export interface PublicRelationshipResult {
+  relationships: PresentedRelationship[];
+  groups: PresentedRelationshipGroup[];
+  truncated: boolean;
+}
+
+export interface PublicRelationshipGraphResult {
+  graph: PresentedRelationshipGraph;
+  truncated: boolean;
 }
 
 export async function listPublicRegistries(): Promise<
@@ -81,57 +89,99 @@ export async function getPublicRecord(
 export async function listPublicRelationships(
   registry: CompiledRegistryConfig,
   record: RegistryRecord,
-): Promise<PublicRelationship[]> {
-  const { relationships, records } = getRepositories();
-  const items = await relationships.list(record.registryId, {
-    recordId: record.id,
-    direction: "either",
-    limit: 100,
+  options: {
+    relationshipTypeIds?: string[];
+    direction?: "outbound" | "inbound" | "undirected";
+    maxNodes?: number;
+  } = {},
+): Promise<PublicRelationshipResult> {
+  const { relationshipGraph } = getRepositories();
+  const raw = await relationshipGraph.getGraph({
+    registryId: record.registryId,
+    rootRecordId: record.id,
+    depth: 1,
+    relationshipTypeIds: options.relationshipTypeIds,
+    visibility: "public",
+    maxNodes: options.maxNodes ?? 101,
   });
 
-  const resolved = await Promise.all(
-    items.map(async (relationship) => {
-      const isFrom =
-        relationship.fromRecordId === record.id;
-      const relatedId = isFrom
-        ? relationship.toRecordId
-        : relationship.fromRecordId;
-      const related = await records.get(
-        record.registryId,
-        relatedId,
-      );
+  if (!raw) {
+    return {
+      relationships: [],
+      groups: [],
+      truncated: false,
+    };
+  }
 
-      if (!related || related.visibility !== "public") {
-        return null;
-      }
+  const recordsById = new Map(
+    raw.nodes.map((node) => [
+      node.record.id,
+      node.record,
+    ]),
+  );
 
-      const type = registry.relationshipTypesById.get(
-        relationship.relationshipTypeId,
-      );
+  const relationships = raw.edges
+    .map((relationship) => {
+      const relatedId =
+        relationship.fromRecordId === record.id
+          ? relationship.toRecordId
+          : relationship.fromRecordId;
+      const related = recordsById.get(relatedId);
 
-      const label = isFrom
-        ? (type?.label ?? relationship.relationshipTypeId)
-        : (type?.inverseLabel ??
-          type?.label ??
-          relationship.relationshipTypeId);
+      if (!related) return null;
 
-      return {
+      return presentRelationship(
+        record.id,
         relationship,
-        label,
-        relatedRecord: presentRecordSummary(
-          related,
-          registry,
-        ),
-      };
-    }),
-  );
+        related,
+        registry,
+      );
+    })
+    .filter(
+      (
+        relationship,
+      ): relationship is PresentedRelationship =>
+        relationship !== null,
+    )
+    .filter(
+      (relationship) =>
+        !options.direction ||
+        relationship.direction === options.direction,
+    );
 
-  return resolved.filter(
-    (value): value is PublicRelationship =>
-      value !== null,
-  );
+  return {
+    relationships,
+    groups: groupPresentedRelationships(relationships),
+    truncated: raw.truncated,
+  };
 }
 
+export async function getPublicRelationshipGraph(
+  registry: CompiledRegistryConfig,
+  recordId: string,
+  options: {
+    depth?: number;
+    relationshipTypeIds?: string[];
+    maxNodes?: number;
+  } = {},
+): Promise<PublicRelationshipGraphResult | null> {
+  const { relationshipGraph } = getRepositories();
+  const raw = await relationshipGraph.getGraph({
+    registryId: registry.definition.id,
+    rootRecordId: recordId,
+    depth: options.depth,
+    relationshipTypeIds: options.relationshipTypeIds,
+    visibility: "public",
+    maxNodes: options.maxNodes ?? 100,
+  });
+
+  if (!raw) return null;
+
+  return {
+    graph: presentRelationshipGraph(raw, registry),
+    truncated: raw.truncated,
+  };
+}
 
 export async function searchPublicRecords(
   registry: CompiledRegistryConfig,
