@@ -150,7 +150,6 @@ DECLARE
     COALESCE(source_fields, '{}'::jsonb);
   record_disposition TEXT;
   field_rule RECORD;
-  replacement_value TEXT;
 BEGIN
   SELECT disposition
   INTO record_disposition
@@ -163,43 +162,13 @@ BEGIN
   END IF;
 
   FOR field_rule IN
-    SELECT
-      field_id,
-      disposition,
-      replacement_text
+    SELECT field_id
     FROM civic_registry_field_disclosures
     WHERE registry_id = registry_value
       AND record_id = record_value
   LOOP
-    replacement_value := NULLIF(
-      field_rule.replacement_text,
-      ''
-    );
-
-    IF replacement_value IS NULL THEN
-      IF field_rule.disposition = 'redacted' THEN
-        replacement_value :=
-          civic_registry_disclosure_text(
-            registry_value,
-            'defaultRedactionText',
-            '[REDACTED]'
-          );
-      ELSE
-        replacement_value :=
-          civic_registry_disclosure_text(
-            registry_value,
-            'defaultWithheldFieldText',
-            '[WITHHELD]'
-          );
-      END IF;
-    END IF;
-
-    result_fields := jsonb_set(
-      result_fields,
-      ARRAY[field_rule.field_id],
-      to_jsonb(replacement_value),
-      true
-    );
+    result_fields :=
+      result_fields - field_rule.field_id;
   END LOOP;
 
   RETURN result_fields;
@@ -328,10 +297,7 @@ DROP TRIGGER IF EXISTS
   ON civic_registry_records;
 
 CREATE TRIGGER civic_registry_public_projection_record_trigger
-BEFORE INSERT OR UPDATE OF
-  fields,
-  record_type_id,
-  tags
+BEFORE INSERT OR UPDATE
 ON civic_registry_records
 FOR EACH ROW
 EXECUTE FUNCTION civic_registry_apply_public_projection();
