@@ -1,0 +1,452 @@
+schemaVersion: 1
+
+registry:
+  id: open-legal-interpretations
+  name: Open Legal Interpretations
+  description: Searchable public registry for significant legal interpretations, issuing offices, authorities, related opinions, publication history, disclosure status, and declassification deadlines.
+  defaultRecordTypeId: interpretation
+  publicByDefault: true
+
+  recordTypes:
+    - id: interpretation
+      name: Legal interpretation
+      pluralName: Legal interpretations
+      description: Significant legal interpretations, formal opinions, memoranda, and related published legal analysis.
+      titleFieldId: title
+      summaryFieldId: summary
+
+      fields:
+        - id: title
+          label: Title
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: summary
+          label: Summary
+          type: longText
+          searchable: true
+
+        - id: interpretation_number
+          label: Interpretation number
+          type: text
+          searchable: true
+          filterable: true
+          sortable: true
+
+        - id: interpretation_type
+          label: Interpretation type
+          type: enum
+          filterable: true
+          options:
+            - value: formal_opinion
+              label: Formal opinion
+            - value: legal_memorandum
+              label: Legal memorandum
+            - value: guidance
+              label: Guidance
+            - value: adjudicatory_opinion
+              label: Adjudicatory opinion
+            - value: other
+              label: Other
+
+        - id: subject
+          label: Subject
+          type: text
+          searchable: true
+          filterable: true
+
+        - id: issued_on
+          label: Issued on
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: public_release_on
+          label: Public release on
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: issuing_body
+          label: Issuing agency or office
+          type: entityRef
+          targetRecordTypeIds:
+            - issuing_body
+          filterable: true
+
+        - id: legal_authorities
+          label: Legal authorities
+          type: entityRefList
+          targetRecordTypeIds:
+            - legal_authority
+
+        - id: key_holding
+          label: Key holding
+          type: longText
+          searchable: true
+
+        - id: full_text
+          label: Searchable interpretation text
+          description: Searchable text extracted or imported from the public interpretation document.
+          type: longText
+          searchable: true
+
+        - id: declassification_due_on
+          label: Declassification or release review due
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: source_reference
+          label: Source reference
+          type: text
+          searchable: true
+
+    - id: issuing_body
+      name: Issuing body
+      pluralName: Issuing bodies
+      description: Agencies, offices, components, and other government bodies that issue legal interpretations.
+      titleFieldId: name
+      summaryFieldId: description
+
+      fields:
+        - id: name
+          label: Name
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: acronym
+          label: Acronym
+          type: text
+          searchable: true
+          filterable: true
+
+        - id: body_type
+          label: Body type
+          type: enum
+          filterable: true
+          options:
+            - value: agency
+              label: Agency
+            - value: office
+              label: Office
+            - value: component
+              label: Component
+            - value: commission
+              label: Commission
+            - value: other
+              label: Other
+
+        - id: parent_body
+          label: Parent body
+          type: entityRef
+          targetRecordTypeIds:
+            - issuing_body
+
+        - id: website
+          label: Website
+          type: url
+
+        - id: description
+          label: Description
+          type: longText
+          searchable: true
+
+    - id: legal_authority
+      name: Legal authority
+      pluralName: Legal authorities
+      description: Statutes, regulations, cases, constitutional provisions, executive instruments, and other authorities interpreted by published opinions.
+      titleFieldId: citation
+      summaryFieldId: name
+
+      fields:
+        - id: citation
+          label: Citation
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: name
+          label: Name
+          type: text
+          searchable: true
+
+        - id: authority_type
+          label: Authority type
+          type: enum
+          filterable: true
+          options:
+            - value: statute
+              label: Statute
+            - value: regulation
+              label: Regulation
+            - value: case
+              label: Case
+            - value: constitutional
+              label: Constitutional provision
+            - value: executive_order
+              label: Executive order
+            - value: other
+              label: Other
+
+        - id: canonical_url
+          label: Canonical URL
+          type: url
+
+        - id: description
+          label: Description
+          type: longText
+          searchable: true
+
+  relationshipTypes:
+    - id: issued-by
+      label: Issued by
+      inverseLabel: Issued
+      directed: true
+      fromRecordTypeIds:
+        - interpretation
+      toRecordTypeIds:
+        - issuing_body
+
+    - id: interprets-authority
+      label: Interprets
+      inverseLabel: Interpreted by
+      directed: true
+      fromRecordTypeIds:
+        - interpretation
+      toRecordTypeIds:
+        - legal_authority
+
+    - id: supersedes
+      label: Supersedes
+      inverseLabel: Superseded by
+      directed: true
+      fromRecordTypeIds:
+        - interpretation
+      toRecordTypeIds:
+        - interpretation
+
+    - id: related-interpretation
+      label: Related interpretation
+      inverseLabel: Related interpretation
+      directed: false
+      fromRecordTypeIds:
+        - interpretation
+      toRecordTypeIds:
+        - interpretation
+
+publicationLifecycle:
+  initialStatusId: draft
+
+  statuses:
+    - id: draft
+      label: Draft
+
+    - id: under_review
+      label: Under review
+
+    - id: approved
+      label: Approved for publication
+
+    - id: published
+      label: Published
+      publiclyVisible: true
+      marksPublished: true
+
+    - id: withdrawn
+      label: Withdrawn
+      publiclyVisible: true
+
+    - id: superseded
+      label: Superseded
+      publiclyVisible: true
+      terminal: true
+
+    - id: archived
+      label: Archived
+      publiclyVisible: true
+      terminal: true
+
+  transitions:
+    - fromStatusId: draft
+      toStatusId: under_review
+      label: Submit for review
+      allowedRoles:
+        - editor
+
+    - fromStatusId: under_review
+      toStatusId: draft
+      label: Return to draft
+      allowedRoles:
+        - reviewer
+
+    - fromStatusId: under_review
+      toStatusId: approved
+      label: Approve for publication
+      allowedRoles:
+        - reviewer
+      approval:
+        approverRoles:
+          - reviewer
+          - publisher
+        minApprovals: 1
+        requesterCannotApprove: true
+
+    - fromStatusId: approved
+      toStatusId: published
+      label: Publish
+      allowedRoles:
+        - publisher
+
+    - fromStatusId: published
+      toStatusId: withdrawn
+      label: Withdraw
+      allowedRoles:
+        - publisher
+
+    - fromStatusId: withdrawn
+      toStatusId: published
+      label: Republish
+      allowedRoles:
+        - publisher
+
+    - fromStatusId: published
+      toStatusId: superseded
+      label: Mark superseded
+      allowedRoles:
+        - publisher
+
+    - fromStatusId: published
+      toStatusId: archived
+      label: Archive
+      allowedRoles:
+        - publisher
+
+    - fromStatusId: withdrawn
+      toStatusId: archived
+      label: Archive
+      allowedRoles:
+        - publisher
+
+  scheduledPublication:
+    enabled: true
+    fromStatusIds:
+      - approved
+    targetStatusId: published
+    allowedRoles:
+      - publisher
+
+deadlines:
+  definitions:
+    - id: declassification_review_due
+      label: Declassification or release review due
+      description: Public deadline taken directly from the configured review-due date on a legal interpretation.
+      recordTypeIds:
+        - interpretation
+      anchor:
+        kind: field
+        fieldId: declassification_due_on
+      offset:
+        value: 0
+        unit: calendarDays
+      warningOffset:
+        value: 30
+        unit: calendarDays
+      dateOnlyAnchorTime: end
+      pauseWhileStatuses:
+        - withdrawn
+      completeWhenStatuses:
+        - superseded
+        - archived
+      publiclyVisible: true
+
+disclosure:
+  withheldRecordBehavior: placeholder
+  defaultRedactionText: "[REDACTED]"
+  defaultWithheldFieldText: "[WITHHELD]"
+  withheldRecordTitle: "Legal interpretation withheld"
+  withheldRecordSummary: "Public contents of this legal interpretation are withheld."
+  withheldDocumentTitle: "Interpretation document withheld"
+  showReasons: true
+  showAuthorities: true
+
+presentation:
+  recordTypes:
+    interpretation:
+      listFields:
+        - title
+        - interpretation_number
+        - interpretation_type
+        - subject
+        - issued_on
+        - issuing_body
+      detailFields:
+        - title
+        - interpretation_number
+        - interpretation_type
+        - subject
+        - issued_on
+        - public_release_on
+        - issuing_body
+        - legal_authorities
+        - summary
+        - key_holding
+        - full_text
+        - declassification_due_on
+        - source_reference
+      defaultSort:
+        fieldId: issued_on
+        direction: desc
+
+    issuing_body:
+      listFields:
+        - name
+        - acronym
+        - body_type
+      detailFields:
+        - name
+        - acronym
+        - body_type
+        - parent_body
+        - website
+        - description
+      defaultSort:
+        fieldId: name
+        direction: asc
+
+    legal_authority:
+      listFields:
+        - citation
+        - name
+        - authority_type
+      detailFields:
+        - citation
+        - name
+        - authority_type
+        - canonical_url
+        - description
+      defaultSort:
+        fieldId: citation
+        direction: asc
+
+notifications:
+  enabled: true
+  eventTypes:
+    - record.published
+    - record.changed
+    - record.matching_created
+    - deadline.approaching
+    - deadline.missed
+    - document.added
+  allowedChannels:
+    - email
+    - webhook
+    - internal
+  deadlineApproachingDays: 30
+  maxDeliveryAttempts: 5
+  retryBaseSeconds: 60

@@ -40,14 +40,19 @@ export default async function HomePage() {
           <div className="registry-grid">
             {registries.map(({ config }) => {
               const definition = config.definition;
+              const href =
+                definition.id ===
+                "open-legal-interpretations"
+                  ? "/open-legal-interpretations"
+                  : `/registries/${encodeURIComponent(
+                      definition.id,
+                    )}`;
 
               return (
                 <Link
                   className="registry-card"
                   key={definition.id}
-                  href={`/registries/${encodeURIComponent(
-                    definition.id,
-                  )}`}
+                  href={href}
                 >
                   <span className="registry-card__kicker">
                     Public registry
