@@ -16,25 +16,27 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 16 — Registry analytics**
+**PR 17 — Notifications and subscriptions**
 
-The engine now includes reusable analytics for both public transparency and
-restricted administrative operations without exposing canonical values through
-aggregate queries.
+The engine now includes durable, configuration-driven event subscriptions and
+delivery processing without weakening the public disclosure boundary.
 
-PR 16 adds:
+PR 17 adds:
 
-- public and internal analytics scopes;
-- record-type and lifecycle/status distributions;
-- monthly publication trends;
-- immutable record-change activity;
-- evidence coverage;
-- open, due-soon, and overdue deadline metrics;
-- configuration-driven field breakdowns using filterable fields;
-- disclosure-safe public aggregation over `public_fields`; and
-- public and administrator analytics views.
+- record publication/change and new-matching-record events;
+- approaching and missed deadline events;
+- document-added events;
+- public-scope and internal-scope subscriptions;
+- email, signed webhook, and persistent internal notification channels;
+- generic record type, record id, lifecycle status, and tag filters;
+- durable event/delivery deduplication;
+- leased delivery processing with retry/backoff;
+- webhook SSRF protections and HMAC signatures;
+- provider-neutral HTTP email relay integration;
+- administrator subscription management and internal inbox; and
+- a schedulable notification runner.
 
-See [Registry analytics](docs/ANALYTICS.md).
+See [Notifications and subscriptions](docs/NOTIFICATIONS.md).
 
 ## Local development
 
