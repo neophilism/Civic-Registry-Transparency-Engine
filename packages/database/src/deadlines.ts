@@ -544,10 +544,8 @@ export class PostgresDeadlineService
       );
     }
 
-    values.push(clampLimit(options.limit));
-    const limit = values.length;
-    values.push(normalizeOffset(options.offset));
-    const offset = values.length;
+    const limit = clampLimit(options.limit);
+    const offset = normalizeOffset(options.offset);
 
     const result = await this.pool.query<DeadlineRow>(
       `
