@@ -91,6 +91,29 @@ test("public notification subscriptions cannot receive private record events", a
       },
     );
 
+    const queuedThenPrivate =
+      await records.create(
+        {
+          id: "queued-then-private-record",
+          registryId: config.registry.id,
+          recordTypeId: "document",
+          fields: {
+            title: "Queued public notice",
+            document_type: "notice",
+          },
+          status: "published",
+          visibility: "public",
+          externalIdentifiers: [],
+          tags: [],
+          createdAt: "2026-10-06T01:05:00.000Z",
+          updatedAt: "2026-10-06T01:05:00.000Z",
+          publishedAt: "2026-10-06T01:05:00.000Z",
+        },
+        {
+          bootstrapLifecycle: true,
+        },
+      );
+
     await records.create(
       {
         id: "private-notification-record",
@@ -104,25 +127,44 @@ test("public notification subscriptions cannot receive private record events", a
         visibility: "private",
         externalIdentifiers: [],
         tags: [],
-        createdAt: "2026-10-06T01:05:00.000Z",
-        updatedAt: "2026-10-06T01:05:00.000Z",
-        publishedAt: "2026-10-06T01:05:00.000Z",
+        createdAt: "2026-10-06T01:10:00.000Z",
+        updatedAt: "2026-10-06T01:10:00.000Z",
+        publishedAt: "2026-10-06T01:10:00.000Z",
       },
       {
         bootstrapLifecycle: true,
       },
     );
 
-    const result = await notifications.run(
+    await notifications.collectEvents(
       config.registry.id,
-      {
-        now: "2026-10-06T02:00:00.000Z",
-      },
+      "2026-10-06T02:00:00.000Z",
     );
+    const materialized =
+      await notifications.materializeDeliveries(
+        config.registry.id,
+        "2026-10-06T02:00:00.000Z",
+      );
 
-    assert.equal(result.materialized, 1);
-    assert.equal(result.dispatched, 1);
-    assert.equal(result.failed, 0);
+    assert.equal(materialized, 2);
+
+    await records.update({
+      ...queuedThenPrivate,
+      visibility: "private",
+      updatedAt: "2026-10-06T02:05:00.000Z",
+    });
+
+    const dispatch =
+      await notifications.dispatchPending(
+        config.registry.id,
+        {
+          now: "2026-10-06T02:10:00.000Z",
+        },
+      );
+
+    assert.equal(dispatch.dispatched, 1);
+    assert.equal(dispatch.failed, 0);
+    assert.equal(dispatch.suppressed, 1);
 
     const inbox =
       await notifications.listInternalNotifications(
@@ -163,6 +205,27 @@ test("public notification subscriptions cannot receive private record events", a
           event.subjectId ===
           "private-notification-record",
       ),
+    );
+
+    const deliveries =
+      await notifications.listDeliveries(
+        config.registry.id,
+        { limit: 20 },
+      );
+
+    assert.equal(
+      deliveries.filter(
+        (delivery) =>
+          delivery.status === "sent",
+      ).length,
+      1,
+    );
+    assert.equal(
+      deliveries.filter(
+        (delivery) =>
+          delivery.status === "suppressed",
+      ).length,
+      1,
     );
   } finally {
     await pool.end();
