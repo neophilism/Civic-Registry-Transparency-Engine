@@ -15,3 +15,4 @@ export * from "./ingestion.ts";
 export * from "./admin.ts";
 export * from "./analytics.ts";
 export * from "./notifications.ts";
+export * from "./integrity.ts";

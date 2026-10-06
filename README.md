@@ -16,27 +16,24 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 17 — Notifications and subscriptions**
+**PR 18 — Cryptographic audit integrity**
 
-The engine now includes durable, configuration-driven event subscriptions and
-delivery processing without weakening the public disclosure boundary.
+The engine now adds cryptographic tamper evidence on top of the database-enforced
+immutable history introduced in PR 9.
 
-PR 17 adds:
+PR 18 adds:
 
-- record publication/change and new-matching-record events;
-- approaching and missed deadline events;
-- document-added events;
-- public-scope and internal-scope subscriptions;
-- email, signed webhook, and persistent internal notification channels;
-- generic record type, record id, lifecycle status, and tag filters;
-- durable event/delivery deduplication;
-- leased delivery processing with retry/backoff;
-- webhook SSRF protections and HMAC signatures;
-- provider-neutral HTTP email relay integration;
-- administrator subscription management and internal inbox; and
-- a schedulable notification runner.
+- a registry-wide SHA-256 chain over record revisions and audit events;
+- deterministic PR-18 baseline commitments for existing immutable history;
+- registry-scoped serialized append ordering;
+- independent chain/source verification;
+- protected integrity-ledger and chain-head storage;
+- Ed25519-signed external checkpoints;
+- optional signed SHA-256 binding of physical backup files;
+- CLI verification/checkpoint tooling; and
+- a restricted administrator integrity dashboard.
 
-See [Notifications and subscriptions](docs/NOTIFICATIONS.md).
+See [Cryptographic audit integrity](docs/AUDIT-INTEGRITY.md).
 
 ## Local development
 
