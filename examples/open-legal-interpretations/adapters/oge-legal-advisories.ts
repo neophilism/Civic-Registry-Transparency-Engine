@@ -203,7 +203,7 @@ export function parseOgeLegalAdvisory(
   const title = heading
     .replace(
       new RegExp(
-        \`^\${advisoryId}\\\\s*:\\\\s*\`,
+        "^" + advisoryId + "\\s*:\\s*",
         "i",
       ),
       "",
@@ -281,7 +281,7 @@ export function parseOgeLegalAdvisory(
         .map((link) => link.href),
     );
   const externalId =
-    \`oge:\${advisoryId}\`;
+    `oge:${advisoryId}`;
 
   return {
     id: stableRecordId(
