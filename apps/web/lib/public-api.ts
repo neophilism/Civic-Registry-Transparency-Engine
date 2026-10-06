@@ -70,6 +70,19 @@ export function publicApiOptions(): Response {
   });
 }
 
+export function publicApiRawJson(
+  data: unknown,
+  init: {
+    status?: number;
+    headers?: HeadersInit;
+  } = {},
+): Response {
+  return Response.json(data, {
+    status: init.status ?? 200,
+    headers: headers(init.headers),
+  });
+}
+
 export function publicApiJson<T>(
   data: T,
   init: {
