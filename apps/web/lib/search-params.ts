@@ -165,7 +165,13 @@ export function toUrlSearchParams(
   const result = new URLSearchParams();
 
   for (const [key, raw] of Object.entries(params)) {
-    for (const value of searchValues(raw)) {
+    const values = Array.isArray(raw)
+      ? raw
+      : raw !== undefined
+        ? [raw]
+        : [];
+
+    for (const value of values) {
       result.append(key, value);
     }
   }
