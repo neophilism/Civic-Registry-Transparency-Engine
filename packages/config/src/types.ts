@@ -24,6 +24,30 @@ export interface RegistryPresentationConfig {
   recordTypes?: Record<string, RecordTypePresentationConfig>;
 }
 
+export interface AnalyticsDimensionConfig {
+  id: string;
+  label: string;
+  recordTypeId: string;
+  fieldId: string;
+  publiclyVisible?: boolean;
+  limit?: number;
+}
+
+export interface RegistryAnalyticsConfig {
+  publicationTrendDays?: number;
+  changeActivityDays?: number;
+  deadlineHorizonDays?: number;
+  dimensions?: AnalyticsDimensionConfig[];
+}
+
+export interface CompiledRegistryAnalyticsConfig {
+  definition: RegistryAnalyticsConfig;
+  publicationTrendDays: number;
+  changeActivityDays: number;
+  deadlineHorizonDays: number;
+  dimensions: ReadonlyArray<Required<AnalyticsDimensionConfig>>;
+}
+
 export interface PublicationStatusConfig {
   id: string;
   label: string;
@@ -177,6 +201,7 @@ export interface RegistryConfigFileV1 {
   deadlines?: DeadlineEngineConfig;
   disclosure?: DisclosureConfig;
   presentation?: RegistryPresentationConfig;
+  analytics?: RegistryAnalyticsConfig;
 }
 
 export type RegistryConfigFile = RegistryConfigFileV1;
@@ -243,6 +268,7 @@ export interface CompiledRegistryConfig {
   publicationLifecycle?: CompiledPublicationLifecycleConfig;
   deadlines?: CompiledDeadlineEngineConfig;
   disclosure: CompiledDisclosureConfig;
+  analytics: CompiledRegistryAnalyticsConfig;
   getRecordType(recordTypeId: string): CompiledRecordTypeConfig;
   getField(recordTypeId: string, fieldId: string): FieldDefinition;
 }
