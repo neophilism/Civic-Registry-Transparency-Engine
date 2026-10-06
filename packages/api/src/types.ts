@@ -82,9 +82,8 @@ export interface ApiRecordTypeDefinition {
   listFieldIds: string[];
   detailFieldIds: string[];
   defaultSort?: {
-    fieldId?: string;
-    by?: string;
-    direction?: "asc" | "desc";
+    fieldId: string;
+    direction: "asc" | "desc";
   };
 }
 
