@@ -8,9 +8,11 @@ import {
   getPresentationConfig,
 } from "./validation.ts";
 import type {
+  CompiledDisclosureConfig,
   CompiledPublicationLifecycleConfig,
   CompiledRecordTypeConfig,
   CompiledRegistryConfig,
+  DisclosureConfig,
   FormControlType,
   FormFieldConfig,
   PublicationLifecycleConfig,
@@ -129,6 +131,31 @@ function compileRecordType(
   };
 }
 
+function compileDisclosure(
+  definition: DisclosureConfig | undefined,
+): CompiledDisclosureConfig {
+  const config = definition ?? {};
+
+  return {
+    definition: config,
+    withheldRecordBehavior:
+      config.withheldRecordBehavior ?? "placeholder",
+    defaultRedactionText:
+      config.defaultRedactionText ?? "[REDACTED]",
+    defaultWithheldFieldText:
+      config.defaultWithheldFieldText ?? "[WITHHELD]",
+    withheldRecordTitle:
+      config.withheldRecordTitle ?? "Record withheld",
+    withheldRecordSummary:
+      config.withheldRecordSummary ??
+      "Public contents are withheld.",
+    withheldDocumentTitle:
+      config.withheldDocumentTitle ?? "Document withheld",
+    showReasons: config.showReasons ?? true,
+    showAuthorities: config.showAuthorities ?? true,
+  };
+}
+
 function transitionKey(
   fromStatusId: string,
   toStatusId: string,
@@ -237,6 +264,9 @@ export function compileRegistryConfig(
           config.publicationLifecycle,
         )
       : undefined;
+  const disclosure = compileDisclosure(
+    config.disclosure,
+  );
 
   return {
     schemaVersion: config.schemaVersion,
@@ -244,6 +274,7 @@ export function compileRegistryConfig(
     recordTypesById,
     relationshipTypesById,
     publicationLifecycle,
+    disclosure,
     getRecordType(recordTypeId: string) {
       const recordType = recordTypesById.get(recordTypeId);
 
