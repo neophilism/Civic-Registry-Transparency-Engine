@@ -1,0 +1,50 @@
+{
+  "records": [
+    {
+      "id": "example-agency",
+      "registryId": "public-document-catalog",
+      "recordTypeId": "organization",
+      "fields": {
+        "name": "Example Public Agency",
+        "website": "https://example.gov"
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": ["example"],
+      "createdAt": "2026-01-15T12:00:00.000Z",
+      "updatedAt": "2026-01-15T12:00:00.000Z",
+      "publishedAt": "2026-01-15T12:00:00.000Z"
+    },
+    {
+      "id": "example-report",
+      "registryId": "public-document-catalog",
+      "recordTypeId": "document",
+      "fields": {
+        "title": "Example Annual Report",
+        "summary": "A sample public record used to demonstrate the generic registry engine.",
+        "document_type": "report",
+        "published_on": "2026-01-15",
+        "publisher": "example-agency"
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": ["example", "report"],
+      "createdAt": "2026-01-15T12:05:00.000Z",
+      "updatedAt": "2026-01-15T12:05:00.000Z",
+      "publishedAt": "2026-01-15T12:05:00.000Z"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "example-report-publisher",
+      "registryId": "public-document-catalog",
+      "relationshipTypeId": "published-by",
+      "fromRecordId": "example-report",
+      "toRecordId": "example-agency",
+      "createdAt": "2026-01-15T12:05:00.000Z",
+      "metadata": {}
+    }
+  ]
+}
