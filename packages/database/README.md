@@ -170,3 +170,27 @@ Run due schedules with:
 ```bash
 pnpm db:publish-due
 ```
+
+
+## Disclosure and redaction
+
+Migration `0006_disclosure_redaction.sql` adds generic current-state
+disclosure tables for records, fields, and documents plus document redaction
+annotations.
+
+Canonical record data remains in `fields`.
+
+Public search uses separately maintained:
+
+- `public_fields`;
+- `public_search_text`;
+- `public_search_document`.
+
+Database triggers refresh the public projection after record/disclosure
+changes, including direct SQL record edits.
+
+`PostgresDisclosureRepository` is the typed application interface for
+setting, clearing, and reading disclosure rules.
+
+See [Disclosure and redaction](../../docs/DISCLOSURE-REDACTION.md) for the
+public-safety model.
