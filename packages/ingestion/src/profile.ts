@@ -376,18 +376,21 @@ export function validateIngestionProfile(
     }
   }
 
-  if (
-    profile.allowLifecycleBootstrap !==
-      undefined &&
-    typeof profile.allowLifecycleBootstrap !==
-      "boolean"
-  ) {
-    issues.push({
-      path: "allowLifecycleBootstrap",
-      code: "invalid_ingestion_boolean",
-      message:
-        "allowLifecycleBootstrap must be a boolean when provided.",
-    });
+  for (const booleanKey of [
+    "allowLifecycleBootstrap",
+    "replaceFields",
+  ] as const) {
+    if (
+      profile[booleanKey] !== undefined &&
+      typeof profile[booleanKey] !== "boolean"
+    ) {
+      issues.push({
+        path: booleanKey,
+        code: "invalid_ingestion_boolean",
+        message:
+          `${booleanKey} must be a boolean when provided.`,
+      });
+    }
   }
 
   return issues;
@@ -435,6 +438,8 @@ export function compileIngestionProfile(
     ],
     allowLifecycleBootstrap:
       profile.allowLifecycleBootstrap === true,
+    replaceFields:
+      profile.replaceFields === true,
   };
 }
 
