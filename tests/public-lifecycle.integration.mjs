@@ -99,6 +99,7 @@ test("public surfaces require both public visibility and a publicly visible life
         "published-doc",
         "published",
       ),
+      { bootstrapLifecycle: true },
     );
     const historyRecord = await records.create(
       documentRecord("history-doc", "draft"),
