@@ -241,6 +241,61 @@ function optionalNonEmpty(
   }
 }
 
+function validateRedactionLocator(
+  locator: DocumentRedaction["locator"],
+  pageCount: number | undefined,
+): void {
+  if (!locator) return;
+
+  for (const [label, value] of [
+    ["page", locator.page],
+    ["pageEnd", locator.pageEnd],
+    ["lineStart", locator.lineStart],
+    ["lineEnd", locator.lineEnd],
+  ] as const) {
+    if (
+      value !== undefined &&
+      (!Number.isInteger(value) || value < 1)
+    ) {
+      throw new PersistenceConflictError(
+        `${label} must be a positive integer.`,
+      );
+    }
+  }
+
+  if (
+    locator.page !== undefined &&
+    locator.pageEnd !== undefined &&
+    locator.pageEnd < locator.page
+  ) {
+    throw new PersistenceConflictError(
+      "pageEnd cannot be less than page.",
+    );
+  }
+
+  if (
+    locator.lineStart !== undefined &&
+    locator.lineEnd !== undefined &&
+    locator.lineEnd < locator.lineStart
+  ) {
+    throw new PersistenceConflictError(
+      "lineEnd cannot be less than lineStart.",
+    );
+  }
+
+  if (
+    pageCount !== undefined &&
+    (
+      (locator.page ?? 0) > pageCount ||
+      (locator.pageEnd ?? 0) > pageCount
+    )
+  ) {
+    throw new PersistenceConflictError(
+      `Document redaction page range exceeds the document page count of ${pageCount}.`,
+    );
+  }
+}
+
 function optionalHttpUrl(
   value: string | undefined,
   label: string,
@@ -876,9 +931,13 @@ export class PostgresDisclosureRepository
   async upsertDocumentRedaction(
     redaction: DocumentRedaction,
   ): Promise<DocumentRedaction> {
-    await this.requireDocument(
+    const document = await this.requireDocument(
       redaction.registryId,
       redaction.documentId,
+    );
+    validateRedactionLocator(
+      redaction.locator,
+      document.pageCount,
     );
     requireDateTime(
       redaction.createdAt,
