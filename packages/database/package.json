@@ -17,7 +17,8 @@
     "@civic-registry/search": "workspace:*",
     "@civic-registry/deadlines": "workspace:*",
     "@civic-registry/ingestion": "workspace:*",
-    "@civic-registry/source-adapters": "workspace:*"
+    "@civic-registry/source-adapters": "workspace:*",
+    "@civic-registry/documents": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
