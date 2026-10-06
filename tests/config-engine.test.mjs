@@ -256,3 +256,99 @@ test("compileRegistryConfig accepts validated object configuration directly", ()
     "Object Registry",
   );
 });
+
+
+test("compiles analytics windows and generic dimensions", async () => {
+  const source = await readFile(
+    "examples/generic-registry/registry.yaml",
+    "utf8",
+  );
+  const compiled = loadRegistryConfig(source);
+
+  assert.equal(
+    compiled.analytics.publicationTrendDays,
+    365,
+  );
+  assert.equal(
+    compiled.analytics.changeActivityDays,
+    90,
+  );
+  assert.equal(
+    compiled.analytics.deadlineHorizonDays,
+    30,
+  );
+  assert.deepEqual(
+    compiled.analytics.dimensions.map(
+      ({ id, recordTypeId, fieldId, publiclyVisible }) => ({
+        id,
+        recordTypeId,
+        fieldId,
+        publiclyVisible,
+      }),
+    ),
+    [
+      {
+        id: "document-type",
+        recordTypeId: "document",
+        fieldId: "document_type",
+        publiclyVisible: true,
+      },
+      {
+        id: "publisher",
+        recordTypeId: "document",
+        fieldId: "publisher",
+        publiclyVisible: true,
+      },
+    ],
+  );
+});
+
+test("rejects analytics dimensions with unsupported field types", () => {
+  const invalid = {
+    schemaVersion: 1,
+    registry: {
+      id: "bad-analytics",
+      name: "Bad Analytics",
+      recordTypes: [
+        {
+          id: "entry",
+          name: "Entry",
+          pluralName: "Entries",
+          titleFieldId: "title",
+          fields: [
+            {
+              id: "title",
+              label: "Title",
+              type: "text",
+            },
+            {
+              id: "payload",
+              label: "Payload",
+              type: "json",
+            },
+          ],
+        },
+      ],
+    },
+    analytics: {
+      dimensions: [
+        {
+          id: "payload",
+          label: "Payload",
+          recordTypeId: "entry",
+          fieldId: "payload",
+        },
+      ],
+    },
+  };
+
+  const issues = validateRegistryConfig(invalid);
+
+  assert.ok(
+    issues.some(
+      (issue) =>
+        issue.code ===
+        "unsupported_analytics_field_type",
+    ),
+  );
+});
