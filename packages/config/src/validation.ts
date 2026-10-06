@@ -564,16 +564,6 @@ function validatePublicationLifecycle(
               message:
                 "minApprovals must be a positive integer.",
             });
-          } else if (
-            roles.length > 0 &&
-            minApprovals > roles.length * 1000
-          ) {
-            issues.push({
-              path: `${path}.approval.minApprovals`,
-              code: "implausible_min_approvals",
-              message:
-                "minApprovals is unreasonably large for the configured approval rule.",
-            });
           }
 
           if (
