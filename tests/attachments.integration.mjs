@@ -221,9 +221,8 @@ test("PDF attachment ingestion materializes idempotent evidence and preserves ch
 
     assert.ok(extraction);
     assert.equal(
-      extraction.pageCount ??
-        extraction.pages.length,
       extraction.pages.length,
+      1,
     );
     assert.match(
       extraction.text,
