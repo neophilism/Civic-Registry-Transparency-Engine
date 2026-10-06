@@ -16,19 +16,23 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 1 — Repository foundation**
+**PR 10 — Configurable publication lifecycle**
 
-The first milestone establishes:
+The engine now includes the reusable foundation completed through PR 9:
+schema-driven registries, PostgreSQL persistence, public search, relationships,
+source/evidence traceability, and immutable record history.
 
-- pnpm monorepo conventions;
-- a Next.js reference application;
-- PostgreSQL local development infrastructure;
-- continuous integration;
-- lint, typecheck, test, and build quality gates;
-- a health endpoint;
-- architectural and contribution guidance.
+PR 10 adds configuration-driven publication workflows with:
 
-Generic registry domain modeling begins in PR 2.
+- named lifecycle states and public-state semantics;
+- allowed state transitions;
+- generic role requirements;
+- approval-gated transitions;
+- scheduled publication;
+- database-level state-machine enforcement;
+- lifecycle-aware public search, lists, relationships, and history.
+
+See [Publication lifecycle](docs/PUBLICATION-LIFECYCLE.md).
 
 ## Local development
 
