@@ -6,10 +6,12 @@ import {
 } from "@civic-registry/registry";
 
 import { Breadcrumbs } from "../../../../../components/breadcrumbs";
+import { EvidenceGroups } from "../../../../../components/evidence-groups";
 import { RecordFieldValue } from "../../../../../components/record-field";
 import { RelationshipGroups } from "../../../../../components/relationship-groups";
 import { formatDateTime } from "../../../../../lib/format";
 import {
+  getPublicEvidence,
   getPublicRecord,
   getPublicRegistry,
   listPublicRelationships,
@@ -66,13 +68,19 @@ export default async function RecordPage({
   const recordType = registry.config.getRecordType(
     record.recordTypeId,
   );
-  const relationshipResult = await listPublicRelationships(
-    registry.config,
-    record,
-    {
-      maxNodes: 101,
-    },
-  );
+  const [relationshipResult, evidence] = await Promise.all([
+    listPublicRelationships(
+      registry.config,
+      record,
+      {
+        maxNodes: 101,
+      },
+    ),
+    getPublicEvidence(
+      registry.config,
+      record,
+    ),
+  ]);
 
   return (
     <main className="page-shell">
@@ -206,6 +214,44 @@ export default async function RecordPage({
           ) : null}
         </aside>
       </div>
+
+      {evidence.groups.length > 0 ? (
+        <section
+          className="section-block"
+          aria-labelledby="evidence-summary-heading"
+        >
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Traceability</p>
+              <h2 id="evidence-summary-heading">
+                Evidence
+              </h2>
+            </div>
+            <div className="section-actions">
+              <span className="metric">
+                {evidence.citations.length}{" "}
+                {evidence.citations.length === 1
+                  ? "citation"
+                  : "citations"}
+              </span>
+              <Link
+                href={`/registries/${encodeURIComponent(
+                  registryId,
+                )}/records/${encodeURIComponent(
+                  recordId,
+                )}/evidence`}
+              >
+                View all evidence
+              </Link>
+            </div>
+          </div>
+
+          <EvidenceGroups
+            groups={evidence.groups}
+            limitPerGroup={2}
+          />
+        </section>
+      ) : null}
 
       {relationshipResult.groups.length > 0 ? (
         <section
