@@ -5,12 +5,17 @@ import { randomUUID } from "node:crypto";
 import { compileRegistryConfig } from "@civic-registry/config";
 import type {
   ExternalIdentifier,
+  NotificationChannel,
+  NotificationEventType,
+  NotificationScope,
+  NotificationTarget,
   RegistryRecord,
   Source,
   SourceType,
   Visibility,
 } from "@civic-registry/core";
 import {
+  PostgresNotificationService,
   PostgresPublicationLifecycleService,
 } from "@civic-registry/database";
 import { revalidatePath } from "next/cache";
@@ -583,4 +588,253 @@ export async function reconcileAdminDeadlines(
 
   revalidatePath(returnTo);
   redirect(destination(returnTo, "notice", notice));
+}
+
+
+export async function createAdminNotificationSubscription(
+  formData: FormData,
+): Promise<void> {
+  const session = await requireAdminSession();
+  const registryId = text(formData, "registryId");
+  const returnTo = safeReturnTo(
+    text(formData, "returnTo"),
+    "/admin/registries/" +
+      encodeURIComponent(registryId) +
+      "/notifications",
+  );
+  let failure: string | undefined;
+
+  try {
+    const channel =
+      text(formData, "channel") as NotificationChannel;
+    const scope =
+      text(formData, "scope") as NotificationScope;
+    let target: NotificationTarget;
+
+    if (channel === "email") {
+      target = {
+        email: text(formData, "target"),
+      };
+    } else if (channel === "webhook") {
+      target = {
+        url: text(formData, "target"),
+        secret: text(formData, "webhookSecret"),
+      };
+    } else {
+      target = {
+        recipientId: text(formData, "target"),
+      };
+    }
+
+    const service = new PostgresNotificationService(
+      getDatabasePool(),
+    );
+
+    await service.createSubscription({
+      registryId,
+      scope,
+      channel,
+      target,
+      eventTypes: csv(
+        text(formData, "eventTypes"),
+      ) as NotificationEventType[],
+      filters: {
+        recordTypeIds: csv(
+          text(formData, "recordTypeIds"),
+        ),
+        recordIds: csv(
+          text(formData, "recordIds"),
+        ),
+        statusIds: csv(
+          text(formData, "statusIds"),
+        ),
+        tags: csv(text(formData, "tags")),
+      },
+      actorId: session.actorId,
+    });
+  } catch (error) {
+    failure = errorMessage(
+      error,
+      "Notification subscription could not be created.",
+    );
+  }
+
+  if (failure) {
+    redirect(destination(returnTo, "error", failure));
+  }
+
+  revalidatePath(returnTo);
+  redirect(
+    destination(
+      returnTo,
+      "notice",
+      "Notification subscription created.",
+    ),
+  );
+}
+
+export async function setAdminNotificationSubscriptionEnabled(
+  formData: FormData,
+): Promise<void> {
+  const session = await requireAdminSession();
+  const registryId = text(formData, "registryId");
+  const subscriptionId =
+    text(formData, "subscriptionId");
+  const enabled =
+    text(formData, "enabled") === "true";
+  const returnTo = safeReturnTo(
+    text(formData, "returnTo"),
+    "/admin/registries/" +
+      encodeURIComponent(registryId) +
+      "/notifications",
+  );
+  let failure: string | undefined;
+
+  try {
+    const service = new PostgresNotificationService(
+      getDatabasePool(),
+    );
+    await service.setSubscriptionEnabled(
+      registryId,
+      subscriptionId,
+      enabled,
+      session.actorId,
+    );
+  } catch (error) {
+    failure = errorMessage(
+      error,
+      "Notification subscription could not be updated.",
+    );
+  }
+
+  if (failure) {
+    redirect(destination(returnTo, "error", failure));
+  }
+
+  revalidatePath(returnTo);
+  redirect(
+    destination(
+      returnTo,
+      "notice",
+      enabled
+        ? "Notification subscription enabled."
+        : "Notification subscription disabled.",
+    ),
+  );
+}
+
+export async function deleteAdminNotificationSubscription(
+  formData: FormData,
+): Promise<void> {
+  const session = await requireAdminSession();
+  const registryId = text(formData, "registryId");
+  const subscriptionId =
+    text(formData, "subscriptionId");
+  const returnTo = safeReturnTo(
+    text(formData, "returnTo"),
+    "/admin/registries/" +
+      encodeURIComponent(registryId) +
+      "/notifications",
+  );
+  let failure: string | undefined;
+
+  try {
+    const service = new PostgresNotificationService(
+      getDatabasePool(),
+    );
+    const deleted =
+      await service.deleteSubscription(
+        registryId,
+        subscriptionId,
+        session.actorId,
+      );
+
+    if (!deleted) {
+      throw new Error(
+        "Notification subscription does not exist.",
+      );
+    }
+  } catch (error) {
+    failure = errorMessage(
+      error,
+      "Notification subscription could not be deleted.",
+    );
+  }
+
+  if (failure) {
+    redirect(destination(returnTo, "error", failure));
+  }
+
+  revalidatePath(returnTo);
+  redirect(
+    destination(
+      returnTo,
+      "notice",
+      "Notification subscription deleted.",
+    ),
+  );
+}
+
+export async function runAdminNotifications(
+  formData: FormData,
+): Promise<void> {
+  await requireAdminSession();
+  const registryId = text(formData, "registryId");
+  const returnTo = safeReturnTo(
+    text(formData, "returnTo"),
+    "/admin/registries/" +
+      encodeURIComponent(registryId) +
+      "/notifications",
+  );
+  let failure: string | undefined;
+  let notice = "Notification run completed.";
+
+  try {
+    const service = new PostgresNotificationService(
+      getDatabasePool(),
+    );
+    const result = await service.run(registryId);
+
+    notice =
+      `Collected ${result.collected} events, created ${result.materialized} deliveries, sent ${result.dispatched}, and recorded ${result.failed} delivery failures.`;
+  } catch (error) {
+    failure = errorMessage(
+      error,
+      "Notification run failed.",
+    );
+  }
+
+  if (failure) {
+    redirect(destination(returnTo, "error", failure));
+  }
+
+  revalidatePath(returnTo);
+  redirect(destination(returnTo, "notice", notice));
+}
+
+export async function markAdminNotificationRead(
+  formData: FormData,
+): Promise<void> {
+  const session = await requireAdminSession();
+  const registryId = text(formData, "registryId");
+  const notificationId =
+    text(formData, "notificationId");
+  const returnTo = safeReturnTo(
+    text(formData, "returnTo"),
+    "/admin/registries/" +
+      encodeURIComponent(registryId) +
+      "/notifications",
+  );
+
+  const service = new PostgresNotificationService(
+    getDatabasePool(),
+  );
+  await service.markInternalNotificationRead(
+    registryId,
+    notificationId,
+    session.actorId,
+  );
+
+  revalidatePath(returnTo);
+  redirect(returnTo);
 }
