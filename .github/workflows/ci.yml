@@ -15,9 +15,24 @@ concurrency:
 
 jobs:
   quality:
-    name: Lint, typecheck, test, build
+    name: Lint, typecheck, test, migrate, build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: civic_registry
+          POSTGRES_USER: civic_registry
+          POSTGRES_PASSWORD: civic_registry
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U civic_registry -d civic_registry"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     env:
       DATABASE_URL: postgresql://civic_registry:civic_registry@localhost:5432/civic_registry
@@ -46,8 +61,14 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Test
+      - name: Unit tests
         run: pnpm test
+
+      - name: Apply database migrations
+        run: pnpm db:migrate
+
+      - name: Database integration tests
+        run: pnpm test:db
 
       - name: Build
         run: pnpm build
