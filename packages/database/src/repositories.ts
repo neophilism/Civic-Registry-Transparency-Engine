@@ -148,7 +148,11 @@ function mapRelationship(row: RelationshipRow): Relationship {
 export class PostgresRegistryConfigRepository
   implements RegistryConfigRepository
 {
-  constructor(private readonly pool: Pool) {}
+  private readonly pool: Pool;
+
+  constructor(pool: Pool) {
+    this.pool = pool;
+  }
 
   async upsert(config: RegistryConfigFile): Promise<void> {
     assertValidRegistryConfig(config);
@@ -220,10 +224,16 @@ export class PostgresRegistryConfigRepository
 }
 
 export class PostgresRecordRepository implements RecordRepository {
+  private readonly pool: Pool;
+  private readonly configs: RegistryConfigRepository;
+
   constructor(
-    private readonly pool: Pool,
-    private readonly configs: RegistryConfigRepository,
-  ) {}
+    pool: Pool,
+    configs: RegistryConfigRepository,
+  ) {
+    this.pool = pool;
+    this.configs = configs;
+  }
 
   private async validate(record: RegistryRecord): Promise<void> {
     const config = await this.configs.get(record.registryId);
@@ -408,11 +418,19 @@ export class PostgresRecordRepository implements RecordRepository {
 export class PostgresRelationshipRepository
   implements RelationshipRepository
 {
+  private readonly pool: Pool;
+  private readonly configs: RegistryConfigRepository;
+  private readonly records: RecordRepository;
+
   constructor(
-    private readonly pool: Pool,
-    private readonly configs: RegistryConfigRepository,
-    private readonly records: RecordRepository,
-  ) {}
+    pool: Pool,
+    configs: RegistryConfigRepository,
+    records: RecordRepository,
+  ) {
+    this.pool = pool;
+    this.configs = configs;
+    this.records = records;
+  }
 
   private async validate(
     relationship: Relationship,
