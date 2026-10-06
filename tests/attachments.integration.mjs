@@ -17,7 +17,9 @@ import {
   createDatabasePool,
   PostgresCitationRepository,
   PostgresDocumentRepository,
+  PostgresIntegrityService,
   PostgresPdfAttachmentService,
+  PostgresRecordHistoryRepository,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
   PostgresSourceRepository,
@@ -31,6 +33,9 @@ import {
 import {
   createTextPdf,
 } from "./helpers/pdf-fixture.mjs";
+import {
+  processOpenLegalInterpretationAttachments,
+} from "../examples/open-legal-interpretations/adapters/attachment-processing.ts";
 
 const databaseUrl =
   process.env.DATABASE_URL;
@@ -357,6 +362,121 @@ test("PDF attachment ingestion materializes idempotent evidence and preserves ch
     assert.equal(
       source?.sourceType,
       "document",
+    );
+
+    const processed =
+      await processOpenLegalInterpretationAttachments({
+        registryId:
+          input.registryId,
+        row: {
+          id: input.recordId,
+          external_id:
+            "refresh:test",
+          title:
+            input.recordTitle,
+          canonical_url:
+            "https://example.gov/interpretation",
+          source_adapter:
+            "refresh-test",
+          retrieved_at:
+            "2026-10-06T19:00:00.000Z",
+          attachment_urls: [
+            attachmentUrl,
+          ],
+        },
+        allowedHosts: [
+          "example.gov",
+        ],
+        attachments:
+          service,
+        records,
+      });
+
+    assert.equal(
+      processed.fullTextUpdated,
+      true,
+    );
+    assert.equal(
+      processed.attachmentExisting,
+      1,
+    );
+
+    const enriched =
+      await records.get(
+        input.registryId,
+        input.recordId,
+      );
+
+    assert.match(
+      String(
+        enriched?.fields.full_text ??
+          "",
+      ),
+      /Second revised official opinion text/,
+    );
+
+    const repeatedEnrichment =
+      await processOpenLegalInterpretationAttachments({
+        registryId:
+          input.registryId,
+        row: {
+          id: input.recordId,
+          external_id:
+            "refresh:test",
+          title:
+            input.recordTitle,
+          canonical_url:
+            "https://example.gov/interpretation",
+          source_adapter:
+            "refresh-test",
+          retrieved_at:
+            "2026-10-06T19:05:00.000Z",
+          attachment_urls: [
+            attachmentUrl,
+          ],
+        },
+        allowedHosts: [
+          "example.gov",
+        ],
+        attachments:
+          service,
+        records,
+      });
+
+    assert.equal(
+      repeatedEnrichment.fullTextUpdated,
+      false,
+    );
+
+    const history =
+      await new PostgresRecordHistoryRepository(
+        pool,
+      ).listVersions(
+        input.registryId,
+        input.recordId,
+        {
+          limit: 20,
+        },
+      );
+
+    assert.ok(
+      history.some(
+        (version) =>
+          version.reason ===
+          "Refresh full text from retrieved PDF attachment.",
+      ),
+    );
+
+    const integrity =
+      await new PostgresIntegrityService(
+        pool,
+      ).verifyRegistry(
+        input.registryId,
+      );
+
+    assert.equal(
+      integrity.valid,
+      true,
     );
   } finally {
     await pool.end();
