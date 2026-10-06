@@ -35,14 +35,25 @@ export function AdminShell({
         <nav aria-label="Administrator navigation">
           <Link href="/admin">Registries</Link>
           {registryId ? (
-            <Link
-              href={
-                "/registries/" +
-                encodeURIComponent(registryId)
-              }
-            >
-              Public view
-            </Link>
+            <>
+              <Link
+                href={
+                  "/admin/registries/" +
+                  encodeURIComponent(registryId) +
+                  "/analytics"
+                }
+              >
+                Analytics
+              </Link>
+              <Link
+                href={
+                  "/registries/" +
+                  encodeURIComponent(registryId)
+                }
+              >
+                Public view
+              </Link>
+            </>
           ) : null}
           <form action={signOutAdmin}>
             <button type="submit">Sign out</button>
