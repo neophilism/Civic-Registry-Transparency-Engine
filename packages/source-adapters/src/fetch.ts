@@ -4,8 +4,10 @@ import {
 import { isIP } from "node:net";
 
 import type {
+  PublicSourceBinaryFetchResult,
   PublicSourceClient,
   PublicSourceClientOptions,
+  PublicSourceFetchMetadata,
   PublicSourceFetchResult,
 } from "./types.ts";
 
@@ -128,10 +130,10 @@ function validateUrl(
   return url;
 }
 
-async function readLimitedBody(
+async function readLimitedBytes(
   response: Response,
   maxBytes: number,
-): Promise<string> {
+): Promise<Uint8Array> {
   const contentLength =
     response.headers.get("content-length");
 
@@ -145,7 +147,7 @@ async function readLimitedBody(
   }
 
   if (!response.body) {
-    return "";
+    return new Uint8Array();
   }
 
   const reader = response.body.getReader();
@@ -185,9 +187,33 @@ async function readLimitedBody(
     offset += chunk.byteLength;
   }
 
-  return new TextDecoder("utf-8", {
-    fatal: false,
-  }).decode(joined);
+  return joined;
+}
+
+function metadata(
+  response: Response,
+  requestedUrl: string,
+  current: URL,
+): PublicSourceFetchMetadata {
+  return {
+    requestedUrl,
+    finalUrl: current.toString(),
+    contentType:
+      response.headers
+        .get("content-type")
+        ?.split(";")[0]
+        ?.trim()
+        .toLowerCase() ?? "",
+    fetchedAt:
+      new Date().toISOString(),
+    etag:
+      response.headers.get("etag") ??
+      undefined,
+    lastModified:
+      response.headers.get(
+        "last-modified",
+      ) ?? undefined,
+  };
 }
 
 export function createPublicSourceClient(
@@ -212,128 +238,174 @@ export function createPublicSourceClient(
         verbatim: true,
       }));
 
+  async function request(
+    rawUrl: string,
+    allowedHosts: readonly string[],
+    accept: string,
+  ): Promise<{
+    response: Response;
+    requestedUrl: string;
+    current: URL;
+  }> {
+    let current = validateUrl(
+      rawUrl,
+      allowedHosts,
+    );
+    let redirects = 0;
+    const requestedUrl = current.toString();
+
+    while (true) {
+      const addresses =
+        await lookupImpl(current.hostname);
+
+      if (
+        addresses.length === 0 ||
+        addresses.some((entry) =>
+          isPrivateAddress(entry.address),
+        )
+      ) {
+        throw new Error(
+          `Public source host resolves to a private, local, or reserved address: ${current.hostname}`,
+        );
+      }
+
+      const response = await fetchImpl(
+        current,
+        {
+          method: "GET",
+          redirect: "manual",
+          headers: {
+            accept,
+            "user-agent": userAgent,
+          },
+          signal:
+            AbortSignal.timeout(
+              timeoutMs,
+            ),
+        },
+      );
+
+      if (
+        response.status >= 300 &&
+        response.status < 400
+      ) {
+        const location =
+          response.headers.get("location");
+
+        if (!location) {
+          throw new Error(
+            `Source returned redirect without Location header: HTTP ${response.status}`,
+          );
+        }
+
+        redirects += 1;
+
+        if (redirects > maxRedirects) {
+          throw new Error(
+            `Source exceeded redirect limit of ${maxRedirects}.`,
+          );
+        }
+
+        current = validateUrl(
+          new URL(
+            location,
+            current,
+          ).toString(),
+          allowedHosts,
+        );
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Source returned HTTP ${response.status} for ${current.toString()}.`,
+        );
+      }
+
+      return {
+        response,
+        requestedUrl,
+        current,
+      };
+    }
+  }
+
   return {
     async fetchText(
       rawUrl: string,
       allowedHosts: readonly string[],
     ): Promise<PublicSourceFetchResult> {
-      let current = validateUrl(
+      const {
+        response,
+        requestedUrl,
+        current,
+      } = await request(
         rawUrl,
         allowedHosts,
+        "text/html,application/xhtml+xml;q=0.9,text/plain;q=0.8,*/*;q=0.1",
       );
-      let redirects = 0;
-      const requestedUrl = current.toString();
+      const meta = metadata(
+        response,
+        requestedUrl,
+        current,
+      );
 
-      while (true) {
-        const addresses =
-          await lookupImpl(current.hostname);
-
-        if (
-          addresses.length === 0 ||
-          addresses.some((entry) =>
-            isPrivateAddress(entry.address),
-          )
-        ) {
-          throw new Error(
-            `Public source host resolves to a private, local, or reserved address: ${current.hostname}`,
-          );
-        }
-
-        const response = await fetchImpl(
-          current,
-          {
-            method: "GET",
-            redirect: "manual",
-            headers: {
-              accept:
-                "text/html,application/xhtml+xml;q=0.9,text/plain;q=0.8,*/*;q=0.1",
-              "user-agent": userAgent,
-            },
-            signal:
-              AbortSignal.timeout(
-                timeoutMs,
-              ),
-          },
+      if (
+        meta.contentType &&
+        ![
+          "text/html",
+          "application/xhtml+xml",
+          "text/plain",
+        ].includes(meta.contentType)
+      ) {
+        throw new Error(
+          `Unsupported source content type ${meta.contentType || "(missing)"} for ${current.toString()}.`,
         );
+      }
 
-        if (
-          response.status >= 300 &&
-          response.status < 400
-        ) {
-          const location =
-            response.headers.get("location");
-
-          if (!location) {
-            throw new Error(
-              `Source returned redirect without Location header: HTTP ${response.status}`,
-            );
-          }
-
-          redirects += 1;
-
-          if (redirects > maxRedirects) {
-            throw new Error(
-              `Source exceeded redirect limit of ${maxRedirects}.`,
-            );
-          }
-
-          current = validateUrl(
-            new URL(
-              location,
-              current,
-            ).toString(),
-            allowedHosts,
-          );
-          continue;
-        }
-
-        if (!response.ok) {
-          throw new Error(
-            `Source returned HTTP ${response.status} for ${current.toString()}.`,
-          );
-        }
-
-        const contentType =
-          response.headers
-            .get("content-type")
-            ?.split(";")[0]
-            ?.trim()
-            .toLowerCase() ?? "";
-
-        if (
-          contentType &&
-          ![
-            "text/html",
-            "application/xhtml+xml",
-            "text/plain",
-          ].includes(contentType)
-        ) {
-          throw new Error(
-            `Unsupported source content type ${contentType || "(missing)"} for ${current.toString()}.`,
-          );
-        }
-
-        const body = await readLimitedBody(
+      const bytes =
+        await readLimitedBytes(
           response,
           maxResponseBytes,
         );
 
-        return {
-          requestedUrl,
-          finalUrl: current.toString(),
-          contentType,
-          body,
-          fetchedAt:
-            new Date().toISOString(),
-          etag:
-            response.headers.get("etag") ??
-            undefined,
-          lastModified:
-            response.headers.get(
-              "last-modified",
-            ) ?? undefined,
-        };
-      }
+      return {
+        ...meta,
+        body:
+          new TextDecoder("utf-8", {
+            fatal: false,
+          }).decode(bytes),
+      };
+    },
+
+    async fetchBytes(
+      rawUrl: string,
+      allowedHosts: readonly string[],
+    ): Promise<PublicSourceBinaryFetchResult> {
+      const {
+        response,
+        requestedUrl,
+        current,
+      } = await request(
+        rawUrl,
+        allowedHosts,
+        "application/pdf,application/octet-stream;q=0.8,*/*;q=0.1",
+      );
+      const meta = metadata(
+        response,
+        requestedUrl,
+        current,
+      );
+      const body =
+        await readLimitedBytes(
+          response,
+          maxResponseBytes,
+        );
+
+      return {
+        ...meta,
+        body,
+      };
     },
   };
 }
