@@ -209,20 +209,39 @@ async function reconcileDeadlines(
     await runMigrations(pool);
     const deadlines =
       new PostgresDeadlineService(pool);
-    const result =
-      await deadlines.reconcileRegistry(
-        registryId,
-        {
-          limit: 500,
-        },
-      );
+    const aggregate = {
+      records: 0,
+      created: 0,
+      updated: 0,
+      unchanged: 0,
+    };
+    let offset = 0;
+
+    while (true) {
+      const result =
+        await deadlines.reconcileRegistry(
+          registryId,
+          {
+            limit: 500,
+            offset,
+          },
+        );
+
+      aggregate.records += result.records;
+      aggregate.created += result.created;
+      aggregate.updated += result.updated;
+      aggregate.unchanged += result.unchanged;
+
+      if (result.records < 500) break;
+      offset += result.records;
+    }
 
     console.log(
       JSON.stringify(
         {
           command: "reconcile-deadlines",
           registryId,
-          ...result,
+          ...aggregate,
         },
         null,
         2,
