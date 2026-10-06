@@ -1159,7 +1159,7 @@ export class PostgresDeadlineService
         );
       }
 
-      let state = row.state;
+      let state: DeadlineState = row.state;
       let pausedAt =
         row.paused_at?.toISOString() ?? null;
       let totalPausedSeconds = Number(
