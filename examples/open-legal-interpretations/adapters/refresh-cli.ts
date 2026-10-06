@@ -35,6 +35,9 @@ import {
 import {
   openLegalInterpretationsRefreshJobs,
 } from "./refresh-jobs.ts";
+import {
+  processOpenLegalInterpretationAttachments,
+} from "./attachment-processing.ts";
 
 const REGISTRY_ID =
   "open-legal-interpretations";
@@ -172,104 +175,32 @@ async function makeExecutor(
     let fullTextUpdates = 0;
 
     for (const row of adapterRun.rows) {
-      const attachmentUrls =
-        Array.isArray(
-          row.attachment_urls,
-        )
-          ? row.attachment_urls
-          : [];
-
-      if (
-        attachmentUrls.length === 0
-      ) {
-        continue;
-      }
-
-      const attachmentResult =
-        await attachments.ingest({
+      const processed =
+        await processOpenLegalInterpretationAttachments({
           registryId:
             claim.job.registryId,
-          recordId: row.id,
-          recordTitle: row.title,
-          attachmentUrls,
+          row,
           allowedHosts:
             adapter.allowedHosts,
-          visibility: "public",
-          fieldId: "full_text",
+          attachments,
+          records,
         });
 
       attachmentCreated +=
-        attachmentResult.created;
+        processed.attachmentCreated;
       attachmentExisting +=
-        attachmentResult.existing;
+        processed.attachmentExisting;
       attachmentFailed +=
-        attachmentResult.failed;
+        processed.attachmentFailed;
       attachmentWarnings +=
-        attachmentResult.warnings;
-
-      for (const item of
-        attachmentResult.items) {
-        if (item.status === "failed") {
-          refreshWarnings.push({
-            code:
-              "pdf_attachment_failed",
-            message:
-              item.error ??
-              "PDF attachment ingestion failed.",
-            url: item.url,
-          });
-        }
-
-        for (const warning of
-          item.warnings) {
-          refreshWarnings.push({
-            code:
-              "pdf_attachment_warning",
-            message: warning,
-            url:
-              item.finalUrl ??
-              item.url,
-          });
-        }
-      }
-
-      if (
-        attachmentResult.extractedText
-      ) {
-        const record =
-          await records.get(
-            claim.job.registryId,
-            row.id,
-          );
-
-        if (
-          record &&
-          record.fields.full_text !==
-            attachmentResult.extractedText
-        ) {
-          await records.update(
-            {
-              ...record,
-              fields: {
-                ...record.fields,
-                full_text:
-                  attachmentResult.extractedText,
-              },
-              updatedAt:
-                new Date().toISOString(),
-            },
-            {
-              context: {
-                actorId:
-                  "system:source-refresh-worker",
-                reason:
-                  "Refresh full text from retrieved PDF attachment.",
-              },
-            },
-          );
-          fullTextUpdates += 1;
-        }
-      }
+        processed.attachmentWarnings;
+      fullTextUpdates +=
+        processed.fullTextUpdated
+          ? 1
+          : 0;
+      refreshWarnings.push(
+        ...processed.warnings,
+      );
     }
 
     return {
