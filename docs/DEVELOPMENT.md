@@ -12,6 +12,7 @@
 cp .env.example .env
 pnpm install
 docker compose up -d db
+pnpm db:migrate
 pnpm dev
 ```
 
@@ -23,9 +24,32 @@ The foundation health endpoint is:
 GET /api/health
 ```
 
+## Database commands
+
+Apply all pending engine migrations:
+
+```bash
+pnpm db:migrate
+```
+
+Seed the checked-in generic registry example:
+
+```bash
+pnpm db:seed -- \
+  examples/generic-registry/registry.yaml \
+  examples/generic-registry/seed.json
+```
+
+Run PostgreSQL integration tests:
+
+```bash
+pnpm test:db
+```
+
 ## Quality gates
 
-Run the same checks used by CI:
+With the local PostgreSQL service running, execute the same major checks used by
+CI:
 
 ```bash
 pnpm ci
@@ -37,6 +61,8 @@ Or individually:
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm db:migrate
+pnpm test:db
 pnpm build
 ```
 
@@ -47,8 +73,12 @@ branch deployable. Generic capabilities belong upstream. Bill-specific logic
 belongs in downstream applications unless it exposes a reusable abstraction
 needed by multiple products.
 
-## Database note
+## Persistence rule
 
-PR 1 starts PostgreSQL for local development but intentionally creates no
-application tables. Persistence, migrations, and migration validation arrive
-with the database milestone instead of placeholder migrations.
+Downstream registries must not introduce database tables merely because they add
+new configured record types or fields. Registry-specific data belongs in the
+generic persistence model unless a genuinely shared engine capability requires a
+new schema object.
+
+Applied migrations are immutable. Schema changes require a new numbered
+migration.
