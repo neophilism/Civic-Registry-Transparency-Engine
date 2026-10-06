@@ -37,6 +37,17 @@ export function AdminShell({
           {registryId ? (
             <Link
               href={
+                "/admin/registries/" +
+                encodeURIComponent(registryId) +
+                "/analytics"
+              }
+            >
+              Analytics
+            </Link>
+          ) : null}
+          {registryId ? (
+            <Link
+              href={
                 "/registries/" +
                 encodeURIComponent(registryId)
               }
