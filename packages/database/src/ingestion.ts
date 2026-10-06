@@ -876,23 +876,6 @@ export class PostgresIngestionService {
         seenSourceKeys.add(item.sourceKey);
         seenRecordIds.add(item.record.id);
 
-        if (input.dryRun) {
-          counts.validated += 1;
-          await this.insertItem({
-            registryId: input.registryId,
-            runId,
-            itemIndex: item.index,
-            lineNumber: item.line,
-            sourceKey: item.sourceKey,
-            recordId: item.record.id,
-            inputFingerprint:
-              item.inputFingerprint,
-            outcome: "validated",
-            processedAt: startedAt,
-          });
-          continue;
-        }
-
         try {
           const existing =
             await this.records.get(
@@ -915,6 +898,23 @@ export class PostgresIngestionService {
               throw new PersistenceConflictError(
                 `Imported record ${item.record.id} begins in lifecycle status ${item.record.status}; set allowLifecycleBootstrap: true only when importing authoritative pre-existing state.`,
               );
+            }
+
+            if (input.dryRun) {
+              counts.validated += 1;
+              await this.insertItem({
+                registryId: input.registryId,
+                runId,
+                itemIndex: item.index,
+                lineNumber: item.line,
+                sourceKey: item.sourceKey,
+                recordId: item.record.id,
+                inputFingerprint:
+                  item.inputFingerprint,
+                outcome: "validated",
+                processedAt: startedAt,
+              });
+              continue;
             }
 
             await this.records.create(
@@ -960,6 +960,23 @@ export class PostgresIngestionService {
               );
             }
 
+            if (input.dryRun) {
+              counts.validated += 1;
+              await this.insertItem({
+                registryId: input.registryId,
+                runId,
+                itemIndex: item.index,
+                lineNumber: item.line,
+                sourceKey: item.sourceKey,
+                recordId: item.record.id,
+                inputFingerprint:
+                  item.inputFingerprint,
+                outcome: "validated",
+                processedAt: startedAt,
+              });
+              continue;
+            }
+
             if (
               recordsEquivalent(
                 existing,
@@ -977,18 +994,6 @@ export class PostgresIngestionService {
             }
           }
 
-          await this.insertItem({
-            registryId: input.registryId,
-            runId,
-            itemIndex: item.index,
-            lineNumber: item.line,
-            sourceKey: item.sourceKey,
-            recordId: item.record.id,
-            inputFingerprint:
-              item.inputFingerprint,
-            outcome,
-            processedAt: startedAt,
-          });
           await this.insertRecordAudit({
             registryId: input.registryId,
             recordId: item.record.id,
@@ -1001,6 +1006,18 @@ export class PostgresIngestionService {
             occurredAt: startedAt,
             actorId: input.actorId,
             reason: input.reason,
+          });
+          await this.insertItem({
+            registryId: input.registryId,
+            runId,
+            itemIndex: item.index,
+            lineNumber: item.line,
+            sourceKey: item.sourceKey,
+            recordId: item.record.id,
+            inputFingerprint:
+              item.inputFingerprint,
+            outcome,
+            processedAt: startedAt,
           });
         } catch (error) {
           counts.failed += 1;
