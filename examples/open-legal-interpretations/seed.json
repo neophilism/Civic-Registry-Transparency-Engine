@@ -1,0 +1,332 @@
+{
+  "sources": [
+    {
+      "id": "demo-legal-interpretations-index",
+      "registryId": "open-legal-interpretations",
+      "title": "Demonstration Legal Interpretations Publication Index",
+      "sourceType": "webpage",
+      "visibility": "public",
+      "canonicalUrl": "https://example.gov/legal-interpretations",
+      "publishedAt": "2026-09-01T12:00:00.000Z",
+      "retrievedAt": "2026-10-01T14:00:00.000Z",
+      "description": "Synthetic demonstration source used by the Open Legal Interpretations reference application. It is not an actual government publication.",
+      "createdAt": "2026-10-01T14:00:00.000Z"
+    }
+  ],
+  "documents": [
+    {
+      "id": "demo-interpretation-2026-02-pdf",
+      "registryId": "open-legal-interpretations",
+      "title": "Demonstration Interpretation 2026-02",
+      "visibility": "public",
+      "sourceId": "demo-legal-interpretations-index",
+      "fileName": "demo-interpretation-2026-02.pdf",
+      "mimeType": "application/pdf",
+      "canonicalUrl": "https://example.gov/legal-interpretations/2026-02.pdf",
+      "pageCount": 9,
+      "language": "en",
+      "createdAt": "2026-09-01T12:15:00.000Z"
+    },
+    {
+      "id": "demo-interpretation-2025-01-pdf",
+      "registryId": "open-legal-interpretations",
+      "title": "Demonstration Interpretation 2025-01",
+      "visibility": "public",
+      "sourceId": "demo-legal-interpretations-index",
+      "fileName": "demo-interpretation-2025-01.pdf",
+      "mimeType": "application/pdf",
+      "canonicalUrl": "https://example.gov/legal-interpretations/2025-01.pdf",
+      "pageCount": 7,
+      "language": "en",
+      "createdAt": "2025-06-15T13:15:00.000Z"
+    }
+  ],
+  "records": [
+    {
+      "id": "example-federal-agency",
+      "registryId": "open-legal-interpretations",
+      "recordTypeId": "issuing_body",
+      "fields": {
+        "name": "Example Federal Agency",
+        "acronym": "EFA",
+        "body_type": "agency",
+        "website": "https://example.gov",
+        "description": "Synthetic federal agency used only to demonstrate the reusable Open Legal Interpretations application."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "issuing-body"
+      ],
+      "createdAt": "2025-01-01T12:00:00.000Z",
+      "updatedAt": "2025-01-01T12:00:00.000Z",
+      "publishedAt": "2025-01-01T12:00:00.000Z"
+    },
+    {
+      "id": "example-office-general-counsel",
+      "registryId": "open-legal-interpretations",
+      "recordTypeId": "issuing_body",
+      "fields": {
+        "name": "Office of General Counsel",
+        "acronym": "OGC",
+        "body_type": "office",
+        "parent_body": "example-federal-agency",
+        "website": "https://example.gov/ogc",
+        "description": "Synthetic issuing office within the demonstration agency."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "issuing-body"
+      ],
+      "createdAt": "2025-01-01T12:05:00.000Z",
+      "updatedAt": "2025-01-01T12:05:00.000Z",
+      "publishedAt": "2025-01-01T12:05:00.000Z"
+    },
+    {
+      "id": "authority-foia",
+      "registryId": "open-legal-interpretations",
+      "recordTypeId": "legal_authority",
+      "fields": {
+        "citation": "5 U.S.C. § 552",
+        "name": "Freedom of Information Act",
+        "authority_type": "statute",
+        "canonical_url": "https://www.govinfo.gov/link/uscode/5/552",
+        "description": "Federal statute governing public access to agency records."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [
+        {
+          "scheme": "usc",
+          "value": "5-USC-552",
+          "url": "https://www.govinfo.gov/link/uscode/5/552"
+        }
+      ],
+      "tags": [
+        "statute",
+        "foia"
+      ],
+      "createdAt": "2025-01-01T12:10:00.000Z",
+      "updatedAt": "2025-01-01T12:10:00.000Z",
+      "publishedAt": "2025-01-01T12:10:00.000Z"
+    },
+    {
+      "id": "authority-apa",
+      "registryId": "open-legal-interpretations",
+      "recordTypeId": "legal_authority",
+      "fields": {
+        "citation": "5 U.S.C. §§ 551–559",
+        "name": "Administrative Procedure Act",
+        "authority_type": "statute",
+        "canonical_url": "https://www.govinfo.gov/link/uscode/5/551",
+        "description": "Federal statutory framework for agency procedure and adjudication."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [
+        {
+          "scheme": "usc",
+          "value": "5-USC-551-559",
+          "url": "https://www.govinfo.gov/link/uscode/5/551"
+        }
+      ],
+      "tags": [
+        "statute",
+        "apa"
+      ],
+      "createdAt": "2025-01-01T12:15:00.000Z",
+      "updatedAt": "2025-01-01T12:15:00.000Z",
+      "publishedAt": "2025-01-01T12:15:00.000Z"
+    },
+    {
+      "id": "demo-interpretation-2025-01",
+      "registryId": "open-legal-interpretations",
+      "recordTypeId": "interpretation",
+      "fields": {
+        "title": "Demonstration interpretation on release of internal legal memoranda",
+        "summary": "Synthetic example discussing how an agency might analyze publication of internal legal memoranda under public-records law.",
+        "interpretation_number": "DEMO-2025-01",
+        "interpretation_type": "legal_memorandum",
+        "subject": "Public access to legal memoranda",
+        "issued_on": "2025-06-10",
+        "public_release_on": "2025-06-15",
+        "issuing_body": "example-office-general-counsel",
+        "legal_authorities": [
+          "authority-foia"
+        ],
+        "key_holding": "For demonstration purposes only: the memorandum concludes that publication decisions require a record-specific analysis rather than a categorical rule.",
+        "full_text": "This synthetic interpretation is a fixture for testing search, publication history, legal-authority relationships, evidence traceability, supersession, disclosure controls, and deadlines. It does not state the position of any real agency.",
+        "declassification_due_on": "2030-06-10",
+        "source_reference": "DEMO-2025-01"
+      },
+      "status": "superseded",
+      "visibility": "public",
+      "externalIdentifiers": [
+        {
+          "scheme": "demo-opinion",
+          "value": "DEMO-2025-01",
+          "url": "https://example.gov/legal-interpretations/2025-01"
+        }
+      ],
+      "tags": [
+        "demo",
+        "foia",
+        "superseded"
+      ],
+      "createdAt": "2025-06-15T13:00:00.000Z",
+      "updatedAt": "2026-09-01T12:30:00.000Z",
+      "publishedAt": "2025-06-15T13:00:00.000Z"
+    },
+    {
+      "id": "demo-interpretation-2026-02",
+      "registryId": "open-legal-interpretations",
+      "recordTypeId": "interpretation",
+      "fields": {
+        "title": "Demonstration interpretation on publication and procedural transparency",
+        "summary": "Synthetic example analyzing publication of significant legal interpretations and the relationship between transparency obligations and agency procedure.",
+        "interpretation_number": "DEMO-2026-02",
+        "interpretation_type": "formal_opinion",
+        "subject": "Publication of significant legal interpretations",
+        "issued_on": "2026-08-25",
+        "public_release_on": "2026-09-01",
+        "issuing_body": "example-office-general-counsel",
+        "legal_authorities": [
+          "authority-foia",
+          "authority-apa"
+        ],
+        "key_holding": "For demonstration purposes only: significant interpretations should be published with traceable authority, revision history, and explicit disclosure decisions unless lawfully withheld.",
+        "full_text": "This synthetic interpretation demonstrates full-text search across an interpretation record, relationships to issuing offices and legal authorities, evidence citations, supersession of an earlier opinion, declassification review deadlines, notifications, analytics, and immutable audit history. It does not state the position of any real agency.",
+        "declassification_due_on": "2031-08-25",
+        "source_reference": "DEMO-2026-02"
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [
+        {
+          "scheme": "demo-opinion",
+          "value": "DEMO-2026-02",
+          "url": "https://example.gov/legal-interpretations/2026-02"
+        }
+      ],
+      "tags": [
+        "demo",
+        "foia",
+        "apa",
+        "current"
+      ],
+      "createdAt": "2026-09-01T12:00:00.000Z",
+      "updatedAt": "2026-09-01T12:00:00.000Z",
+      "publishedAt": "2026-09-01T12:00:00.000Z"
+    }
+  ],
+  "citations": [
+    {
+      "id": "demo-2025-summary-citation",
+      "registryId": "open-legal-interpretations",
+      "recordId": "demo-interpretation-2025-01",
+      "fieldId": "summary",
+      "sourceId": "demo-legal-interpretations-index",
+      "documentId": "demo-interpretation-2025-01-pdf",
+      "locator": {
+        "page": 1,
+        "section": "Summary"
+      },
+      "note": "Synthetic demonstration citation.",
+      "visibility": "public",
+      "createdAt": "2025-06-15T13:20:00.000Z"
+    },
+    {
+      "id": "demo-2026-summary-citation",
+      "registryId": "open-legal-interpretations",
+      "recordId": "demo-interpretation-2026-02",
+      "fieldId": "summary",
+      "sourceId": "demo-legal-interpretations-index",
+      "documentId": "demo-interpretation-2026-02-pdf",
+      "locator": {
+        "page": 1,
+        "section": "Summary"
+      },
+      "note": "Synthetic demonstration citation.",
+      "visibility": "public",
+      "createdAt": "2026-09-01T12:20:00.000Z"
+    },
+    {
+      "id": "demo-2026-holding-citation",
+      "registryId": "open-legal-interpretations",
+      "recordId": "demo-interpretation-2026-02",
+      "fieldId": "key_holding",
+      "sourceId": "demo-legal-interpretations-index",
+      "documentId": "demo-interpretation-2026-02-pdf",
+      "locator": {
+        "page": 6,
+        "section": "Conclusion"
+      },
+      "note": "Synthetic demonstration citation to the example conclusion.",
+      "visibility": "public",
+      "createdAt": "2026-09-01T12:21:00.000Z"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "demo-2025-issued-by-ogc",
+      "registryId": "open-legal-interpretations",
+      "relationshipTypeId": "issued-by",
+      "fromRecordId": "demo-interpretation-2025-01",
+      "toRecordId": "example-office-general-counsel",
+      "createdAt": "2025-06-15T13:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "demo-2026-issued-by-ogc",
+      "registryId": "open-legal-interpretations",
+      "relationshipTypeId": "issued-by",
+      "fromRecordId": "demo-interpretation-2026-02",
+      "toRecordId": "example-office-general-counsel",
+      "createdAt": "2026-09-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "demo-2025-interprets-foia",
+      "registryId": "open-legal-interpretations",
+      "relationshipTypeId": "interprets-authority",
+      "fromRecordId": "demo-interpretation-2025-01",
+      "toRecordId": "authority-foia",
+      "createdAt": "2025-06-15T13:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "demo-2026-interprets-foia",
+      "registryId": "open-legal-interpretations",
+      "relationshipTypeId": "interprets-authority",
+      "fromRecordId": "demo-interpretation-2026-02",
+      "toRecordId": "authority-foia",
+      "createdAt": "2026-09-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "demo-2026-interprets-apa",
+      "registryId": "open-legal-interpretations",
+      "relationshipTypeId": "interprets-authority",
+      "fromRecordId": "demo-interpretation-2026-02",
+      "toRecordId": "authority-apa",
+      "createdAt": "2026-09-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "demo-2026-supersedes-2025",
+      "registryId": "open-legal-interpretations",
+      "relationshipTypeId": "supersedes",
+      "fromRecordId": "demo-interpretation-2026-02",
+      "toRecordId": "demo-interpretation-2025-01",
+      "createdAt": "2026-09-01T12:30:00.000Z",
+      "metadata": {
+        "note": "Synthetic supersession relationship used to demonstrate legal interpretation lineage."
+      }
+    }
+  ]
+}
