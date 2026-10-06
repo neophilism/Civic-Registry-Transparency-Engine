@@ -14,6 +14,7 @@ import {
   PostgresRelationshipRepository,
   PostgresSearchProvider,
   PostgresSourceRepository,
+  PostgresSourceRefreshService,
 } from "@civic-registry/database";
 import type { Pool } from "pg";
 
@@ -76,6 +77,7 @@ export function getRepositories() {
     documents,
   );
   const search = new PostgresSearchProvider(pool);
+  const sourceRefresh = new PostgresSourceRefreshService(pool);
 
   return {
     admin,
@@ -92,5 +94,6 @@ export function getRepositories() {
     citations,
     disclosure,
     search,
+    sourceRefresh,
   };
 }

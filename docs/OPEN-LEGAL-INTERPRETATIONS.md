@@ -262,3 +262,10 @@ See [Public source adapters](PUBLIC-SOURCE-ADAPTERS.md) for the DOJ OLC and OGE 
 ## Next milestone
 
 A subsequent milestone can add scheduled refresh orchestration, attachment/PDF ingestion, structured legal-authority extraction, and adapter health monitoring without changing the canonical registry model.
+
+
+## Scheduled refresh
+
+PR 21 adds persisted daily refresh jobs for the DOJ OLC and OGE adapters. A recurring worker can poll frequently while PostgreSQL determines which jobs are actually due and prevents overlapping claims.
+
+See [Scheduled source refresh](SOURCE-REFRESH.md) for worker commands, leases, backoff, health states, administrator monitoring, and deployment guidance.

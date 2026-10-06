@@ -838,3 +838,113 @@ export async function markAdminNotificationRead(
   revalidatePath(returnTo);
   redirect(returnTo);
 }
+
+
+export async function setAdminSourceRefreshEnabled(
+  formData: FormData,
+): Promise<void> {
+  await requireAdminSession();
+  const registryId = text(
+    formData,
+    "registryId",
+  );
+  const jobId = text(
+    formData,
+    "jobId",
+  );
+  const enabled =
+    text(formData, "enabled") === "true";
+  const returnTo = safeReturnTo(
+    text(formData, "returnTo"),
+    "/admin/registries/" +
+      encodeURIComponent(registryId) +
+      "/source-refresh",
+  );
+  let failure: string | undefined;
+
+  try {
+    await getRepositories().sourceRefresh.setEnabled(
+      registryId,
+      jobId,
+      enabled,
+    );
+  } catch (error) {
+    failure = errorMessage(
+      error,
+      "Source refresh job could not be updated.",
+    );
+  }
+
+  if (failure) {
+    redirect(
+      destination(
+        returnTo,
+        "error",
+        failure,
+      ),
+    );
+  }
+
+  revalidatePath(returnTo);
+  redirect(
+    destination(
+      returnTo,
+      "notice",
+      enabled
+        ? "Source refresh job enabled."
+        : "Source refresh job disabled.",
+    ),
+  );
+}
+
+export async function queueAdminSourceRefreshNow(
+  formData: FormData,
+): Promise<void> {
+  await requireAdminSession();
+  const registryId = text(
+    formData,
+    "registryId",
+  );
+  const jobId = text(
+    formData,
+    "jobId",
+  );
+  const returnTo = safeReturnTo(
+    text(formData, "returnTo"),
+    "/admin/registries/" +
+      encodeURIComponent(registryId) +
+      "/source-refresh",
+  );
+  let failure: string | undefined;
+
+  try {
+    await getRepositories().sourceRefresh.queueNow(
+      registryId,
+      jobId,
+    );
+  } catch (error) {
+    failure = errorMessage(
+      error,
+      "Source refresh job could not be queued.",
+    );
+  }
+
+  if (failure) {
+    redirect(
+      destination(
+        returnTo,
+        "error",
+        failure,
+      ),
+    );
+  }
+
+  revalidatePath(returnTo);
+  redirect(
+    destination(
+      returnTo,
+      "notice",
+      "Source refresh job queued. The worker will claim it on its next poll.",
+    ),
+  );
+}

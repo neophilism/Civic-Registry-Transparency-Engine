@@ -16,7 +16,8 @@
     "pg": "^8.16.3",
     "@civic-registry/search": "workspace:*",
     "@civic-registry/deadlines": "workspace:*",
-    "@civic-registry/ingestion": "workspace:*"
+    "@civic-registry/ingestion": "workspace:*",
+    "@civic-registry/source-adapters": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

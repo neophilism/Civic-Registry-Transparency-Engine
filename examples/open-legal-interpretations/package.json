@@ -8,7 +8,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@civic-registry/source-adapters": "workspace:*"
+    "@civic-registry/source-adapters": "workspace:*",
+    "@civic-registry/config": "workspace:*",
+    "@civic-registry/database": "workspace:*",
+    "@civic-registry/ingestion": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

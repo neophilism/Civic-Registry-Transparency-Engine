@@ -28,6 +28,9 @@
     "db:ingest-open-legal-interpretations-demo": "node packages/database/src/cli.ts ingest open-legal-interpretations examples/open-legal-interpretations/import-profile.yaml examples/open-legal-interpretations/import.csv csv",
     "source:fetch-olc": "node examples/open-legal-interpretations/adapters/cli.ts doj-olc",
     "source:fetch-oge": "node examples/open-legal-interpretations/adapters/cli.ts oge-legal-advisories",
-    "db:ingest-open-legal-interpretations-source": "node packages/database/src/cli.ts ingest open-legal-interpretations examples/open-legal-interpretations/adapter-import-profile.yaml"
+    "db:ingest-open-legal-interpretations-source": "node packages/database/src/cli.ts ingest open-legal-interpretations examples/open-legal-interpretations/adapter-import-profile.yaml",
+    "source:refresh-open-legal-interpretations": "node examples/open-legal-interpretations/adapters/refresh-cli.ts run",
+    "source:refresh-sync-open-legal-interpretations": "node examples/open-legal-interpretations/adapters/refresh-cli.ts sync",
+    "source:refresh-status-open-legal-interpretations": "node examples/open-legal-interpretations/adapters/refresh-cli.ts status"
   }
 }

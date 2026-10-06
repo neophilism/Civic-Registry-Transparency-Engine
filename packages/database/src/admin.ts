@@ -19,6 +19,8 @@ export interface AdminRegistrySummary {
   failedIngestionItemCount: number;
   openDeadlineCount: number;
   overdueDeadlineCount: number;
+  sourceRefreshJobCount: number;
+  sourceRefreshIssueCount: number;
 }
 
 export interface AdminTransitionRequestListOptions {
@@ -43,6 +45,8 @@ interface SummaryRow extends QueryResultRow {
   failed_ingestion_item_count: number;
   open_deadline_count: number;
   overdue_deadline_count: number;
+  source_refresh_job_count: number;
+  source_refresh_issue_count: number;
 }
 
 interface RequestRow extends QueryResultRow {
@@ -174,7 +178,42 @@ export class PostgresAdminRepository {
             WHERE registry_id = $1
               AND state = 'open'
               AND due_at < NOW()
-          ) AS overdue_deadline_count
+          ) AS overdue_deadline_count,
+          (
+            SELECT COUNT(*)::int
+            FROM civic_registry_source_refresh_jobs
+            WHERE registry_id = $1
+          ) AS source_refresh_job_count,
+          (
+            SELECT COUNT(*)::int
+            FROM civic_registry_source_refresh_jobs
+            WHERE registry_id = $1
+              AND enabled = TRUE
+              AND (
+                last_status IN (
+                  'failed',
+                  'completed_with_warnings'
+                )
+                OR (
+                  last_completed_at IS NOT NULL
+                  AND last_completed_at <
+                    NOW() -
+                    (
+                      stale_after_seconds *
+                      INTERVAL '1 second'
+                    )
+                )
+                OR (
+                  last_completed_at IS NULL
+                  AND created_at <
+                    NOW() -
+                    (
+                      stale_after_seconds *
+                      INTERVAL '1 second'
+                    )
+                )
+              )
+          ) AS source_refresh_issue_count
       `,
       [registryId],
     );
@@ -190,6 +229,10 @@ export class PostgresAdminRepository {
       openDeadlineCount: row?.open_deadline_count ?? 0,
       overdueDeadlineCount:
         row?.overdue_deadline_count ?? 0,
+      sourceRefreshJobCount:
+        row?.source_refresh_job_count ?? 0,
+      sourceRefreshIssueCount:
+        row?.source_refresh_issue_count ?? 0,
     };
   }
 
