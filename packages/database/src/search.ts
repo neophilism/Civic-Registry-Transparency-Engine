@@ -50,6 +50,11 @@ interface WhereClause {
   sql: string;
   values: unknown[];
   textQueryParameter?: string;
+  fieldsColumn: "fields" | "public_fields";
+  searchDocumentColumn:
+    | "search_document"
+    | "public_search_document";
+  tagExpression: string;
 }
 
 class SqlParameters {
@@ -96,8 +101,10 @@ function rangeCast(field: FieldDefinition): string {
 function fieldSortExpression(
   field: FieldDefinition,
   keyParameter: string,
+  fieldsColumn: "fields" | "public_fields",
 ): string {
-  const raw = `NULLIF(fields ->> ${keyParameter}, '')`;
+  const raw =
+    `NULLIF(${fieldsColumn} ->> ${keyParameter}, '')`;
 
   switch (field.type) {
     case "integer":
@@ -120,8 +127,42 @@ function buildWhere(
 ): WhereClause {
   const parameters = new SqlParameters();
   const clauses: string[] = [];
+  const publicProjection =
+    request.projection === "public";
+  const fieldsColumn = publicProjection
+    ? "public_fields"
+    : "fields";
+  const searchDocumentColumn = publicProjection
+    ? "public_search_document"
+    : "search_document";
+  const withheldPredicate = `
+    EXISTS (
+      SELECT 1
+      FROM civic_registry_record_disclosures AS disclosure
+      WHERE disclosure.registry_id =
+        civic_registry_records.registry_id
+        AND disclosure.record_id =
+          civic_registry_records.id
+        AND disclosure.disposition = 'withheld'
+    )
+  `;
+  const tagExpression = publicProjection
+    ? `CASE
+        WHEN ${withheldPredicate}
+          THEN ARRAY[]::text[]
+        ELSE tags
+      END`
+    : "tags";
   const registryParameter = parameters.add(request.registryId);
   clauses.push(`registry_id = ${registryParameter}`);
+
+  if (
+    publicProjection &&
+    registry.disclosure.withheldRecordBehavior ===
+      "hidden"
+  ) {
+    clauses.push(`NOT (${withheldPredicate})`);
+  }
 
   if (request.visibility) {
     const parameter = parameters.add(request.visibility);
@@ -138,7 +179,7 @@ function buildWhere(
   if (request.text) {
     textQueryParameter = parameters.add(request.text);
     clauses.push(
-      `search_document @@ websearch_to_tsquery('simple', ${textQueryParameter})`,
+      `${searchDocumentColumn} @@ websearch_to_tsquery('simple', ${textQueryParameter})`,
     );
   }
 
@@ -170,8 +211,8 @@ function buildWhere(
           SELECT 1
           FROM jsonb_array_elements_text(
             CASE
-              WHEN jsonb_typeof(fields -> ${key}) = 'array'
-                THEN fields -> ${key}
+              WHEN jsonb_typeof(${fieldsColumn} -> ${key}) = 'array'
+                THEN ${fieldsColumn} -> ${key}
               ELSE '[]'::jsonb
             END
           ) AS selected(value)
@@ -180,7 +221,7 @@ function buildWhere(
       `);
     } else {
       clauses.push(
-        `fields ->> ${key} = ANY(${values}::text[])`,
+        `${fieldsColumn} ->> ${key} = ANY(${values}::text[])`,
       );
     }
   }
@@ -190,7 +231,7 @@ function buildWhere(
     const key = parameters.add(range.fieldId);
     const cast = rangeCast(field);
     const expression =
-      `NULLIF(fields ->> ${key}, '')::${cast}`;
+      `NULLIF(${fieldsColumn} ->> ${key}, '')::${cast}`;
 
     if (range.from) {
       const from = parameters.add(range.from);
@@ -207,6 +248,9 @@ function buildWhere(
     sql: clauses.join(" AND "),
     values: parameters.values,
     textQueryParameter,
+    fieldsColumn,
+    searchDocumentColumn,
+    tagExpression,
   };
 }
 
@@ -283,7 +327,11 @@ function addSort(
     const field = recordType.fieldsById.get(sort.fieldId)!;
     values.push(sort.fieldId);
     const key = `$${values.length}`;
-    const expression = fieldSortExpression(field, key);
+    const expression = fieldSortExpression(
+      field,
+      key,
+      where.fieldsColumn,
+    );
     return `${expression} ${direction} NULLS LAST, id ASC`;
   }
 
@@ -319,6 +367,7 @@ async function termsFacet(
 function termFacetSql(
   field: FieldDefinition,
   keyParameter: string,
+  fieldsColumn: "fields" | "public_fields",
 ): {
   fromSuffix: string;
   valueExpression: string;
@@ -331,8 +380,8 @@ function termFacetSql(
       fromSuffix: `
         CROSS JOIN LATERAL jsonb_array_elements_text(
           CASE
-            WHEN jsonb_typeof(fields -> ${keyParameter}) = 'array'
-              THEN fields -> ${keyParameter}
+            WHEN jsonb_typeof(${fieldsColumn} -> ${keyParameter}) = 'array'
+              THEN ${fieldsColumn} -> ${keyParameter}
             ELSE '[]'::jsonb
           END
         ) AS facet_value(value)
@@ -343,7 +392,8 @@ function termFacetSql(
 
   return {
     fromSuffix: "",
-    valueExpression: `fields ->> ${keyParameter}`,
+    valueExpression:
+      `${fieldsColumn} ->> ${keyParameter}`,
   };
 }
 
@@ -391,7 +441,7 @@ export class PostgresSearchProvider implements SearchProvider {
     const values = [...where.values];
     const scoreExpression = where.textQueryParameter
       ? `ts_rank_cd(
-          search_document,
+          ${where.searchDocumentColumn},
           websearch_to_tsquery('simple', ${where.textQueryParameter})
         )`
       : "0::real";
@@ -410,7 +460,17 @@ export class PostgresSearchProvider implements SearchProvider {
     const result = await this.pool.query<SearchRecordRow>(
       `
         SELECT
-          *,
+          registry_id,
+          id,
+          record_type_id,
+          ${where.fieldsColumn} AS fields,
+          status,
+          visibility,
+          external_identifiers,
+          tags,
+          created_at,
+          updated_at,
+          published_at,
           ${scoreExpression} AS score,
           COUNT(*) OVER()::int AS total
         FROM civic_registry_records
@@ -440,7 +500,9 @@ export class PostgresSearchProvider implements SearchProvider {
       termsFacet(
         this.pool,
         `${baseFrom}
-          CROSS JOIN LATERAL unnest(tags) AS tag(value)`,
+          CROSS JOIN LATERAL unnest(
+            ${where.tagExpression}
+          ) AS tag(value)`,
         where,
         "tag.value",
       ),
@@ -464,7 +526,7 @@ export class PostgresSearchProvider implements SearchProvider {
           if (isRangeField(field)) {
             const cast = rangeCast(field);
             const expression =
-              `NULLIF(fields ->> ${key}, '')::${cast}`;
+              `NULLIF(${where.fieldsColumn} ->> ${key}, '')::${cast}`;
             const range = await this.pool.query<RangeRow>(
               `
                 SELECT
@@ -491,7 +553,11 @@ export class PostgresSearchProvider implements SearchProvider {
             return;
           }
 
-          const sql = termFacetSql(field, key);
+          const sql = termFacetSql(
+            field,
+            key,
+            where.fieldsColumn,
+          );
           const buckets = await termsFacet(
             this.pool,
             `${baseFrom}${sql.fromSuffix}`,
