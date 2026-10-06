@@ -7,11 +7,13 @@ import {
 
 import { Breadcrumbs } from "../../../../../components/breadcrumbs";
 import { EvidenceGroups } from "../../../../../components/evidence-groups";
+import { HistoryTimeline } from "../../../../../components/history-timeline";
 import { RecordFieldValue } from "../../../../../components/record-field";
 import { RelationshipGroups } from "../../../../../components/relationship-groups";
 import { formatDateTime } from "../../../../../lib/format";
 import {
   getPublicEvidence,
+  getPublicHistory,
   getPublicRecord,
   getPublicRegistry,
   listPublicRelationships,
@@ -68,7 +70,7 @@ export default async function RecordPage({
   const recordType = registry.config.getRecordType(
     record.recordTypeId,
   );
-  const [relationshipResult, evidence] = await Promise.all([
+  const [relationshipResult, evidence, history] = await Promise.all([
     listPublicRelationships(
       registry.config,
       record,
@@ -77,6 +79,10 @@ export default async function RecordPage({
       },
     ),
     getPublicEvidence(
+      registry.config,
+      record,
+    ),
+    getPublicHistory(
       registry.config,
       record,
     ),
@@ -214,6 +220,47 @@ export default async function RecordPage({
           ) : null}
         </aside>
       </div>
+
+      {history.events.length > 0 ||
+      history.revisions.length > 0 ? (
+        <section
+          className="section-block"
+          aria-labelledby="history-summary-heading"
+        >
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Change tracking</p>
+              <h2 id="history-summary-heading">
+                History
+              </h2>
+            </div>
+            <div className="section-actions">
+              <span className="metric">
+                {history.revisions.length}{" "}
+                {history.revisions.length === 1
+                  ? "revision"
+                  : "revisions"}
+              </span>
+              <Link
+                href={`/registries/${encodeURIComponent(
+                  registryId,
+                )}/records/${encodeURIComponent(
+                  recordId,
+                )}/history`}
+              >
+                View full history
+              </Link>
+            </div>
+          </div>
+
+          {history.events.length > 0 ? (
+            <HistoryTimeline
+              events={history.events}
+              limit={3}
+            />
+          ) : null}
+        </section>
+      ) : null}
 
       {evidence.groups.length > 0 ? (
         <section
