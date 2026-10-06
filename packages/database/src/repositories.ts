@@ -16,6 +16,7 @@ import type { Pool, QueryResultRow } from "pg";
 export interface RecordListOptions {
   recordTypeId?: string;
   status?: string;
+  statuses?: string[];
   visibility?: RegistryRecord["visibility"];
   limit?: number;
   offset?: number;
@@ -248,6 +249,19 @@ export class PostgresRecordRepository implements RecordRepository {
     }
 
     assertValidRegistryRecord(record, config.registry);
+
+    const compiled = compileRegistryConfig(config);
+    const lifecycle = compiled.publicationLifecycle;
+
+    if (
+      lifecycle &&
+      !lifecycle.statusesById.has(record.status)
+    ) {
+      throw new PersistenceConflictError(
+        `Status ${record.status} is not configured in the publication lifecycle for registry ${record.registryId}.`,
+      );
+    }
+
     return config;
   }
 
@@ -341,7 +355,27 @@ export class PostgresRecordRepository implements RecordRepository {
     if (options.recordTypeId) {
       addFilter("record_type_id", options.recordTypeId);
     }
+    if (options.status && options.statuses?.length) {
+      throw new PersistenceConflictError(
+        "Record list options cannot combine status and statuses.",
+      );
+    }
+
     if (options.status) addFilter("status", options.status);
+
+    if (options.statuses?.length) {
+      values.push([
+        ...new Set(
+          options.statuses
+            .map((status) => status.trim())
+            .filter(Boolean),
+        ),
+      ]);
+      where.push(
+        `status = ANY(${values.length}::text[])`,
+      );
+    }
+
     if (options.visibility) {
       addFilter("visibility", options.visibility);
     }
@@ -368,9 +402,30 @@ export class PostgresRecordRepository implements RecordRepository {
 
   async update(record: RegistryRecord): Promise<RegistryRecord> {
     const config = await this.validate(record);
+    const compiled = compileRegistryConfig(config);
+
+    if (compiled.publicationLifecycle) {
+      const existing = await this.get(
+        record.registryId,
+        record.id,
+      );
+
+      if (!existing) {
+        throw new PersistenceNotFoundError(
+          `Record ${record.registryId}/${record.id} does not exist.`,
+        );
+      }
+
+      if (existing.status !== record.status) {
+        throw new PersistenceConflictError(
+          "Status changes for lifecycle-managed registries must use the publication lifecycle service.",
+        );
+      }
+    }
+
     const searchText = buildRecordSearchText(
       record,
-      compileRegistryConfig(config),
+      compiled,
     );
 
     const result = await this.pool.query<RecordRow>(
