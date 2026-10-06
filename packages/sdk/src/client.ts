@@ -103,6 +103,23 @@ function appendQuery(
     : path;
 }
 
+function optionalNumberHeader(
+  response: Response,
+  name: string,
+): number | undefined {
+  const raw = response.headers.get(name);
+
+  if (raw === null || raw.trim() === "") {
+    return undefined;
+  }
+
+  const parsed = Number(raw);
+
+  return Number.isFinite(parsed)
+    ? parsed
+    : undefined;
+}
+
 function fileNameFromDisposition(
   value: string | null,
 ): string | undefined {
@@ -132,7 +149,7 @@ export class CivicRegistryClient {
   readonly baseUrl: string;
 
   private readonly fetcher: typeof globalThis.fetch;
-  private readonly headers: HeadersInit;
+  private readonly headers: Headers;
 
   constructor(
     options: CivicRegistryClientOptions,
@@ -150,23 +167,30 @@ export class CivicRegistryClient {
       );
     }
 
-    this.fetcher = fetcher.bind(
-      globalThis,
+    this.fetcher = fetcher;
+    this.headers = new Headers(
+      options.headers ?? {},
     );
-    this.headers = options.headers ?? {};
   }
 
   private async response(
     path: string,
   ): Promise<Response> {
+    const requestHeaders =
+      new Headers(this.headers);
+
+    if (!requestHeaders.has("Accept")) {
+      requestHeaders.set(
+        "Accept",
+        "application/json",
+      );
+    }
+
     const response = await this.fetcher(
       `${this.baseUrl}${path}`,
       {
         method: "GET",
-        headers: {
-          Accept: "application/json",
-          ...this.headers,
-        },
+        headers: requestHeaders,
       },
     );
 
@@ -341,32 +365,14 @@ export class CivicRegistryClient {
             "Content-Disposition",
           ),
         ),
-      total: Number.isFinite(
-        Number(
-          response.headers.get(
-            "X-Export-Total",
-          ),
-        ),
-      )
-        ? Number(
-            response.headers.get(
-              "X-Export-Total",
-            ),
-          )
-        : undefined,
-      exported: Number.isFinite(
-        Number(
-          response.headers.get(
-            "X-Export-Count",
-          ),
-        ),
-      )
-        ? Number(
-            response.headers.get(
-              "X-Export-Count",
-            ),
-          )
-        : undefined,
+      total: optionalNumberHeader(
+        response,
+        "X-Export-Total",
+      ),
+      exported: optionalNumberHeader(
+        response,
+        "X-Export-Count",
+      ),
       truncated:
         response.headers.get(
           "X-Export-Truncated",
