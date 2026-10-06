@@ -106,10 +106,34 @@ test("Open Legal Interpretations runs end-to-end on the generic engine", async (
           "open-legal-interpretations",
         sourcesCreated: 1,
         documentsCreated: 2,
-        recordsCreated: 6,
+        recordsCreated: 8,
         citationsCreated: 3,
         relationshipsCreated: 6,
       },
+    );
+
+    const olcBody = await new PostgresRecordRepository(
+      pool,
+      new PostgresRegistryConfigRepository(pool),
+    ).get(
+      config.registry.id,
+      "usdoj-office-of-legal-counsel",
+    );
+    const ogeBody = await new PostgresRecordRepository(
+      pool,
+      new PostgresRegistryConfigRepository(pool),
+    ).get(
+      config.registry.id,
+      "us-office-government-ethics",
+    );
+
+    assert.equal(
+      olcBody?.recordTypeId,
+      "issuing_body",
+    );
+    assert.equal(
+      ogeBody?.recordTypeId,
+      "issuing_body",
     );
 
     const compiled =
