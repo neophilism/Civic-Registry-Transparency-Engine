@@ -302,8 +302,8 @@ async function termsFacet(
       SELECT ${valueExpression} AS value, COUNT(*)::int AS count
       ${fromSql}
       WHERE ${where.sql}
+        AND ${valueExpression} IS NOT NULL
       GROUP BY value
-      HAVING ${valueExpression} IS NOT NULL
       ORDER BY count DESC, value ASC
       LIMIT 50
     `,
