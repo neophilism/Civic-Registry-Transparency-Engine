@@ -47,6 +47,15 @@ export function AdminShell({
               </Link>
               <Link
                 href={
+                  "/admin/registries/" +
+                  encodeURIComponent(registryId) +
+                  "/notifications"
+                }
+              >
+                Notifications
+              </Link>
+              <Link
+                href={
                   "/registries/" +
                   encodeURIComponent(registryId)
                 }
