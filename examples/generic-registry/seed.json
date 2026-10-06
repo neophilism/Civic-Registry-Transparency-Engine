@@ -1,4 +1,33 @@
 {
+  "sources": [
+    {
+      "id": "example-report-source",
+      "registryId": "public-document-catalog",
+      "title": "Example Public Agency Reports",
+      "sourceType": "webpage",
+      "visibility": "public",
+      "canonicalUrl": "https://example.gov/reports",
+      "publishedAt": "2026-01-15T12:00:00.000Z",
+      "retrievedAt": "2026-01-16T09:00:00.000Z",
+      "description": "Official publication page for Example Public Agency reports.",
+      "createdAt": "2026-01-16T09:00:00.000Z"
+    }
+  ],
+  "documents": [
+    {
+      "id": "example-report-pdf",
+      "registryId": "public-document-catalog",
+      "title": "Example Annual Report PDF",
+      "visibility": "public",
+      "sourceId": "example-report-source",
+      "fileName": "example-annual-report-2026.pdf",
+      "mimeType": "application/pdf",
+      "canonicalUrl": "https://example.gov/reports/example-annual-report-2026.pdf",
+      "pageCount": 12,
+      "language": "en",
+      "createdAt": "2026-01-16T09:05:00.000Z"
+    }
+  ],
   "records": [
     {
       "id": "example-agency",
@@ -34,6 +63,23 @@
       "createdAt": "2026-01-15T12:05:00.000Z",
       "updatedAt": "2026-01-15T12:05:00.000Z",
       "publishedAt": "2026-01-15T12:05:00.000Z"
+    }
+  ],
+  "citations": [
+    {
+      "id": "example-report-summary-citation",
+      "registryId": "public-document-catalog",
+      "recordId": "example-report",
+      "fieldId": "summary",
+      "sourceId": "example-report-source",
+      "documentId": "example-report-pdf",
+      "locator": {
+        "page": 1,
+        "section": "Executive Summary"
+      },
+      "note": "Example field-level citation demonstrating evidence traceability.",
+      "visibility": "public",
+      "createdAt": "2026-01-16T09:10:00.000Z"
     }
   ],
   "relationships": [
