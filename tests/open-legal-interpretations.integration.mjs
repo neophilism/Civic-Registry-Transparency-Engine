@@ -114,9 +114,11 @@ test("Open Legal Interpretations runs end-to-end on the generic engine", async (
 
     const compiled =
       compileRegistryConfig(config);
+    const lifecycle =
+      compiled.publicationLifecycle;
+    assert.ok(lifecycle);
     const publicStatuses = [
-      ...compiled.publicationLifecycle!
-        .publicStatusIds,
+      ...lifecycle.publicStatusIds,
     ];
     const search =
       new PostgresSearchProvider(pool);
