@@ -450,6 +450,66 @@ test("dry runs validate rows and persist run diagnostics without mutating record
       items[0].outcome,
       "validated",
     );
+
+    const createOnly = profile({
+      id: "dry-create-only",
+      mode: "create",
+    });
+
+    await service.run({
+      registryId: config.registry.id,
+      profile: createOnly,
+      format: "json",
+      input: JSON.stringify([
+        {
+          id: "doc-existing",
+          external_id: "EXT-EXISTING",
+          title: "Existing record",
+          type: "report",
+          published_on: "2026-05-03",
+        },
+      ]),
+      sourceLabel: "existing.json",
+      now: "2026-05-03T12:00:00.000Z",
+    });
+
+    const collision = await service.run({
+      registryId: config.registry.id,
+      profile: createOnly,
+      format: "json",
+      input: JSON.stringify([
+        {
+          id: "doc-existing",
+          external_id: "EXT-EXISTING",
+          title: "Would collide",
+          type: "report",
+          published_on: "2026-05-03",
+        },
+      ]),
+      sourceLabel: "collision.json",
+      dryRun: true,
+      now: "2026-05-04T12:00:00.000Z",
+    });
+
+    assert.equal(
+      collision.run.status,
+      "completed_with_errors",
+    );
+    assert.equal(
+      collision.run.failedItems,
+      1,
+    );
+
+    const collisionItems =
+      await service.listItems(
+        config.registry.id,
+        collision.run.id,
+      );
+
+    assert.equal(
+      collisionItems[0].errorCode,
+      "persistence_conflict",
+    );
   } finally {
     await pool.end();
   }
