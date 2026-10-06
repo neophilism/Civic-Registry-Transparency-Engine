@@ -61,6 +61,42 @@ export default async function RegistryPage({
       </header>
 
       <section
+        className="registry-search-entry"
+        aria-labelledby="registry-search-entry-heading"
+      >
+        <div>
+          <p className="eyebrow">Search the registry</p>
+          <h2 id="registry-search-entry-heading">
+            Find public records
+          </h2>
+          <p>
+            Search across every configured public record type, then
+            narrow the results with record-type and field-specific
+            filters.
+          </p>
+        </div>
+        <form
+          method="get"
+          action={`/registries/${encodeURIComponent(
+            definition.id,
+          )}/search`}
+        >
+          <label htmlFor="registry-overview-search">
+            Search terms
+          </label>
+          <div>
+            <input
+              id="registry-overview-search"
+              name="q"
+              type="search"
+              placeholder="Search this registry"
+            />
+            <button type="submit">Search</button>
+          </div>
+        </form>
+      </section>
+
+      <section
         className="section-block"
         aria-labelledby="record-types-heading"
       >
