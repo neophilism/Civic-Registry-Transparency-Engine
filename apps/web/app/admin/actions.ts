@@ -796,7 +796,7 @@ export async function runAdminNotifications(
     const result = await service.run(registryId);
 
     notice =
-      `Collected ${result.collected} events, created ${result.materialized} deliveries, sent ${result.dispatched}, and recorded ${result.failed} delivery failures.`;
+      `Collected ${result.collected} events, created ${result.materialized} deliveries, sent ${result.dispatched}, suppressed ${result.suppressed}, and recorded ${result.failed} delivery failures.`;
   } catch (error) {
     failure = errorMessage(
       error,
