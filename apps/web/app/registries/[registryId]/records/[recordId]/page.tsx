@@ -6,12 +6,14 @@ import {
 } from "@civic-registry/registry";
 
 import { Breadcrumbs } from "../../../../../components/breadcrumbs";
+import { DeadlineList } from "../../../../../components/deadline-list";
 import { EvidenceGroups } from "../../../../../components/evidence-groups";
 import { HistoryTimeline } from "../../../../../components/history-timeline";
 import { RecordFieldValue } from "../../../../../components/record-field";
 import { RelationshipGroups } from "../../../../../components/relationship-groups";
 import { formatDateTime } from "../../../../../lib/format";
 import {
+  getPublicDeadlines,
   getPublicEvidence,
   getPublicHistory,
   getPublicRecordView,
@@ -73,13 +75,22 @@ export default async function RecordPage({
   const recordType = registry.config.getRecordType(
     record.recordTypeId,
   );
-  const [relationshipResult, evidence, history] = await Promise.all([
+  const [
+    relationshipResult,
+    deadlines,
+    evidence,
+    history,
+  ] = await Promise.all([
     listPublicRelationships(
       registry.config,
       record,
       {
         maxNodes: 101,
       },
+    ),
+    getPublicDeadlines(
+      registry.config,
+      record,
     ),
     getPublicEvidence(
       registry.config,
@@ -261,6 +272,32 @@ export default async function RecordPage({
           ) : null}
         </aside>
       </div>
+
+      {deadlines.length > 0 ? (
+        <section
+          className="section-block"
+          aria-labelledby="deadlines-heading"
+        >
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">
+                Time-sensitive obligations
+              </p>
+              <h2 id="deadlines-heading">
+                Deadlines
+              </h2>
+            </div>
+            <span className="metric">
+              {deadlines.length}{" "}
+              {deadlines.length === 1
+                ? "deadline"
+                : "deadlines"}
+            </span>
+          </div>
+
+          <DeadlineList deadlines={deadlines} />
+        </section>
+      ) : null}
 
       {history.events.length > 0 ||
       history.revisions.length > 0 ? (
