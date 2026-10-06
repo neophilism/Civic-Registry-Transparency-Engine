@@ -87,6 +87,19 @@ function fieldLabel(
   return fieldId;
 }
 
+function statusLabel(
+  registry: CompiledRegistryConfig,
+  statusId: string | undefined,
+): string | undefined {
+  if (!statusId) return undefined;
+
+  return (
+    registry.publicationLifecycle?.statusesById.get(
+      statusId,
+    )?.label ?? statusId
+  );
+}
+
 function relationshipLabel(
   registry: CompiledRegistryConfig,
   event: AuditEvent,
@@ -146,6 +159,14 @@ export function presentHistoryEvent(
   const toStatus = stringValue(
     event.metadata?.toStatus,
   );
+  const fromStatusLabel = statusLabel(
+    registry,
+    fromStatus,
+  );
+  const toStatusLabel = statusLabel(
+    registry,
+    toStatus,
+  );
   const fieldId = stringValue(
     event.metadata?.fieldId,
   );
@@ -177,20 +198,20 @@ export function presentHistoryEvent(
     case "record.published":
       label = "Record published";
       detail = fromStatus
-        ? `Status changed from ${fromStatus} to ${toStatus ?? "published"}.`
+        ? `Status changed from ${fromStatusLabel} to ${toStatusLabel ?? "Published"}.`
         : undefined;
       break;
     case "record.withdrawn":
       label = "Record withdrawn";
       detail = fromStatus
-        ? `Status changed from ${fromStatus} to ${toStatus ?? "withdrawn"}.`
+        ? `Status changed from ${fromStatusLabel} to ${toStatusLabel ?? "Withdrawn"}.`
         : undefined;
       break;
     case "record.status_changed":
       label = "Record status changed";
       detail =
         fromStatus || toStatus
-          ? `Status changed from ${fromStatus ?? "unknown"} to ${toStatus ?? "unknown"}.`
+          ? `Status changed from ${fromStatusLabel ?? "unknown"} to ${toStatusLabel ?? "unknown"}.`
           : undefined;
       break;
     case "record.visibility_changed":
@@ -334,8 +355,12 @@ function fieldChanges(
     changes.push({
       key: "status",
       label: "Status",
-      before: previous.status,
-      after: current.status,
+      before:
+        statusLabel(registry, previous.status) ??
+        previous.status,
+      after:
+        statusLabel(registry, current.status) ??
+        current.status,
     });
   }
 
