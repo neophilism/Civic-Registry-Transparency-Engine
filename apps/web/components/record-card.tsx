@@ -18,7 +18,7 @@ export function RecordCard({
     <article className="record-card">
       <div className="record-card__meta">
         <span>{record.recordTypeName}</span>
-        <span>{record.status}</span>
+        <span>{record.statusLabel}</span>
       </div>
 
       <h3>
