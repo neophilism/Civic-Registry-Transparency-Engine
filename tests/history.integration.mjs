@@ -399,3 +399,30 @@ test("database history captures optional actor and reason session context", asyn
     await pool.end();
   }
 });
+
+
+test("repeat seeding does not manufacture relationship or citation audit history", async () => {
+  const { pool, history } = await setup();
+
+  try {
+    const before = await history.listEvents(
+      config.registry.id,
+      "example-report",
+    );
+
+    await seedRegistry(pool, config, seed);
+
+    const after = await history.listEvents(
+      config.registry.id,
+      "example-report",
+    );
+
+    assert.equal(after.length, before.length);
+    assert.deepEqual(
+      after.map((event) => event.eventType),
+      before.map((event) => event.eventType),
+    );
+  } finally {
+    await pool.end();
+  }
+});
