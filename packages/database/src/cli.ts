@@ -547,7 +547,6 @@ async function verifyIntegrity(
         JSON.stringify(
           {
             command: "integrity-verify",
-            registryId,
             ...result,
           },
           null,
