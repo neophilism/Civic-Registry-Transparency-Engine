@@ -931,7 +931,7 @@ export class PostgresNotificationService {
     registryId: string,
     now = new Date().toISOString(),
   ): Promise<number> {
-    const { config, settings } =
+    const { settings } =
       await this.settings(registryId);
     let collected = 0;
 
@@ -1494,7 +1494,7 @@ export class PostgresNotificationService {
     failed: number;
     suppressed: number;
   }> {
-    const { settings } =
+    const { config, settings } =
       await this.settings(registryId);
     const now =
       options.now ?? new Date().toISOString();
