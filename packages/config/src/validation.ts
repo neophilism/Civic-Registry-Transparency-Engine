@@ -6,6 +6,7 @@ import {
 
 import {
   REGISTRY_CONFIG_SCHEMA_VERSION,
+  type DisclosureConfig,
   type PublicationLifecycleConfig,
   type RegistryConfigFile,
   type RegistryPresentationConfig,
@@ -741,6 +742,83 @@ function validatePublicationLifecycle(
   return issues;
 }
 
+function validateDisclosure(
+  disclosure: unknown,
+): ConfigValidationIssue[] {
+  const issues: ConfigValidationIssue[] = [];
+
+  if (disclosure === undefined) return issues;
+
+  if (!isPlainObject(disclosure)) {
+    return [
+      {
+        path: "disclosure",
+        code: "invalid_disclosure_config",
+        message: "disclosure must be an object.",
+      },
+    ];
+  }
+
+  if (
+    disclosure.withheldRecordBehavior !== undefined &&
+    disclosure.withheldRecordBehavior !== "hidden" &&
+    disclosure.withheldRecordBehavior !== "placeholder"
+  ) {
+    issues.push({
+      path: "disclosure.withheldRecordBehavior",
+      code: "invalid_withheld_record_behavior",
+      message:
+        "withheldRecordBehavior must be hidden or placeholder.",
+    });
+  }
+
+  for (const key of [
+    "defaultRedactionText",
+    "defaultWithheldFieldText",
+    "withheldRecordTitle",
+    "withheldRecordSummary",
+    "withheldDocumentTitle",
+  ] as const) {
+    const value = disclosure[key];
+
+    if (
+      value !== undefined &&
+      (
+        typeof value !== "string" ||
+        value.trim().length === 0
+      )
+    ) {
+      issues.push({
+        path: `disclosure.${key}`,
+        code: "invalid_disclosure_text",
+        message:
+          `${key} must be a non-empty string when provided.`,
+      });
+    }
+  }
+
+  for (const key of [
+    "showReasons",
+    "showAuthorities",
+  ] as const) {
+    const value = disclosure[key];
+
+    if (
+      value !== undefined &&
+      typeof value !== "boolean"
+    ) {
+      issues.push({
+        path: `disclosure.${key}`,
+        code: "invalid_disclosure_boolean",
+        message:
+          `${key} must be a boolean when provided.`,
+      });
+    }
+  }
+
+  return issues;
+}
+
 export function validateRegistryConfig(
   value: unknown,
 ): ConfigValidationIssue[] {
@@ -771,6 +849,11 @@ export function validateRegistryConfig(
     issues.push(
       ...validatePublicationLifecycle(
         value.publicationLifecycle,
+      ),
+    );
+    issues.push(
+      ...validateDisclosure(
+        value.disclosure,
       ),
     );
     issues.push(
@@ -808,4 +891,11 @@ export function getPublicationLifecycleConfig(
   value: RegistryConfigFile,
 ): PublicationLifecycleConfig | undefined {
   return value.publicationLifecycle;
+}
+
+
+export function getDisclosureConfig(
+  value: RegistryConfigFile,
+): DisclosureConfig | undefined {
+  return value.disclosure;
 }
