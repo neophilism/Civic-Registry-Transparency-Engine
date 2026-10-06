@@ -1,6 +1,7 @@
 import {
   createDatabasePool,
   PostgresCitationRepository,
+  PostgresDisclosureRepository,
   PostgresDocumentRepository,
   PostgresRecordHistoryRepository,
   PostgresRecordRepository,
@@ -56,6 +57,12 @@ export function getRepositories() {
     sources,
     documents,
   );
+  const disclosure = new PostgresDisclosureRepository(
+    pool,
+    configs,
+    records,
+    documents,
+  );
   const search = new PostgresSearchProvider(pool);
 
   return {
@@ -67,6 +74,7 @@ export function getRepositories() {
     sources,
     documents,
     citations,
+    disclosure,
     search,
   };
 }

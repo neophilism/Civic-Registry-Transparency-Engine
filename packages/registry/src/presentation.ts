@@ -8,6 +8,11 @@ import type {
   CompiledRegistryConfig,
 } from "@civic-registry/config";
 
+import type {
+  PublicFieldDisclosure,
+  PublicRecordDisclosure,
+} from "./disclosure.ts";
+
 export interface PresentedField {
   id: string;
   label: string;
@@ -15,6 +20,7 @@ export interface PresentedField {
   rawValue: FieldValue | undefined;
   displayValue: string;
   empty: boolean;
+  disclosure?: PublicFieldDisclosure;
 }
 
 export interface PresentedRecordSummary {
@@ -30,6 +36,7 @@ export interface PresentedRecordSummary {
   statusLabel: string;
   updatedAt: string;
   fields: PresentedField[];
+  disclosure?: PublicRecordDisclosure;
 }
 
 export interface PresentedRecordDetail extends PresentedRecordSummary {
@@ -135,6 +142,7 @@ function fieldValueAsSummary(
 function presentFields(
   record: RegistryRecord,
   fields: ReadonlyArray<FieldDefinition>,
+  disclosure?: PublicRecordDisclosure,
 ): PresentedField[] {
   return fields.map((field) => {
     const rawValue = record.fields[field.id];
@@ -147,6 +155,8 @@ function presentFields(
       rawValue,
       displayValue,
       empty: displayValue.trim().length === 0,
+      disclosure:
+        disclosure?.fields[field.id],
     };
   });
 }
@@ -154,6 +164,7 @@ function presentFields(
 export function presentRecordSummary(
   record: RegistryRecord,
   registry: CompiledRegistryConfig,
+  disclosure?: PublicRecordDisclosure,
 ): PresentedRecordSummary {
   const recordType = registry.getRecordType(record.recordTypeId);
 
@@ -172,23 +183,37 @@ export function presentRecordSummary(
         record.status,
       )?.label ?? record.status,
     updatedAt: record.updatedAt,
-    fields: presentFields(record, recordType.listFields),
+    fields: presentFields(
+      record,
+      recordType.listFields,
+      disclosure,
+    ),
+    disclosure,
   };
 }
 
 export function presentRecordDetail(
   record: RegistryRecord,
   registry: CompiledRegistryConfig,
+  disclosure?: PublicRecordDisclosure,
 ): PresentedRecordDetail {
   const recordType = registry.getRecordType(record.recordTypeId);
 
   return {
-    ...presentRecordSummary(record, registry),
+    ...presentRecordSummary(
+      record,
+      registry,
+      disclosure,
+    ),
     visibility: record.visibility,
     createdAt: record.createdAt,
     publishedAt: record.publishedAt,
     tags: record.tags ?? [],
     externalIdentifiers: record.externalIdentifiers ?? [],
-    fields: presentFields(record, recordType.detailFields),
+    fields: presentFields(
+      record,
+      recordType.detailFields,
+      disclosure,
+    ),
   };
 }

@@ -118,6 +118,19 @@ export function normalizeSearchRequest(
     });
   }
 
+  if (
+    request.projection !== undefined &&
+    request.projection !== "internal" &&
+    request.projection !== "public"
+  ) {
+    issues.push({
+      path: "projection",
+      code: "invalid_search_projection",
+      message:
+        "projection must be internal or public.",
+    });
+  }
+
   const recordType = getSelectedRecordType(
     registry,
     request,
@@ -235,6 +248,7 @@ export function normalizeSearchRequest(
     page,
     pageSize,
     visibility: request.visibility,
+    projection: request.projection ?? "internal",
   };
 }
 

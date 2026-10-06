@@ -16,23 +16,23 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 10 — Configurable publication lifecycle**
+**PR 11 — Disclosure and redaction controls**
 
-The engine now includes the reusable foundation completed through PR 9:
-schema-driven registries, PostgreSQL persistence, public search, relationships,
-source/evidence traceability, and immutable record history.
+The engine now includes configurable publication lifecycle, immutable history,
+evidence traceability, relationships, and public search.
 
-PR 10 adds configuration-driven publication workflows with:
+PR 11 adds non-destructive disclosure controls with:
 
-- named lifecycle states and public-state semantics;
-- allowed state transitions;
-- generic role requirements;
-- approval-gated transitions;
-- scheduled publication;
-- database-level state-machine enforcement;
-- lifecycle-aware public search, lists, relationships, and history.
+- whole-record withholding;
+- field-level redaction/withholding;
+- safe public record projections;
+- separate public-safe search fields/indexes;
+- document disclosure and sanitized-artifact references;
+- document redaction metadata;
+- disclosure-aware relationships, evidence, and history;
+- immutable disclosure audit events.
 
-See [Publication lifecycle](docs/PUBLICATION-LIFECYCLE.md).
+See [Disclosure and redaction](docs/DISCLOSURE-REDACTION.md).
 
 ## Local development
 

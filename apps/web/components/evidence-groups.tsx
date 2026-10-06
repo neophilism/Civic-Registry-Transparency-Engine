@@ -1,5 +1,6 @@
-import type {
-  PresentedCitationGroup,
+import {
+  formatCitationLocator,
+  type PresentedCitationGroup,
 } from "@civic-registry/registry";
 
 import { formatDateTime } from "../lib/format";
@@ -77,6 +78,90 @@ export function EvidenceGroups({
                           {citation.source.title}
                         </EvidenceLink>
                       </h4>
+                    </div>
+                  ) : null}
+
+                  {citation.document?.disclosure &&
+                  citation.document.disclosure
+                    .disposition !== "disclosed" ? (
+                    <div className="document-disclosure">
+                      <strong>
+                        {citation.document.disclosure
+                          .disposition === "withheld"
+                          ? "Document withheld"
+                          : "Redacted public copy"}
+                      </strong>
+                      {citation.document.disclosure
+                        .publicNote ? (
+                        <p>
+                          {
+                            citation.document
+                              .disclosure.publicNote
+                          }
+                        </p>
+                      ) : null}
+                      {citation.document.disclosure.reason ? (
+                        <p>
+                          <span>Reason:</span>{" "}
+                          {
+                            citation.document
+                              .disclosure.reason
+                          }
+                        </p>
+                      ) : null}
+                      {citation.document.disclosure
+                        .authority ? (
+                        <p>
+                          <span>Authority:</span>{" "}
+                          {
+                            citation.document
+                              .disclosure.authority
+                          }
+                        </p>
+                      ) : null}
+                      {citation.document.disclosure
+                        .redactions.length > 0 ? (
+                        <ul className="redaction-list">
+                          {citation.document.disclosure.redactions.map(
+                            (redaction) => {
+                              const location =
+                                formatCitationLocator(
+                                  redaction.locator,
+                                );
+
+                              return (
+                                <li key={redaction.id}>
+                                  <strong>
+                                    {location ??
+                                      "Document redaction"}
+                                  </strong>
+                                  {redaction.publicNote ? (
+                                    <span>
+                                      {
+                                        redaction.publicNote
+                                      }
+                                    </span>
+                                  ) : null}
+                                  {redaction.reason ? (
+                                    <span>
+                                      Reason:{" "}
+                                      {redaction.reason}
+                                    </span>
+                                  ) : null}
+                                  {redaction.authority ? (
+                                    <span>
+                                      Authority:{" "}
+                                      {
+                                        redaction.authority
+                                      }
+                                    </span>
+                                  ) : null}
+                                </li>
+                              );
+                            },
+                          )}
+                        </ul>
+                      ) : null}
                     </div>
                   ) : null}
 

@@ -74,7 +74,16 @@ export async function rebuildRegistrySearchIndex(
       await client.query(
         `
           UPDATE civic_registry_records
-          SET search_text = $3
+          SET
+            search_text = $3,
+            public_search_text =
+              civic_registry_public_record_search_text(
+                registry_id,
+                id,
+                record_type_id,
+                tags,
+                public_fields
+              )
           WHERE registry_id = $1 AND id = $2
         `,
         [record.registryId, record.id, searchText],

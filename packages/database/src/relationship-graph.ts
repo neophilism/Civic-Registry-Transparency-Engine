@@ -19,6 +19,7 @@ export interface RelationshipGraphQuery {
   depth?: number;
   relationshipTypeIds?: string[];
   statusIds?: string[];
+  excludeWithheld?: boolean;
   direction?: RelationshipTraversalDirection;
   visibility?: Visibility;
   maxNodes?: number;
@@ -186,6 +187,29 @@ export class PostgresRelationshipGraphRepository {
       );
     }
 
+    if (query.excludeWithheld) {
+      where.push(`
+        NOT EXISTS (
+          SELECT 1
+          FROM civic_registry_record_disclosures AS disclosure
+          WHERE disclosure.registry_id =
+            from_record.registry_id
+            AND disclosure.record_id = from_record.id
+            AND disclosure.disposition = 'withheld'
+        )
+      `);
+      where.push(`
+        NOT EXISTS (
+          SELECT 1
+          FROM civic_registry_record_disclosures AS disclosure
+          WHERE disclosure.registry_id =
+            to_record.registry_id
+            AND disclosure.record_id = to_record.id
+            AND disclosure.disposition = 'withheld'
+        )
+      `);
+    }
+
     const result = await this.pool.query<EdgeRow>(
       `
         SELECT rel.*
@@ -235,6 +259,20 @@ export class PostgresRelationshipGraphRepository {
       rootWhere.push(
         `status = ANY($${rootValues.length}::text[])`,
       );
+    }
+
+    if (query.excludeWithheld) {
+      rootWhere.push(`
+        NOT EXISTS (
+          SELECT 1
+          FROM civic_registry_record_disclosures AS disclosure
+          WHERE disclosure.registry_id =
+            civic_registry_records.registry_id
+            AND disclosure.record_id =
+              civic_registry_records.id
+            AND disclosure.disposition = 'withheld'
+        )
+      `);
     }
 
     const root = await this.pool.query<RecordRow>(
@@ -329,6 +367,20 @@ export class PostgresRelationshipGraphRepository {
       where.push(
         `status = ANY($${values.length}::text[])`,
       );
+    }
+
+    if (query.excludeWithheld) {
+      where.push(`
+        NOT EXISTS (
+          SELECT 1
+          FROM civic_registry_record_disclosures AS disclosure
+          WHERE disclosure.registry_id =
+            civic_registry_records.registry_id
+            AND disclosure.record_id =
+              civic_registry_records.id
+            AND disclosure.disposition = 'withheld'
+        )
+      `);
     }
 
     const records = await this.pool.query<RecordRow>(

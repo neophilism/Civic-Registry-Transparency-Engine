@@ -14,7 +14,7 @@ import { formatDateTime } from "../../../../../lib/format";
 import {
   getPublicEvidence,
   getPublicHistory,
-  getPublicRecord,
+  getPublicRecordView,
   getPublicRegistry,
   listPublicRelationships,
 } from "../../../../../lib/public-registry";
@@ -32,18 +32,19 @@ export async function generateMetadata({
   params,
 }: RecordPageProps): Promise<Metadata> {
   const { registryId, recordId } = await params;
-  const [registry, record] = await Promise.all([
+  const [registry, recordView] = await Promise.all([
     getPublicRegistry(registryId),
-    getPublicRecord(registryId, recordId),
+    getPublicRecordView(registryId, recordId),
   ]);
 
-  if (!registry || !record) {
+  if (!registry || !recordView) {
     return { title: "Record not found" };
   }
 
   const presented = presentRecordDetail(
-    record,
+    recordView.record,
     registry.config,
+    recordView.disclosure,
   );
 
   return {
@@ -56,16 +57,18 @@ export default async function RecordPage({
   params,
 }: RecordPageProps) {
   const { registryId, recordId } = await params;
-  const [registry, record] = await Promise.all([
+  const [registry, recordView] = await Promise.all([
     getPublicRegistry(registryId),
-    getPublicRecord(registryId, recordId),
+    getPublicRecordView(registryId, recordId),
   ]);
 
-  if (!registry || !record) notFound();
+  if (!registry || !recordView) notFound();
 
+  const record = recordView.record;
   const presented = presentRecordDetail(
     record,
     registry.config,
+    recordView.disclosure,
   );
   const recordType = registry.config.getRecordType(
     record.recordTypeId,
@@ -127,6 +130,44 @@ export default async function RecordPage({
           </span>
         </div>
       </header>
+
+      {presented.disclosure &&
+      presented.disclosure.disposition !==
+        "disclosed" ? (
+        <section
+          className="disclosure-notice"
+          aria-label="Disclosure status"
+        >
+          <div>
+            <p className="eyebrow">
+              Public disclosure
+            </p>
+            <h2>
+              {presented.disclosure.disposition ===
+              "withheld"
+                ? "Record contents withheld"
+                : "Record contains redactions"}
+            </h2>
+          </div>
+          <div className="disclosure-notice__detail">
+            {presented.disclosure.publicNote ? (
+              <p>{presented.disclosure.publicNote}</p>
+            ) : null}
+            {presented.disclosure.reason ? (
+              <p>
+                <strong>Reason:</strong>{" "}
+                {presented.disclosure.reason}
+              </p>
+            ) : null}
+            {presented.disclosure.authority ? (
+              <p>
+                <strong>Authority:</strong>{" "}
+                {presented.disclosure.authority}
+              </p>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       <div className="record-layout">
         <section

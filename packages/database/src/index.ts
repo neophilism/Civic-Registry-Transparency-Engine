@@ -8,3 +8,4 @@ export * from "./relationship-graph.ts";
 export * from "./evidence.ts";
 export * from "./history.ts";
 export * from "./lifecycle.ts";
+export * from "./disclosure.ts";

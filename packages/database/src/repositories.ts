@@ -22,6 +22,7 @@ export interface RecordListOptions {
   status?: string;
   statuses?: string[];
   visibility?: RegistryRecord["visibility"];
+  excludeWithheld?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -184,6 +185,15 @@ export class PostgresRegistryConfigRepository
         config.schemaVersion,
         JSON.stringify(config),
       ],
+    );
+
+    await this.pool.query(
+      `
+        UPDATE civic_registry_records
+        SET fields = fields
+        WHERE registry_id = $1
+      `,
+      [config.registry.id],
     );
   }
 
@@ -433,6 +443,20 @@ export class PostgresRecordRepository implements RecordRepository {
 
     if (options.visibility) {
       addFilter("visibility", options.visibility);
+    }
+
+    if (options.excludeWithheld) {
+      where.push(`
+        NOT EXISTS (
+          SELECT 1
+          FROM civic_registry_record_disclosures AS disclosure
+          WHERE disclosure.registry_id =
+            civic_registry_records.registry_id
+            AND disclosure.record_id =
+              civic_registry_records.id
+            AND disclosure.disposition = 'withheld'
+        )
+      `);
     }
 
     values.push(clampLimit(options.limit));

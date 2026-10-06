@@ -24,8 +24,13 @@ export interface SearchSort {
   direction?: "asc" | "desc";
 }
 
+export type SearchProjection =
+  | "internal"
+  | "public";
+
 export interface SearchRequest {
   registryId: string;
+  projection?: SearchProjection;
   text?: string;
   recordTypeId?: string;
   statuses?: string[];

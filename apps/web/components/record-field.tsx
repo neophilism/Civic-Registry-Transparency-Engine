@@ -20,6 +20,27 @@ export function RecordFieldValue({
   field: PresentedField;
   registryId: string;
 }) {
+  if (field.disclosure) {
+    return (
+      <span className="disclosure-value">
+        <strong>{field.displayValue}</strong>
+        {field.disclosure.publicNote ? (
+          <small>{field.disclosure.publicNote}</small>
+        ) : null}
+        {field.disclosure.reason ? (
+          <small>
+            Reason: {field.disclosure.reason}
+          </small>
+        ) : null}
+        {field.disclosure.authority ? (
+          <small>
+            Authority: {field.disclosure.authority}
+          </small>
+        ) : null}
+      </span>
+    );
+  }
+
   if (field.empty) {
     return <span className="empty-value">Not provided</span>;
   }
