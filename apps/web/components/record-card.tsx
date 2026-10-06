@@ -8,6 +8,12 @@ export function RecordCard({
 }: {
   record: PresentedRecordSummary;
 }) {
+  const secondaryFields = record.fields.filter(
+    (field) =>
+      field.id !== record.titleFieldId &&
+      field.id !== record.summaryFieldId,
+  );
+
   return (
     <article className="record-card">
       <div className="record-card__meta">
@@ -31,17 +37,9 @@ export function RecordCard({
         </p>
       ) : null}
 
-      <dl className="record-card__fields">
-        {record.fields
-          .filter(
-            (field) =>
-              field.id !==
-              record.fields.find(
-                (candidate) =>
-                  candidate.displayValue === record.title,
-              )?.id,
-          )
-          .map((field) => (
+      {secondaryFields.length > 0 ? (
+        <dl className="record-card__fields">
+          {secondaryFields.map((field) => (
             <div key={field.id}>
               <dt>{field.label}</dt>
               <dd>
@@ -52,7 +50,8 @@ export function RecordCard({
               </dd>
             </div>
           ))}
-      </dl>
+        </dl>
+      ) : null}
     </article>
   );
 }
