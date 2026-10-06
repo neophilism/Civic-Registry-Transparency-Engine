@@ -1,0 +1,16 @@
+{
+  "name": "@civic-registry/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generic domain model and validation primitives for the Civic Registry & Transparency Engine.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}
