@@ -7,7 +7,6 @@ import {
 } from "../packages/config/src/index.ts";
 import {
   createDatabasePool,
-  getDatabasePool as _unused,
   runMigrations,
   seedRegistry,
 } from "../packages/database/src/index.ts";
