@@ -557,18 +557,81 @@ export async function getPublicEvidence(
   registry: CompiledRegistryConfig,
   record: RegistryRecord,
 ): Promise<PublicEvidenceResult> {
-  const { citations } = getRepositories();
-  const evidence = await citations.listEvidenceForRecord(
-    registry.definition.id,
-    record.id,
-    {
-      visibility: "public",
-      limit: 500,
-    },
+  const { citations, disclosure } = getRepositories();
+  const recordBundle =
+    await disclosure.getRecordBundle(
+      registry.definition.id,
+      record.id,
+    );
+
+  if (
+    recordBundle.record?.disposition === "withheld"
+  ) {
+    return {
+      citations: [],
+      groups: [],
+    };
+  }
+
+  const hiddenFieldIds = new Set(
+    recordBundle.fields.map(
+      (field) => field.fieldId,
+    ),
   );
-  const presented = evidence.map((item) =>
-    presentCitation(item, record, registry),
+  const evidence = (
+    await citations.listEvidenceForRecord(
+      registry.definition.id,
+      record.id,
+      {
+        visibility: "public",
+        limit: 500,
+      },
+    )
+  ).filter(
+    (item) =>
+      !item.citation.fieldId ||
+      !hiddenFieldIds.has(item.citation.fieldId),
   );
+  const documentIds = evidence.flatMap((item) =>
+    item.document ? [item.document.id] : [],
+  );
+  const documentBundles =
+    await disclosure.listDocumentBundles(
+      registry.definition.id,
+      documentIds,
+    );
+  const presented = evidence.map((item) => {
+    if (!item.document) {
+      return presentCitation(
+        item,
+        record,
+        registry,
+      );
+    }
+
+    const bundle =
+      documentBundles.get(item.document.id) ?? {
+        redactions: [],
+      };
+    const projection =
+      projectDocumentForPublic(
+        item.document,
+        registry,
+        bundle.document ?? null,
+        bundle.redactions,
+      );
+
+    return presentCitation(
+      {
+        ...item,
+        document: projection.document,
+        documentDisclosure:
+          projection.disclosure,
+      },
+      record,
+      registry,
+    );
+  });
 
   return {
     citations: presented,
@@ -581,8 +644,11 @@ export async function getPublicHistory(
   registry: CompiledRegistryConfig,
   record: RegistryRecord,
 ): Promise<PublicHistoryResult> {
-  const { history } = getRepositories();
-  const [events, versions] = await Promise.all([
+  const { history, disclosure } =
+    getRepositories();
+  const [events, versions, recordBundle] =
+    await Promise.all([
+
     history.listEvents(
       registry.definition.id,
       record.id,
@@ -599,23 +665,58 @@ export async function getPublicHistory(
         limit: 500,
       },
     ),
+    disclosure.getRecordBundle(
+      registry.definition.id,
+      record.id,
+    ),
   ]);
 
   const lifecycle = registry.publicationLifecycle;
-  const publicVersions = lifecycle
+  const lifecycleVersions = lifecycle
     ? versions.filter((version) =>
         lifecycle.isPublicStatus(
           version.snapshot.status,
         ),
       )
     : versions;
-  const presentedEvents = events.map((event) =>
-    presentHistoryEvent(
-      event,
-      record,
-      registry,
-    ),
-  );
+  const publicVersions =
+    recordBundle.record?.disposition ===
+    "withheld"
+      ? []
+      : lifecycleVersions.flatMap((version) => {
+          const projection =
+            projectRecordForPublic(
+              version.snapshot,
+              registry,
+              recordBundle.record ?? null,
+              recordBundle.fields,
+            );
+
+          return projection.record
+            ? [
+                {
+                  ...version,
+                  snapshot: projection.record,
+                },
+              ]
+            : [];
+        });
+  const presentedEvents = events
+    .filter(
+      (event) =>
+        recordBundle.record?.disposition !==
+          "withheld" ||
+        event.eventType.startsWith(
+          "disclosure.",
+        ),
+    )
+    .map((event) =>
+      presentHistoryEvent(
+        event,
+        record,
+        registry,
+      ),
+    );
   const publicEvents = lifecycle
     ? presentedEvents.filter((event) => {
         const status = lifecycleStatusAtEvent(
