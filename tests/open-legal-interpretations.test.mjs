@@ -104,3 +104,20 @@ test("reference application presentation reuses generic engine services", () => 
     /Registry &amp; Transparency Engine/,
   );
 });
+
+
+test("installed-registry home routes the reference application to its dedicated presentation", () => {
+  const home = fs.readFileSync(
+    "apps/web/app/page.tsx",
+    "utf8",
+  );
+
+  assert.match(
+    home,
+    /open-legal-interpretations/,
+  );
+  assert.match(
+    home,
+    /\/open-legal-interpretations/,
+  );
+});
