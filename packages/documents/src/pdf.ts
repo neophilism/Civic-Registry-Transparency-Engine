@@ -1,6 +1,14 @@
 import {
   createHash,
 } from "node:crypto";
+import {
+  createRequire,
+} from "node:module";
+import {
+  dirname,
+  join,
+  sep,
+} from "node:path";
 
 import {
   getDocument,
@@ -11,6 +19,20 @@ import type {
   ExtractedDocumentPage,
   PdfExtraction,
 } from "./types.ts";
+
+const require =
+  createRequire(import.meta.url);
+const pdfjsPackageRoot =
+  dirname(
+    require.resolve(
+      "pdfjs-dist/package.json",
+    ),
+  );
+const standardFontDataUrl =
+  join(
+    pdfjsPackageRoot,
+    "standard_fonts",
+  ) + sep;
 
 function sha256(
   value: string,
@@ -87,6 +109,7 @@ export async function extractPdfText(
   const loadingTask =
     getDocument({
       data,
+      standardFontDataUrl,
       useSystemFonts: false,
       disableFontFace: true,
       stopAtErrors: true,
