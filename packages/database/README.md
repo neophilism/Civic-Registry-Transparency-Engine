@@ -138,3 +138,35 @@ system with explicit baseline events instead of fabricated creation events.
 
 The read-side `PostgresRecordHistoryRepository` provides visibility-aware
 version and event queries.
+
+
+## Publication lifecycle
+
+Migration `0005_publication_lifecycle.sql` adds durable transition requests,
+approval decisions, publication schedules, and a PostgreSQL state-machine
+guard.
+
+Normal record creation must begin at the configured lifecycle
+`initialStatusId`. Seed/import code may explicitly use
+`bootstrapLifecycle: true` for pre-existing records.
+
+Status updates for lifecycle-managed registries must use
+`PostgresPublicationLifecycleService`. The database independently verifies
+that the state transition exists and rejects ordinary direct SQL status
+changes.
+
+The lifecycle service supports:
+
+- role-gated transitions;
+- approval thresholds;
+- requester self-approval restrictions;
+- scheduled publication;
+- schedule cancellation;
+- due-schedule processing;
+- audit-event emission.
+
+Run due schedules with:
+
+```bash
+pnpm db:publish-due
+```
