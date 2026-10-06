@@ -24,8 +24,16 @@ test("PDF extraction returns page text and deterministic hashes", async () => {
     createTextPdf(
       "Civic transparency opinion",
     );
+  const originalBytes =
+    new Uint8Array(bytes);
   const extraction =
     await extractPdfText(bytes);
+
+  assert.deepEqual(
+    bytes,
+    originalBytes,
+    "PDF extraction must not detach or mutate the caller's source bytes.",
+  );
 
   assert.equal(
     extraction.pageCount,
