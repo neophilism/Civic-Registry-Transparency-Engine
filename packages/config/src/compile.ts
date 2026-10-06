@@ -13,6 +13,7 @@ import type {
   CompiledDisclosureConfig,
   CompiledPublicationLifecycleConfig,
   CompiledRecordTypeConfig,
+  CompiledRegistryAnalyticsConfig,
   CompiledRegistryConfig,
   DeadlineEngineConfig,
   DisclosureConfig,
@@ -20,6 +21,7 @@ import type {
   FormFieldConfig,
   PublicationLifecycleConfig,
   RecordTypePresentationConfig,
+  RegistryAnalyticsConfig,
   RegistryConfigFile,
 } from "./types.ts";
 
@@ -231,6 +233,30 @@ function compileDisclosure(
   };
 }
 
+function compileAnalytics(
+  definition: RegistryAnalyticsConfig | undefined,
+): CompiledRegistryAnalyticsConfig {
+  const config = definition ?? {};
+
+  return {
+    definition: config,
+    publicationTrendDays:
+      config.publicationTrendDays ?? 365,
+    changeActivityDays:
+      config.changeActivityDays ?? 90,
+    deadlineHorizonDays:
+      config.deadlineHorizonDays ?? 30,
+    dimensions: (config.dimensions ?? []).map(
+      (dimension) => ({
+        ...dimension,
+        publiclyVisible:
+          dimension.publiclyVisible ?? false,
+        limit: dimension.limit ?? 12,
+      }),
+    ),
+  };
+}
+
 function transitionKey(
   fromStatusId: string,
   toStatusId: string,
@@ -345,6 +371,9 @@ export function compileRegistryConfig(
   const disclosure = compileDisclosure(
     config.disclosure,
   );
+  const analytics = compileAnalytics(
+    config.analytics,
+  );
 
   return {
     schemaVersion: config.schemaVersion,
@@ -354,6 +383,7 @@ export function compileRegistryConfig(
     publicationLifecycle,
     deadlines,
     disclosure,
+    analytics,
     getRecordType(recordTypeId: string) {
       const recordType = recordTypesById.get(recordTypeId);
 
