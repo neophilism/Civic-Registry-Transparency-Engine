@@ -88,9 +88,9 @@ export async function extractPdfText(
     getDocument({
       data,
       isEvalSupported: false,
-      useSystemFonts: true,
+      useSystemFonts: false,
       disableFontFace: true,
-      stopEvent: true,
+      stopAtErrors: true,
     });
   const pages:
     ExtractedDocumentPage[] = [];
