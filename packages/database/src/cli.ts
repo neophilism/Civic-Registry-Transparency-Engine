@@ -7,6 +7,9 @@ import {
 } from "@civic-registry/config";
 
 import { runMigrations } from "./migrations.ts";
+import {
+  PostgresPublicationLifecycleService,
+} from "./lifecycle.ts";
 import { createDatabasePool } from "./pool.ts";
 import {
   PostgresRegistryConfigRepository,
@@ -142,6 +145,47 @@ async function reindex(
   }
 }
 
+async function publishDue(
+  limitValue: string | undefined,
+): Promise<void> {
+  const limit = limitValue
+    ? Number.parseInt(limitValue, 10)
+    : undefined;
+
+  if (
+    limitValue &&
+    (!Number.isInteger(limit) || (limit ?? 0) < 1)
+  ) {
+    throw new Error(
+      "publish-due limit must be a positive integer.",
+    );
+  }
+
+  const pool = createDatabasePool();
+
+  try {
+    await runMigrations(pool);
+    const lifecycle =
+      new PostgresPublicationLifecycleService(pool);
+    const result = await lifecycle.processDueSchedules({
+      limit,
+    });
+
+    console.log(
+      JSON.stringify(
+        {
+          command: "publish-due",
+          ...result,
+        },
+        null,
+        2,
+      ),
+    );
+  } finally {
+    await pool.end();
+  }
+}
+
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
 
@@ -160,8 +204,13 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === "publish-due") {
+    await publishDue(args[0]);
+    return;
+  }
+
   throw new Error(
-    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex> [arguments]",
+    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex|publish-due> [arguments]",
   );
 }
 
