@@ -463,7 +463,7 @@ test("public deadline views expose only explicitly public definitions", async ()
       await getPublicDeadlines(
         registry.config,
         recordView.record,
-        "2026-01-20T12:00:00.000Z",
+        "2026-01-23T12:00:00.000Z",
       );
 
     assert.deepEqual(
