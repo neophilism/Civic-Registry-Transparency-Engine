@@ -7,6 +7,7 @@ import {
 
 import { Breadcrumbs } from "../../../../../components/breadcrumbs";
 import { RecordFieldValue } from "../../../../../components/record-field";
+import { RelationshipGroups } from "../../../../../components/relationship-groups";
 import { formatDateTime } from "../../../../../lib/format";
 import {
   getPublicRecord,
@@ -65,9 +66,12 @@ export default async function RecordPage({
   const recordType = registry.config.getRecordType(
     record.recordTypeId,
   );
-  const relationships = await listPublicRelationships(
+  const relationshipResult = await listPublicRelationships(
     registry.config,
     record,
+    {
+      maxNodes: 101,
+    },
   );
 
   return (
@@ -203,7 +207,7 @@ export default async function RecordPage({
         </aside>
       </div>
 
-      {relationships.length > 0 ? (
+      {relationshipResult.groups.length > 0 ? (
         <section
           className="section-block"
           aria-labelledby="relationships-heading"
@@ -213,30 +217,41 @@ export default async function RecordPage({
               <p className="eyebrow">Connected records</p>
               <h2 id="relationships-heading">Relationships</h2>
             </div>
+            <div className="section-actions">
+              <Link
+                href={`/registries/${encodeURIComponent(
+                  registryId,
+                )}/records/${encodeURIComponent(
+                  recordId,
+                )}/relationships`}
+              >
+                Browse all
+              </Link>
+              <Link
+                href={`/registries/${encodeURIComponent(
+                  registryId,
+                )}/records/${encodeURIComponent(
+                  recordId,
+                )}/graph`}
+              >
+                Relationship map
+              </Link>
+            </div>
           </div>
 
-          <div className="relationship-list">
-            {relationships.map((item) => (
-              <article
-                className="relationship-card"
-                key={item.relationship.id}
-              >
-                <span>{item.label}</span>
-                <h3>
-                  <Link
-                    href={`/registries/${encodeURIComponent(
-                      registryId,
-                    )}/records/${encodeURIComponent(
-                      item.relatedRecord.id,
-                    )}`}
-                  >
-                    {item.relatedRecord.title}
-                  </Link>
-                </h3>
-                <p>{item.relatedRecord.recordTypeName}</p>
-              </article>
-            ))}
-          </div>
+          {relationshipResult.truncated ? (
+            <div className="notice">
+              Only the first public connections are shown in this
+              summary. Open the relationship browser to narrow the
+              result by type.
+            </div>
+          ) : null}
+
+          <RelationshipGroups
+            registryId={registryId}
+            groups={relationshipResult.groups}
+            limitPerGroup={4}
+          />
         </section>
       ) : null}
     </main>
