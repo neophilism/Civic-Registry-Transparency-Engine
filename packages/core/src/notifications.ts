@@ -172,9 +172,15 @@ export function notificationMatchesSubscription(
 
   const filters = subscription.filters;
 
+  const recordId =
+    stringPayload(event.payload, "recordId") ??
+    (event.subjectType === "record"
+      ? event.subjectId
+      : undefined);
+
   if (
     filters.recordIds?.length &&
-    !filters.recordIds.includes(event.subjectId)
+    !filters.recordIds.includes(recordId ?? "")
   ) {
     return false;
   }
