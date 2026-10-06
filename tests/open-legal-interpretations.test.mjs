@@ -101,6 +101,6 @@ test("reference application presentation reuses generic engine services", () => 
   assert.match(page, /getPublicAnalytics/);
   assert.match(
     page,
-    /Civic Registry &amp; Transparency Engine/,
+    /Registry &amp; Transparency Engine/,
   );
 });
