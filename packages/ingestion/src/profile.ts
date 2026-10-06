@@ -58,7 +58,7 @@ function validateValueSpec(
   }
 
   if (
-    hasPath &&
+    typeof value.path === "string" &&
     value.path.trim().length === 0
   ) {
     issues.push({
