@@ -217,6 +217,25 @@ deadlines:
       calendarId: federal_business
       publiclyVisible: false
 
+analytics:
+  publicationTrendDays: 365
+  changeActivityDays: 90
+  deadlineHorizonDays: 30
+  dimensions:
+    - id: document-type
+      label: Documents by type
+      recordTypeId: document
+      fieldId: document_type
+      publiclyVisible: true
+      limit: 10
+
+    - id: publisher
+      label: Documents by publisher
+      recordTypeId: document
+      fieldId: publisher
+      publiclyVisible: true
+      limit: 12
+
 disclosure:
   withheldRecordBehavior: placeholder
   defaultRedactionText: "[REDACTED]"
