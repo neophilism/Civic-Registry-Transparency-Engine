@@ -3,6 +3,7 @@ import {
   PostgresAdminRepository,
   PostgresAnalyticsRepository,
   PostgresCitationRepository,
+  PostgresIntegrityService,
   PostgresDeadlineService,
   PostgresDisclosureRepository,
   PostgresDocumentRepository,
@@ -37,6 +38,7 @@ export function getRepositories() {
   const configs = new PostgresRegistryConfigRepository(pool);
   const admin = new PostgresAdminRepository(pool);
   const analytics = new PostgresAnalyticsRepository(pool);
+  const integrity = new PostgresIntegrityService(pool);
   const deadlines = new PostgresDeadlineService(pool);
   const records = new PostgresRecordRepository(
     pool,
@@ -78,6 +80,7 @@ export function getRepositories() {
   return {
     admin,
     analytics,
+    integrity,
     configs,
     deadlines,
     records,
