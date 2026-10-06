@@ -217,7 +217,16 @@ export class PostgresAnalyticsRepository {
             ON citation.registry_id = record.registry_id
             AND citation.record_id = record.id
           WHERE ${where}
-            ${scope === "public" ? "AND citation.visibility = 'public'" : ""}
+            ${scope === "public" ? `
+              AND citation.visibility = 'public'
+              AND NOT EXISTS (
+                SELECT 1
+                FROM civic_registry_record_disclosures AS disclosure
+                WHERE disclosure.registry_id = record.registry_id
+                  AND disclosure.record_id = record.id
+                  AND disclosure.disposition = 'withheld'
+              )
+            ` : ""}
         `,
         values,
       ),
@@ -358,17 +367,15 @@ export class PostgresAnalyticsRepository {
         );
       }
 
-      if (excludeWithheld) {
-        where.push(`
-          NOT EXISTS (
-            SELECT 1
-            FROM civic_registry_record_disclosures AS disclosure
-            WHERE disclosure.registry_id = record.registry_id
-              AND disclosure.record_id = record.id
-              AND disclosure.disposition = 'withheld'
-          )
-        `);
-      }
+      where.push(`
+        NOT EXISTS (
+          SELECT 1
+          FROM civic_registry_record_disclosures AS disclosure
+          WHERE disclosure.registry_id = record.registry_id
+            AND disclosure.record_id = record.id
+            AND disclosure.disposition = 'withheld'
+        )
+      `);
     }
 
     const result = await this.pool.query<{
