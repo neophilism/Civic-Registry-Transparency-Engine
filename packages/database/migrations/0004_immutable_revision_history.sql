@@ -141,15 +141,23 @@ $$;
 CREATE OR REPLACE FUNCTION civic_registry_prevent_history_mutation()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-AS $$
+AS $
 BEGIN
+  IF TG_OP = 'DELETE' AND NOT EXISTS (
+    SELECT 1
+    FROM civic_registry_configurations
+    WHERE registry_id = OLD.registry_id
+  ) THEN
+    RETURN OLD;
+  END IF;
+
   RAISE EXCEPTION
     'Civic Registry history is immutable; % on % is not permitted.',
     TG_OP,
     TG_TABLE_NAME
     USING ERRCODE = '55000';
 END;
-$$;
+$;
 
 DROP TRIGGER IF EXISTS civic_registry_record_versions_immutable
   ON civic_registry_record_versions;
@@ -539,19 +547,26 @@ CREATE OR REPLACE FUNCTION civic_registry_relationship_event_visibility(
 RETURNS TEXT
 LANGUAGE SQL
 STABLE
-AS $$
+AS $
   SELECT CASE
-    WHEN COUNT(*) = 2
-      AND BOOL_AND(visibility = 'public')
-      THEN 'public'
+    WHEN
+      (
+        SELECT visibility = 'public'
+        FROM civic_registry_records
+        WHERE registry_id = registry_value
+          AND id = from_record_value
+      )
+      AND
+      (
+        SELECT visibility = 'public'
+        FROM civic_registry_records
+        WHERE registry_id = registry_value
+          AND id = to_record_value
+      )
+    THEN 'public'
     ELSE 'private'
-  END
-  FROM civic_registry_records
-  WHERE registry_id = registry_value
-    AND id = ANY(
-      ARRAY[from_record_value, to_record_value]::TEXT[]
-    );
-$$;
+  END;
+$;
 
 CREATE OR REPLACE FUNCTION civic_registry_insert_relationship_event(
   relationship_row civic_registry_relationships,
@@ -825,6 +840,19 @@ BEGIN
     );
 
     RETURN OLD;
+  END IF;
+
+  IF
+    OLD.record_id IS NOT DISTINCT FROM NEW.record_id
+    AND OLD.field_id IS NOT DISTINCT FROM NEW.field_id
+    AND OLD.source_id IS NOT DISTINCT FROM NEW.source_id
+    AND OLD.document_id IS NOT DISTINCT FROM NEW.document_id
+    AND OLD.locator IS NOT DISTINCT FROM NEW.locator
+    AND OLD.note IS NOT DISTINCT FROM NEW.note
+    AND OLD.visibility IS NOT DISTINCT FROM NEW.visibility
+    AND OLD.created_at IS NOT DISTINCT FROM NEW.created_at
+  THEN
+    RETURN NEW;
   END IF;
 
   old_visibility := civic_registry_citation_event_visibility(
