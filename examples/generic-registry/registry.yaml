@@ -78,6 +78,97 @@ registry:
       toRecordTypeIds:
         - organization
 
+
+publicationLifecycle:
+  initialStatusId: draft
+
+  statuses:
+    - id: draft
+      label: Draft
+
+    - id: under_review
+      label: Under review
+
+    - id: approved
+      label: Approved
+
+    - id: published
+      label: Published
+      publiclyVisible: true
+      marksPublished: true
+
+    - id: withdrawn
+      label: Withdrawn
+      publiclyVisible: true
+
+    - id: archived
+      label: Archived
+      publiclyVisible: true
+      terminal: true
+
+  transitions:
+    - fromStatusId: draft
+      toStatusId: under_review
+      label: Submit for review
+      allowedRoles:
+        - editor
+
+    - fromStatusId: under_review
+      toStatusId: draft
+      label: Return to draft
+      allowedRoles:
+        - reviewer
+
+    - fromStatusId: under_review
+      toStatusId: approved
+      label: Approve
+      allowedRoles:
+        - reviewer
+      approval:
+        approverRoles:
+          - reviewer
+          - publisher
+        minApprovals: 1
+        requesterCannotApprove: true
+
+    - fromStatusId: approved
+      toStatusId: published
+      label: Publish
+      allowedRoles:
+        - publisher
+
+    - fromStatusId: published
+      toStatusId: withdrawn
+      label: Withdraw
+      allowedRoles:
+        - publisher
+
+    - fromStatusId: withdrawn
+      toStatusId: published
+      label: Republish
+      allowedRoles:
+        - publisher
+
+    - fromStatusId: published
+      toStatusId: archived
+      label: Archive
+      allowedRoles:
+        - publisher
+
+    - fromStatusId: withdrawn
+      toStatusId: archived
+      label: Archive
+      allowedRoles:
+        - publisher
+
+  scheduledPublication:
+    enabled: true
+    fromStatusIds:
+      - approved
+    targetStatusId: published
+    allowedRoles:
+      - publisher
+
 presentation:
   recordTypes:
     document:
