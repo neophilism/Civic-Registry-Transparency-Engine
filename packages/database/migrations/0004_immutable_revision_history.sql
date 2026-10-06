@@ -906,3 +906,67 @@ AFTER INSERT OR UPDATE OR DELETE
 ON civic_registry_citations
 FOR EACH ROW
 EXECUTE FUNCTION civic_registry_capture_citation_history();
+
+
+DO $$
+DECLARE
+  relationship_row civic_registry_relationships;
+BEGIN
+  FOR relationship_row IN
+    SELECT *
+    FROM civic_registry_relationships
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1
+      FROM civic_registry_audit_events AS event
+      WHERE event.registry_id = relationship_row.registry_id
+        AND event.subject_type = 'record'
+        AND event.event_type = 'relationship.history_initialized'
+        AND event.metadata ->> 'relationshipId' = relationship_row.id
+    ) THEN
+      PERFORM civic_registry_insert_relationship_event(
+        relationship_row,
+        'relationship.history_initialized',
+        NOW()
+      );
+    END IF;
+  END LOOP;
+END;
+$$;
+
+DO $$
+DECLARE
+  citation_row civic_registry_citations;
+  visibility_value TEXT;
+BEGIN
+  FOR citation_row IN
+    SELECT *
+    FROM civic_registry_citations
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1
+      FROM civic_registry_audit_events AS event
+      WHERE event.registry_id = citation_row.registry_id
+        AND event.subject_type = 'record'
+        AND event.subject_id = citation_row.record_id
+        AND event.event_type = 'evidence.citation_history_initialized'
+        AND event.metadata ->> 'citationId' = citation_row.id
+    ) THEN
+      visibility_value := civic_registry_citation_event_visibility(
+        citation_row.registry_id,
+        citation_row.record_id,
+        citation_row.visibility,
+        citation_row.source_id,
+        citation_row.document_id
+      );
+
+      PERFORM civic_registry_insert_citation_event(
+        citation_row,
+        'evidence.citation_history_initialized',
+        visibility_value,
+        NOW()
+      );
+    END IF;
+  END LOOP;
+END;
+$$;
