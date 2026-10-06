@@ -23,6 +23,8 @@
     "db:ingest": "node packages/database/src/cli.ts ingest",
     "db:notifications-run": "node packages/database/src/cli.ts notifications-run",
     "db:integrity-verify": "node packages/database/src/cli.ts integrity-verify",
-    "db:integrity-checkpoint": "node packages/database/src/cli.ts integrity-checkpoint"
+    "db:integrity-checkpoint": "node packages/database/src/cli.ts integrity-checkpoint",
+    "db:seed-open-legal-interpretations": "node packages/database/src/cli.ts seed examples/open-legal-interpretations/registry.yaml examples/open-legal-interpretations/seed.json",
+    "db:ingest-open-legal-interpretations-demo": "node packages/database/src/cli.ts ingest open-legal-interpretations examples/open-legal-interpretations/import-profile.yaml examples/open-legal-interpretations/import.csv csv"
   }
 }
