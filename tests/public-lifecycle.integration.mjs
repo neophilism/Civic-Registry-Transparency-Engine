@@ -7,6 +7,7 @@ import {
 } from "../packages/config/src/index.ts";
 import {
   createDatabasePool,
+  PostgresPublicationLifecycleService,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
   PostgresRelationshipRepository,
@@ -88,6 +89,8 @@ test("public surfaces require both public visibility and a publicly visible life
         configs,
         records,
       );
+    const lifecycle =
+      new PostgresPublicationLifecycleService(pool);
 
     await configs.upsert(config);
 
@@ -193,10 +196,56 @@ test("public surfaces require both public visibility and a publicly visible life
 
     assert.equal(related.relationships.length, 0);
 
-    await pool.query(
-      "UPDATE civic_registry_records SET status = 'published', published_at = '2026-01-02T00:00:00.000Z', updated_at = '2026-01-02T00:00:00.000Z' WHERE registry_id = $1 AND id = $2",
-      [config.registry.id, historyRecord.id],
+    await lifecycle.requestTransition({
+      registryId: config.registry.id,
+      recordId: historyRecord.id,
+      toStatusId: "under_review",
+      context: {
+        actorId: "editor-history",
+        roles: ["editor"],
+      },
+      now: "2026-01-01T01:00:00.000Z",
+    });
+
+    const approvalRequest =
+      await lifecycle.requestTransition({
+        registryId: config.registry.id,
+        recordId: historyRecord.id,
+        toStatusId: "approved",
+        context: {
+          actorId: "reviewer-history",
+          roles: ["reviewer"],
+        },
+        now: "2026-01-01T02:00:00.000Z",
+      });
+
+    assert.equal(
+      approvalRequest.kind,
+      "pending_approval",
     );
+
+    await lifecycle.decideTransition({
+      registryId: config.registry.id,
+      requestId: approvalRequest.request.id,
+      decision: "approved",
+      actorId: "publisher-history",
+      actorRoles: ["publisher"],
+      now: "2026-01-01T03:00:00.000Z",
+    });
+
+    const publishResult =
+      await lifecycle.requestTransition({
+        registryId: config.registry.id,
+        recordId: historyRecord.id,
+        toStatusId: "published",
+        context: {
+          actorId: "publisher-history",
+          roles: ["publisher"],
+        },
+        now: "2026-01-02T00:00:00.000Z",
+      });
+
+    assert.equal(publishResult.kind, "executed");
 
     const publicHistoryRecord =
       await getPublicRecord(
