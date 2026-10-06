@@ -626,12 +626,7 @@ export class PostgresPdfAttachmentService {
               sourceResult.source.id,
             fileName,
             mimeType:
-              mimeType ===
-                "application/octet-stream" ||
-              mimeType ===
-                "binary/octet-stream"
-                ? "application/pdf"
-                : mimeType,
+              "application/pdf",
             storageKey:
               stored.storageKey,
             canonicalUrl:
