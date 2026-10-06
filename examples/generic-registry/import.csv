@@ -1,0 +1,3 @@
+id,external_id,title,summary,type,published_on
+imported-report-1,EXAMPLE-1001,Imported annual report,Example record imported through PR 13.,report,2026-09-01
+imported-notice-1,EXAMPLE-1002,Imported public notice,Second example ingestion row.,notice,2026-09-15
