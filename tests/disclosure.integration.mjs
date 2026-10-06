@@ -289,11 +289,11 @@ test("field redactions protect public lookup, search, facets, evidence, and hist
     );
     assert.equal(
       stored.rows[0].public_fields.title,
-      "[REDACTED]",
+      undefined,
     );
     assert.equal(
       stored.rows[0].public_fields.document_type,
-      "[WITHHELD]",
+      undefined,
     );
     assert.doesNotMatch(
       stored.rows[0].public_search_text,
@@ -380,7 +380,7 @@ test("field redactions protect public lookup, search, facets, evidence, and hist
     );
     assert.equal(
       afterSql.rows[0].public_fields.title,
-      "[REDACTED]",
+      undefined,
     );
     assert.doesNotMatch(
       afterSql.rows[0].public_search_text,
