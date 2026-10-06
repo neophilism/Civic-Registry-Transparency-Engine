@@ -16,26 +16,28 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 12 — Configurable deadline engine**
+**PR 13 — Import and ingestion pipelines**
 
 The engine now includes configurable publication lifecycle, immutable history,
 disclosure/redaction controls, evidence traceability, relationships, public
-search, and deadline tracking.
+search, deadline tracking, and resilient structured ingestion.
 
-PR 12 adds:
+PR 13 adds:
 
-- configurable calendar-day, business-day, hour, and week deadlines;
-- reusable business-day calendars and excluded dates;
-- created/publication/field/status-entry/manual anchors;
-- warning windows and derived due-soon/overdue urgency;
-- lifecycle-driven pause, tolling, completion, and cancellation;
-- manual keyed deadline instances;
-- automatic record/lifecycle reconciliation;
-- registry-wide CLI reconciliation;
-- immutable deadline audit events;
-- public deadline API and record-page presentation.
+- JSON, NDJSON, and CSV decoding;
+- source-specific YAML/JSON import profiles kept outside registry policy;
+- nested path mapping and schema-aware type coercion;
+- stable input/row SHA-256 fingerprints;
+- create and idempotent upsert modes;
+- safe patch-style updates with explicit full-field replacement;
+- lifecycle-safe historical-state bootstrap;
+- row-level failure isolation;
+- dry-run validation;
+- durable ingestion run/item diagnostics;
+- immutable record audit linkage to ingestion runs;
+- CLI-driven imports and example fixtures.
 
-See [Configurable deadline engine](docs/DEADLINES.md).
+See [Import and ingestion pipelines](docs/INGESTION.md).
 
 ## Local development
 

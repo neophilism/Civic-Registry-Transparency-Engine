@@ -10,3 +10,5 @@ export * from "./history.ts";
 export * from "./lifecycle.ts";
 export * from "./disclosure.ts";
 export * from "./deadlines.ts";
+
+export * from "./ingestion.ts";
