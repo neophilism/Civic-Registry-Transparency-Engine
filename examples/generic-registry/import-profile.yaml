@@ -1,0 +1,49 @@
+id: example-document-import
+recordTypeId: document
+mode: upsert
+
+recordId:
+  path: id
+  required: true
+  trim: true
+
+sourceKey:
+  path: external_id
+  required: true
+  trim: true
+
+fields:
+  title:
+    path: title
+    required: true
+    trim: true
+
+  summary:
+    path: summary
+    trim: true
+
+  document_type:
+    path: type
+    trim: true
+
+  published_on:
+    path: published_on
+    trim: true
+
+status:
+  literal: published
+
+visibility:
+  literal: public
+
+staticTags:
+  - imported
+
+externalIdentifiers:
+  - scheme: example-source
+    value:
+      path: external_id
+      required: true
+
+allowLifecycleBootstrap: true
+replaceFields: false
