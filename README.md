@@ -16,29 +16,26 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 14 — Public API, TypeScript SDK & exports**
+**PR 15 — Administrator console**
 
-The engine now exposes a stable read-only integration surface on top of the
-same lifecycle, disclosure, search, evidence, history, relationship, and
-deadline boundaries used by the public site.
+The engine now includes a restricted, domain-neutral operator console for
+managing canonical registry data and operational workflows without weakening
+the public disclosure boundary.
 
-PR 14 adds:
+PR 15 adds:
 
-- versioned `/api/v1` public endpoints;
-- consistent JSON envelopes and machine-readable errors;
-- read-only cross-origin access;
-- public registry metadata;
-- record/search/evidence/history/relationship/graph/deadline endpoints;
-- OpenAPI 3.1;
-- reusable `@civic-registry/api` contracts;
-- reusable `@civic-registry/sdk` TypeScript client;
-- JSON, NDJSON, and CSV exports;
-- multi-page export collection with explicit truncation metadata;
-- spreadsheet-formula protection for CSV exports;
-- integration tests proving redacted canonical values do not leak through the
-  API or exports.
+- authenticated `/admin` access with explicit operator identity;
+- cross-registry operational summaries;
+- schema-driven record creation and editing;
+- publication lifecycle requests and approval decisions;
+- deadline monitoring, reconciliation, and state actions;
+- ingestion-run and item-level failure visibility;
+- source management;
+- immutable history and audit inspection;
+- installed configuration validation;
+- database-backed audit attribution for administrative record writes.
 
-See [Public API, SDK, and exports](docs/PUBLIC-API.md).
+See [Administrator console](docs/ADMIN-CONSOLE.md).
 
 ## Local development
 

@@ -1,5 +1,6 @@
 import {
   createDatabasePool,
+  PostgresAdminRepository,
   PostgresCitationRepository,
   PostgresDeadlineService,
   PostgresDisclosureRepository,
@@ -33,6 +34,7 @@ export function getDatabasePool(): Pool {
 export function getRepositories() {
   const pool = getDatabasePool();
   const configs = new PostgresRegistryConfigRepository(pool);
+  const admin = new PostgresAdminRepository(pool);
   const deadlines = new PostgresDeadlineService(pool);
   const records = new PostgresRecordRepository(
     pool,
@@ -72,6 +74,7 @@ export function getRepositories() {
   const search = new PostgresSearchProvider(pool);
 
   return {
+    admin,
     configs,
     deadlines,
     records,

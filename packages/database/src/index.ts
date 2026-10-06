@@ -12,3 +12,4 @@ export * from "./disclosure.ts";
 export * from "./deadlines.ts";
 
 export * from "./ingestion.ts";
+export * from "./admin.ts";
