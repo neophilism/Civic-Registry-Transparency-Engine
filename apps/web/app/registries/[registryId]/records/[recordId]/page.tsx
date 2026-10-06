@@ -120,7 +120,7 @@ export default async function RecordPage({
 
         <div className="status-stack">
           <span className="status-pill">
-            {presented.status}
+            {presented.statusLabel}
           </span>
           <span className="status-pill status-pill--quiet">
             {presented.visibility}
