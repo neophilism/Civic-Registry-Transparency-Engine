@@ -77,8 +77,6 @@ export function publicRegistryDetail(
                     fieldId:
                       compiled.defaultSort
                         .fieldId,
-                    by:
-                      compiled.defaultSort.by,
                     direction:
                       compiled.defaultSort
                         .direction,
