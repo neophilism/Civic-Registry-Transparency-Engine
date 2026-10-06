@@ -1,0 +1,22 @@
+{
+  "name": "@civic-registry/ingestion",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Provider-neutral structured decoding, mapping, validation, and fingerprinting for Civic Registry imports.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@civic-registry/config": "workspace:*",
+    "@civic-registry/core": "workspace:*",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
