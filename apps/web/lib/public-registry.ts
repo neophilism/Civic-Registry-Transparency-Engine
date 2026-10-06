@@ -10,6 +10,10 @@ import {
   presentRecordSummary,
   type PresentedRecordSummary,
 } from "@civic-registry/registry";
+import type {
+  SearchRequest,
+  SearchResponse,
+} from "@civic-registry/search";
 
 import { getRepositories } from "./database";
 
@@ -126,4 +130,19 @@ export async function listPublicRelationships(
     (value): value is PublicRelationship =>
       value !== null,
   );
+}
+
+
+export async function searchPublicRecords(
+  registry: CompiledRegistryConfig,
+  request: Omit<SearchRequest, "registryId" | "visibility"> &
+    Partial<Pick<SearchRequest, "registryId" | "visibility">>,
+): Promise<SearchResponse> {
+  const { search } = getRepositories();
+
+  return search.search(registry, {
+    ...request,
+    registryId: registry.definition.id,
+    visibility: "public",
+  });
 }

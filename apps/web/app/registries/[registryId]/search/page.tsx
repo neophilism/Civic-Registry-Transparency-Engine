@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { presentRecordSummary } from "@civic-registry/registry";
 
@@ -19,7 +18,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-interface RecordsPageProps {
+interface SearchPageProps {
   params: Promise<{
     registryId: string;
   }>;
@@ -28,59 +27,41 @@ interface RecordsPageProps {
 
 export async function generateMetadata({
   params,
-  searchParams,
-}: RecordsPageProps): Promise<Metadata> {
+}: SearchPageProps): Promise<Metadata> {
   const { registryId } = await params;
-  const query = await searchParams;
   const registry = await getPublicRegistry(registryId);
 
-  if (!registry) return { title: "Registry not found" };
-
-  const requestedType = firstSearchValue(query.type);
-  const type = requestedType
-    ? registry.config.recordTypesById.get(requestedType)
-    : undefined;
-
   return {
-    title: type
-      ? `${type.definition.pluralName} — ${registry.config.definition.name}`
-      : registry.config.definition.name,
+    title: registry
+      ? `Search — ${registry.config.definition.name}`
+      : "Registry not found",
   };
 }
 
-export default async function RecordsPage({
+export default async function RegistrySearchPage({
   params,
   searchParams,
-}: RecordsPageProps) {
+}: SearchPageProps) {
   const { registryId } = await params;
   const query = await searchParams;
   const registry = await getPublicRegistry(registryId);
 
   if (!registry) notFound();
 
-  const requestedType = firstSearchValue(query.type);
-  const fallbackType =
-    registry.config.definition.defaultRecordTypeId ??
-    registry.config.definition.recordTypes[0]?.id;
+  const selectedTypeId = firstSearchValue(query.type);
+  const recordType = selectedTypeId
+    ? registry.config.recordTypesById.get(selectedTypeId)
+    : undefined;
 
-  if (!fallbackType) notFound();
-
-  const recordTypeId = requestedType ?? fallbackType;
-  const recordType =
-    registry.config.recordTypesById.get(recordTypeId);
-
-  if (!recordType) {
+  if (selectedTypeId && !recordType) {
     redirect(
-      `/registries/${encodeURIComponent(
-        registryId,
-      )}/records?type=${encodeURIComponent(fallbackType)}`,
+      `/registries/${encodeURIComponent(registryId)}/search`,
     );
   }
 
   const request = parsePublicSearchRequest(
     registry.config,
     query,
-    recordTypeId,
   );
   const result = await searchPublicRecords(
     registry.config,
@@ -91,7 +72,7 @@ export default async function RecordsPage({
   );
   const basePath = `/registries/${encodeURIComponent(
     registryId,
-  )}/records`;
+  )}/search`;
 
   return (
     <main className="page-shell">
@@ -102,57 +83,28 @@ export default async function RecordsPage({
             label: registry.config.definition.name,
             href: `/registries/${encodeURIComponent(registryId)}`,
           },
-          { label: recordType.definition.pluralName },
+          { label: "Search" },
         ]}
       />
 
       <header className="page-heading page-heading--compact">
-        <p className="eyebrow">
-          {registry.config.definition.name}
+        <p className="eyebrow">Registry-wide discovery</p>
+        <h1>Search {registry.config.definition.name}</h1>
+        <p className="lede">
+          Search all public record types together, or narrow the
+          query to a configured type to unlock its field-specific
+          filters.
         </p>
-        <h1>{recordType.definition.pluralName}</h1>
-        {recordType.definition.description ? (
-          <p className="lede">
-            {recordType.definition.description}
-          </p>
-        ) : null}
       </header>
-
-      <nav
-        className="record-type-nav"
-        aria-label="Record types"
-      >
-        {registry.config.definition.recordTypes.map((type) => {
-          const active = type.id === recordTypeId;
-
-          return (
-            <Link
-              key={type.id}
-              className={active ? "is-active" : undefined}
-              aria-current={active ? "page" : undefined}
-              href={`${basePath}?type=${encodeURIComponent(type.id)}`}
-            >
-              {type.pluralName}
-            </Link>
-          );
-        })}
-        <Link
-          href={`/registries/${encodeURIComponent(
-            registryId,
-          )}/search`}
-        >
-          Search all types
-        </Link>
-      </nav>
 
       <section
         className="section-block section-block--search"
-        aria-labelledby="search-heading"
+        aria-labelledby="registry-search-heading"
       >
         <div className="section-heading">
           <div>
             <p className="eyebrow">Discovery</p>
-            <h2 id="search-heading">
+            <h2 id="registry-search-heading">
               Search and filter
             </h2>
           </div>
@@ -164,26 +116,22 @@ export default async function RecordsPage({
           facets={result.facets}
           params={query}
           action={basePath}
+          includeRecordType
         />
       </section>
 
       <section
         className="section-block"
-        aria-labelledby="records-heading"
+        aria-labelledby="search-results-heading"
       >
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Publicly visible</p>
-            <h2 id="records-heading">
+            <p className="eyebrow">Results</p>
+            <h2 id="search-results-heading">
               {result.total}{" "}
               {result.total === 1 ? "record" : "records"}
             </h2>
           </div>
-          {firstSearchValue(query.q) ? (
-            <span className="metric">
-              Query: “{firstSearchValue(query.q)}”
-            </span>
-          ) : null}
         </div>
 
         {presented.length > 0 ? (
@@ -208,8 +156,8 @@ export default async function RecordsPage({
           <div className="empty-state empty-state--inline">
             <h3>No matching public records</h3>
             <p>
-              Try removing a filter, broadening the date range,
-              or using fewer search terms.
+              Try a broader query or remove one of the selected
+              filters.
             </p>
           </div>
         )}

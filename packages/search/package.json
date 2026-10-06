@@ -1,9 +1,9 @@
 {
-  "name": "@civic-registry/database",
+  "name": "@civic-registry/search",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "PostgreSQL persistence, migrations, repositories, and seed support for the Civic Registry & Transparency Engine.",
+  "description": "Provider-neutral search contracts, validation, facets, and index text generation for Civic Registry.",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -12,13 +12,10 @@
   },
   "dependencies": {
     "@civic-registry/config": "workspace:*",
-    "@civic-registry/core": "workspace:*",
-    "pg": "^8.16.3",
-    "@civic-registry/search": "workspace:*"
+    "@civic-registry/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "@types/pg": "^8.15.5",
     "typescript": "^5.9.0"
   }
 }

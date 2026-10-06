@@ -8,6 +8,9 @@ import {
   compileRegistryConfig,
   type RegistryConfigFile,
 } from "@civic-registry/config";
+import {
+  buildRecordSearchText,
+} from "@civic-registry/search";
 import type { Pool, QueryResultRow } from "pg";
 
 export interface RecordListOptions {
@@ -235,7 +238,7 @@ export class PostgresRecordRepository implements RecordRepository {
     this.configs = configs;
   }
 
-  private async validate(record: RegistryRecord): Promise<void> {
+  private async validate(record: RegistryRecord): Promise<RegistryConfigFile> {
     const config = await this.configs.get(record.registryId);
 
     if (!config) {
@@ -245,10 +248,15 @@ export class PostgresRecordRepository implements RecordRepository {
     }
 
     assertValidRegistryRecord(record, config.registry);
+    return config;
   }
 
   async create(record: RegistryRecord): Promise<RegistryRecord> {
-    await this.validate(record);
+    const config = await this.validate(record);
+    const searchText = buildRecordSearchText(
+      record,
+      compileRegistryConfig(config),
+    );
 
     try {
       const result = await this.pool.query<RecordRow>(
@@ -264,12 +272,13 @@ export class PostgresRecordRepository implements RecordRepository {
             tags,
             created_at,
             updated_at,
-            published_at
+            published_at,
+            search_text
           )
           VALUES (
             $1, $2, $3, $4::jsonb, $5, $6, $7::jsonb,
             $8::text[], $9::timestamptz, $10::timestamptz,
-            $11::timestamptz
+            $11::timestamptz, $12
           )
           RETURNING *
         `,
@@ -285,6 +294,7 @@ export class PostgresRecordRepository implements RecordRepository {
           record.createdAt,
           record.updatedAt,
           record.publishedAt ?? null,
+          searchText,
         ],
       );
 
@@ -357,7 +367,11 @@ export class PostgresRecordRepository implements RecordRepository {
   }
 
   async update(record: RegistryRecord): Promise<RegistryRecord> {
-    await this.validate(record);
+    const config = await this.validate(record);
+    const searchText = buildRecordSearchText(
+      record,
+      compileRegistryConfig(config),
+    );
 
     const result = await this.pool.query<RecordRow>(
       `
@@ -371,7 +385,8 @@ export class PostgresRecordRepository implements RecordRepository {
           tags = $8::text[],
           created_at = $9::timestamptz,
           updated_at = $10::timestamptz,
-          published_at = $11::timestamptz
+          published_at = $11::timestamptz,
+          search_text = $12
         WHERE registry_id = $1 AND id = $2
         RETURNING *
       `,
@@ -387,6 +402,7 @@ export class PostgresRecordRepository implements RecordRepository {
         record.createdAt,
         record.updatedAt,
         record.publishedAt ?? null,
+        searchText,
       ],
     );
 

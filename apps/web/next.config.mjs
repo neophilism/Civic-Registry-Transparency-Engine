@@ -7,6 +7,7 @@ const nextConfig = {
     "@civic-registry/config",
     "@civic-registry/database",
     "@civic-registry/registry",
+    "@civic-registry/search",
   ],
 };
 

@@ -67,3 +67,22 @@ pnpm db:seed -- \
 
 Seed operations are idempotent for the same IDs: existing records are updated
 and existing relationships are replaced.
+
+
+## Search provider
+
+The database package also contains the default `PostgresSearchProvider`.
+Search behavior is defined by the provider-neutral `@civic-registry/search`
+contract.
+
+PostgreSQL stores engine-generated searchable text separately from the
+configured JSONB record payload and maintains a GIN-indexed generated
+`tsvector`.
+
+After upgrading an existing database to the search migration, run:
+
+```bash
+pnpm db:reindex
+```
+
+New creates and updates maintain their index text automatically.

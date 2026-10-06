@@ -3,6 +3,7 @@ import {
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
   PostgresRelationshipRepository,
+  PostgresSearchProvider,
 } from "@civic-registry/database";
 import type { Pool } from "pg";
 
@@ -31,10 +32,12 @@ export function getRepositories() {
     configs,
     records,
   );
+  const search = new PostgresSearchProvider(pool);
 
   return {
     configs,
     records,
     relationships,
+    search,
   };
 }
