@@ -103,13 +103,13 @@ function validateUrl(
     url = new URL(rawUrl);
   } catch {
     throw new Error(
-      \`Source URL is invalid: \${rawUrl}\`,
+      `Source URL is invalid: ${rawUrl}`,
     );
   }
 
   if (url.protocol !== "https:") {
     throw new Error(
-      \`Public source URL must use HTTPS: \${url.toString()}\`,
+      `Public source URL must use HTTPS: ${url.toString()}`,
     );
   }
 
@@ -121,7 +121,7 @@ function validateUrl(
 
   if (!isAllowedHost(url.hostname, allowedHosts)) {
     throw new Error(
-      \`Public source host is not allowed for this adapter: \${url.hostname}\`,
+      `Public source host is not allowed for this adapter: ${url.hostname}`,
     );
   }
 
@@ -140,7 +140,7 @@ async function readLimitedBody(
     Number(contentLength) > maxBytes
   ) {
     throw new Error(
-      \`Source response exceeds configured size limit of \${maxBytes} bytes.\`,
+      `Source response exceeds configured size limit of ${maxBytes} bytes.`,
     );
   }
 
@@ -167,7 +167,7 @@ async function readLimitedBody(
           "response too large",
         );
         throw new Error(
-          \`Source response exceeds configured size limit of \${maxBytes} bytes.\`,
+          `Source response exceeds configured size limit of ${maxBytes} bytes.`,
         );
       }
 
@@ -235,7 +235,7 @@ export function createPublicSourceClient(
           )
         ) {
           throw new Error(
-            \`Public source host resolves to a private, local, or reserved address: \${current.hostname}\`,
+            `Public source host resolves to a private, local, or reserved address: ${current.hostname}`,
           );
         }
 
@@ -265,7 +265,7 @@ export function createPublicSourceClient(
 
           if (!location) {
             throw new Error(
-              \`Source returned redirect without Location header: HTTP \${response.status}\`,
+              `Source returned redirect without Location header: HTTP ${response.status}`,
             );
           }
 
@@ -273,7 +273,7 @@ export function createPublicSourceClient(
 
           if (redirects > maxRedirects) {
             throw new Error(
-              \`Source exceeded redirect limit of \${maxRedirects}.\`,
+              `Source exceeded redirect limit of ${maxRedirects}.`,
             );
           }
 
@@ -289,7 +289,7 @@ export function createPublicSourceClient(
 
         if (!response.ok) {
           throw new Error(
-            \`Source returned HTTP \${response.status} for \${current.toString()}.\`,
+            `Source returned HTTP ${response.status} for ${current.toString()}.`,
           );
         }
 
@@ -309,7 +309,7 @@ export function createPublicSourceClient(
           ].includes(contentType)
         ) {
           throw new Error(
-            \`Unsupported source content type \${contentType || "(missing)"} for \${current.toString()}.\`,
+            `Unsupported source content type ${contentType || "(missing)"} for ${current.toString()}.`,
           );
         }
 
