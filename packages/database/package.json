@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@civic-registry/analytics": "workspace:*",
     "@civic-registry/config": "workspace:*",
     "@civic-registry/core": "workspace:*",
     "pg": "^8.16.3",
