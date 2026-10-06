@@ -192,8 +192,16 @@ test("PDF attachment ingestion materializes idempotent evidence and preserves ch
     const first =
       await service.ingest(input);
 
-    assert.equal(first.created, 1);
-    assert.equal(first.failed, 0);
+    assert.equal(
+      first.failed,
+      0,
+      JSON.stringify(first.items, null, 2),
+    );
+    assert.equal(
+      first.created,
+      1,
+      JSON.stringify(first.items, null, 2),
+    );
     assert.match(
       first.extractedText,
       /First official opinion text/,
