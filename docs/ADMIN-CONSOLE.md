@@ -14,12 +14,14 @@ The console is disabled unless the server has:
 CIVIC_REGISTRY_ADMIN_TOKEN=<a long random secret>
 ```
 
-Operators sign in with that token plus an actor ID and the lifecycle roles
-they intend to exercise. The token creates an HTTP-only, SameSite=Strict,
-signed session that expires after eight hours. Roles supplied at sign-in do
-not bypass registry policy: lifecycle requests and approval decisions still
-pass through the existing publication lifecycle service and its configured
-role checks.
+Operators sign in with that token plus an actor ID and lifecycle-role context.
+The token creates an HTTP-only, SameSite=Strict, signed session that expires
+after eight hours. The lifecycle service still evaluates every transition
+against the configured allowed/approver roles, but the built-in token flow does
+not independently verify a person's role claims. Treat possession of the token
+as administrator-level access. Deployments requiring per-user RBAC should put
+the console behind organization identity infrastructure and supply only
+identity-authorized role context.
 
 Production deployments should additionally place `/admin` behind their
 normal identity-aware proxy, SSO, VPN, or equivalent network/application

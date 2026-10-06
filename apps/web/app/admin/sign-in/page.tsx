@@ -79,9 +79,12 @@ export default async function AdminSignInPage({
               placeholder="editor, reviewer, publisher"
             />
             <small>
-              Roles do not grant themselves permissions;
-              each registry transition still enforces its
-              configured allowed and approver roles.
+              The administrator token grants console access.
+              These role strings are the operator context
+              evaluated by each registry&apos;s configured
+              lifecycle rules. Use organization SSO/RBAC in
+              front of the console when roles must be
+              identity-verified.
             </small>
           </label>
           <label>
