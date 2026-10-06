@@ -66,17 +66,7 @@ CREATE TABLE IF NOT EXISTS civic_registry_source_refresh_jobs (
   CONSTRAINT civic_registry_source_refresh_jobs_registry_fk
     FOREIGN KEY (registry_id)
     REFERENCES civic_registry_configurations(registry_id)
-    ON DELETE CASCADE,
-  CONSTRAINT civic_registry_source_refresh_jobs_last_ingestion_fk
-    FOREIGN KEY (
-      registry_id,
-      last_ingestion_run_id
-    )
-    REFERENCES civic_registry_ingestion_runs(
-      registry_id,
-      id
-    )
-    ON DELETE SET NULL
+    ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS
@@ -146,14 +136,7 @@ CREATE TABLE IF NOT EXISTS civic_registry_source_refresh_runs (
       registry_id,
       id
     )
-    ON DELETE CASCADE,
-  CONSTRAINT civic_registry_source_refresh_runs_ingestion_fk
-    FOREIGN KEY (registry_id, ingestion_run_id)
-    REFERENCES civic_registry_ingestion_runs(
-      registry_id,
-      id
-    )
-    ON DELETE SET NULL
+    ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS
