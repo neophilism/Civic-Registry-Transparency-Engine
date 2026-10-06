@@ -235,7 +235,6 @@ export class PostgresAnalyticsRepository {
         scope,
         options.publicStatusIds,
         options.publicDeadlineTypeIds,
-        options.excludeWithheld === true,
         dueSoonDays,
       ),
     ]);
@@ -335,7 +334,6 @@ export class PostgresAnalyticsRepository {
     scope: AnalyticsScope,
     publicStatusIds: string[] | undefined,
     publicDeadlineTypeIds: string[] | undefined,
-    excludeWithheld: boolean,
     dueSoonDays: number,
   ): Promise<RegistryAnalytics["deadlines"]> {
     const values: unknown[] = [registryId, dueSoonDays];
