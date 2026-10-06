@@ -2,6 +2,7 @@ import {
   createDatabasePool,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
+  PostgresRelationshipGraphRepository,
   PostgresRelationshipRepository,
   PostgresSearchProvider,
 } from "@civic-registry/database";
@@ -32,12 +33,15 @@ export function getRepositories() {
     configs,
     records,
   );
+  const relationshipGraph =
+    new PostgresRelationshipGraphRepository(pool);
   const search = new PostgresSearchProvider(pool);
 
   return {
     configs,
     records,
     relationships,
+    relationshipGraph,
     search,
   };
 }
