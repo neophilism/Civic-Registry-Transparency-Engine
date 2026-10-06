@@ -40,6 +40,13 @@ pnpm db:seed -- \
   examples/generic-registry/seed.json
 ```
 
+Rebuild full-text indexes after changing searchable fields or upgrading an
+installation that already contained records before the search migration:
+
+```bash
+pnpm db:reindex
+```
+
 Run PostgreSQL integration tests:
 
 ```bash
@@ -62,6 +69,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm db:migrate
+pnpm db:reindex
 pnpm test:db
 pnpm build
 ```
