@@ -6,6 +6,7 @@ import {
 
 import {
   REGISTRY_CONFIG_SCHEMA_VERSION,
+  type DeadlineEngineConfig,
   type DisclosureConfig,
   type PublicationLifecycleConfig,
   type RegistryConfigFile,
@@ -742,6 +743,598 @@ function validatePublicationLifecycle(
   return issues;
 }
 
+function validateDeadlineOffset(
+  issues: ConfigValidationIssue[],
+  path: string,
+  value: unknown,
+): void {
+  if (!isPlainObject(value)) {
+    issues.push({
+      path,
+      code: "invalid_deadline_offset",
+      message: "Deadline offsets must be objects.",
+    });
+    return;
+  }
+
+  if (
+    typeof value.value !== "number" ||
+    !Number.isInteger(value.value) ||
+    value.value < 0
+  ) {
+    issues.push({
+      path: `${path}.value`,
+      code: "invalid_deadline_offset_value",
+      message:
+        "Deadline offset values must be non-negative integers.",
+    });
+  }
+
+  if (
+    value.unit !== "hours" &&
+    value.unit !== "calendarDays" &&
+    value.unit !== "businessDays" &&
+    value.unit !== "weeks"
+  ) {
+    issues.push({
+      path: `${path}.unit`,
+      code: "invalid_deadline_offset_unit",
+      message:
+        "Deadline offset unit must be hours, calendarDays, businessDays, or weeks.",
+    });
+  }
+}
+
+function validateDeadlineStatusList(
+  issues: ConfigValidationIssue[],
+  path: string,
+  value: unknown,
+  statusIds: ReadonlySet<string>,
+): string[] {
+  if (value === undefined) return [];
+
+  if (
+    !Array.isArray(value) ||
+    !value.every(
+      (status) =>
+        typeof status === "string" &&
+        status.trim().length > 0,
+    )
+  ) {
+    issues.push({
+      path,
+      code: "invalid_deadline_status_list",
+      message:
+        "Deadline status lists must contain status ids.",
+    });
+    return [];
+  }
+
+  const values = value.map((status) => status.trim());
+
+  if (new Set(values).size !== values.length) {
+    issues.push({
+      path,
+      code: "duplicate_deadline_status",
+      message:
+        "Deadline status lists cannot contain duplicates.",
+    });
+  }
+
+  for (const status of values) {
+    if (!statusIds.has(status)) {
+      issues.push({
+        path,
+        code: "unknown_deadline_status",
+        message:
+          `Unknown deadline lifecycle status: ${status}.`,
+      });
+    }
+  }
+
+  return values;
+}
+
+function validateDeadlines(
+  deadlines: unknown,
+  registry: RegistryDefinition,
+  lifecycle: unknown,
+): ConfigValidationIssue[] {
+  const issues: ConfigValidationIssue[] = [];
+
+  if (deadlines === undefined) return issues;
+
+  if (!isPlainObject(deadlines)) {
+    return [
+      {
+        path: "deadlines",
+        code: "invalid_deadline_config",
+        message: "deadlines must be an object.",
+      },
+    ];
+  }
+
+  const recordTypesById = new Map(
+    registry.recordTypes.map((recordType) => [
+      recordType.id,
+      recordType,
+    ]),
+  );
+  const statusIds = new Set<string>();
+
+  if (
+    isPlainObject(lifecycle) &&
+    Array.isArray(lifecycle.statuses)
+  ) {
+    for (const status of lifecycle.statuses) {
+      if (
+        isPlainObject(status) &&
+        typeof status.id === "string"
+      ) {
+        statusIds.add(status.id);
+      }
+    }
+  }
+
+  const calendarIds = new Set(["default"]);
+
+  if (deadlines.calendars !== undefined) {
+    if (!Array.isArray(deadlines.calendars)) {
+      issues.push({
+        path: "deadlines.calendars",
+        code: "invalid_deadline_calendars",
+        message: "deadlines.calendars must be an array.",
+      });
+    } else {
+      deadlines.calendars.forEach((calendar, index) => {
+        const path = `deadlines.calendars[${index}]`;
+
+        if (!isPlainObject(calendar)) {
+          issues.push({
+            path,
+            code: "invalid_deadline_calendar",
+            message:
+              "Each deadline calendar must be an object.",
+          });
+          return;
+        }
+
+        if (
+          typeof calendar.id !== "string" ||
+          !CONFIG_IDENTIFIER_PATTERN.test(calendar.id)
+        ) {
+          issues.push({
+            path: `${path}.id`,
+            code: "invalid_deadline_calendar_id",
+            message:
+              "Deadline calendar ids must be lowercase configuration identifiers.",
+          });
+        } else if (calendarIds.has(calendar.id)) {
+          if (calendar.id !== "default") {
+            issues.push({
+              path: `${path}.id`,
+              code: "duplicate_deadline_calendar",
+              message:
+                `Duplicate deadline calendar: ${calendar.id}.`,
+            });
+          }
+        } else {
+          calendarIds.add(calendar.id);
+        }
+
+        if (
+          calendar.label !== undefined &&
+          (
+            typeof calendar.label !== "string" ||
+            calendar.label.trim().length === 0
+          )
+        ) {
+          issues.push({
+            path: `${path}.label`,
+            code: "invalid_deadline_calendar_label",
+            message:
+              "Deadline calendar labels must be non-empty strings.",
+          });
+        }
+
+        if (calendar.weekendDays !== undefined) {
+          if (
+            !Array.isArray(calendar.weekendDays) ||
+            !calendar.weekendDays.every(
+              (day) =>
+                typeof day === "number" &&
+                Number.isInteger(day) &&
+                day >= 0 &&
+                day <= 6,
+            )
+          ) {
+            issues.push({
+              path: `${path}.weekendDays`,
+              code: "invalid_deadline_weekend_days",
+              message:
+                "weekendDays must contain integers from 0 (Sunday) through 6 (Saturday).",
+            });
+          } else {
+            const unique = new Set(calendar.weekendDays);
+
+            if (unique.size !== calendar.weekendDays.length) {
+              issues.push({
+                path: `${path}.weekendDays`,
+                code: "duplicate_deadline_weekend_day",
+                message:
+                  "weekendDays cannot contain duplicates.",
+              });
+            }
+
+            if (unique.size === 7) {
+              issues.push({
+                path: `${path}.weekendDays`,
+                code: "deadline_calendar_has_no_business_days",
+                message:
+                  "A deadline calendar must leave at least one business day.",
+              });
+            }
+          }
+        }
+
+        if (calendar.excludedDates !== undefined) {
+          if (
+            !Array.isArray(calendar.excludedDates) ||
+            !calendar.excludedDates.every(
+              (date) =>
+                typeof date === "string" &&
+                /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+                !Number.isNaN(
+                  Date.parse(`${date}T00:00:00.000Z`),
+                ),
+            )
+          ) {
+            issues.push({
+              path: `${path}.excludedDates`,
+              code: "invalid_deadline_excluded_dates",
+              message:
+                "excludedDates must contain valid YYYY-MM-DD dates.",
+            });
+          } else if (
+            new Set(calendar.excludedDates).size !==
+            calendar.excludedDates.length
+          ) {
+            issues.push({
+              path: `${path}.excludedDates`,
+              code: "duplicate_deadline_excluded_date",
+              message:
+                "excludedDates cannot contain duplicates.",
+            });
+          }
+        }
+      });
+    }
+  }
+
+  if (
+    !Array.isArray(deadlines.definitions) ||
+    deadlines.definitions.length === 0
+  ) {
+    issues.push({
+      path: "deadlines.definitions",
+      code: "missing_deadline_definitions",
+      message:
+        "deadlines.definitions must contain at least one deadline definition.",
+    });
+    return issues;
+  }
+
+  const definitionIds = new Set<string>();
+
+  deadlines.definitions.forEach((definition, index) => {
+    const path = `deadlines.definitions[${index}]`;
+
+    if (!isPlainObject(definition)) {
+      issues.push({
+        path,
+        code: "invalid_deadline_definition",
+        message:
+          "Each deadline definition must be an object.",
+      });
+      return;
+    }
+
+    if (
+      typeof definition.id !== "string" ||
+      !CONFIG_IDENTIFIER_PATTERN.test(definition.id)
+    ) {
+      issues.push({
+        path: `${path}.id`,
+        code: "invalid_deadline_id",
+        message:
+          "Deadline ids must be lowercase configuration identifiers.",
+      });
+    } else if (definitionIds.has(definition.id)) {
+      issues.push({
+        path: `${path}.id`,
+        code: "duplicate_deadline_id",
+        message:
+          `Duplicate deadline definition: ${definition.id}.`,
+      });
+    } else {
+      definitionIds.add(definition.id);
+    }
+
+    if (
+      typeof definition.label !== "string" ||
+      definition.label.trim().length === 0
+    ) {
+      issues.push({
+        path: `${path}.label`,
+        code: "invalid_deadline_label",
+        message:
+          "Deadline labels must be non-empty strings.",
+      });
+    }
+
+    if (
+      definition.description !== undefined &&
+      (
+        typeof definition.description !== "string" ||
+        definition.description.trim().length === 0
+      )
+    ) {
+      issues.push({
+        path: `${path}.description`,
+        code: "invalid_deadline_description",
+        message:
+          "Deadline descriptions must be non-empty strings when provided.",
+      });
+    }
+
+    let recordTypeIds: string[] = [];
+
+    if (definition.recordTypeIds !== undefined) {
+      if (
+        !Array.isArray(definition.recordTypeIds) ||
+        definition.recordTypeIds.length === 0 ||
+        !definition.recordTypeIds.every(
+          (id) => typeof id === "string",
+        )
+      ) {
+        issues.push({
+          path: `${path}.recordTypeIds`,
+          code: "invalid_deadline_record_types",
+          message:
+            "recordTypeIds must be a non-empty array of record type ids.",
+        });
+      } else {
+        recordTypeIds = definition.recordTypeIds;
+
+        if (
+          new Set(recordTypeIds).size !==
+          recordTypeIds.length
+        ) {
+          issues.push({
+            path: `${path}.recordTypeIds`,
+            code: "duplicate_deadline_record_type",
+            message:
+              "recordTypeIds cannot contain duplicates.",
+          });
+        }
+
+        for (const id of recordTypeIds) {
+          if (!recordTypesById.has(id)) {
+            issues.push({
+              path: `${path}.recordTypeIds`,
+              code: "unknown_deadline_record_type",
+              message:
+                `Unknown deadline record type: ${id}.`,
+            });
+          }
+        }
+      }
+    }
+
+    if (!isPlainObject(definition.anchor)) {
+      issues.push({
+        path: `${path}.anchor`,
+        code: "invalid_deadline_anchor",
+        message: "Deadline anchor must be an object.",
+      });
+    } else {
+      const kind = definition.anchor.kind;
+
+      if (
+        kind !== "createdAt" &&
+        kind !== "publishedAt" &&
+        kind !== "field" &&
+        kind !== "statusEntered" &&
+        kind !== "manual"
+      ) {
+        issues.push({
+          path: `${path}.anchor.kind`,
+          code: "invalid_deadline_anchor_kind",
+          message:
+            "Deadline anchor kind must be createdAt, publishedAt, field, statusEntered, or manual.",
+        });
+      }
+
+      if (kind === "field") {
+        const fieldId = definition.anchor.fieldId;
+
+        if (
+          typeof fieldId !== "string" ||
+          fieldId.trim().length === 0
+        ) {
+          issues.push({
+            path: `${path}.anchor.fieldId`,
+            code: "invalid_deadline_anchor_field",
+            message:
+              "Field-anchored deadlines require fieldId.",
+          });
+        } else if (recordTypeIds.length === 0) {
+          issues.push({
+            path: `${path}.recordTypeIds`,
+            code: "deadline_field_anchor_requires_record_types",
+            message:
+              "Field-anchored deadlines must declare recordTypeIds.",
+          });
+        } else {
+          for (const recordTypeId of recordTypeIds) {
+            const field = recordTypesById
+              .get(recordTypeId)
+              ?.fields.find(
+                (candidate) =>
+                  candidate.id === fieldId,
+              );
+
+            if (!field) {
+              issues.push({
+                path: `${path}.anchor.fieldId`,
+                code: "unknown_deadline_anchor_field",
+                message:
+                  `Field ${fieldId} does not exist on record type ${recordTypeId}.`,
+              });
+            } else if (
+              field.type !== "date" &&
+              field.type !== "datetime"
+            ) {
+              issues.push({
+                path: `${path}.anchor.fieldId`,
+                code: "invalid_deadline_anchor_field_type",
+                message:
+                  `Field ${fieldId} must be a date or datetime field.`,
+              });
+            }
+          }
+        }
+      }
+
+      if (kind === "statusEntered") {
+        if (statusIds.size === 0) {
+          issues.push({
+            path: `${path}.anchor.statusId`,
+            code: "deadline_status_anchor_requires_lifecycle",
+            message:
+              "Status-anchored deadlines require publicationLifecycle configuration.",
+          });
+        } else if (
+          typeof definition.anchor.statusId !==
+            "string" ||
+          !statusIds.has(
+            definition.anchor.statusId,
+          )
+        ) {
+          issues.push({
+            path: `${path}.anchor.statusId`,
+            code: "unknown_deadline_anchor_status",
+            message:
+              "statusId must reference a configured lifecycle status.",
+          });
+        }
+      }
+    }
+
+    validateDeadlineOffset(
+      issues,
+      `${path}.offset`,
+      definition.offset,
+    );
+
+    if (definition.warningOffset !== undefined) {
+      validateDeadlineOffset(
+        issues,
+        `${path}.warningOffset`,
+        definition.warningOffset,
+      );
+    }
+
+    if (
+      definition.calendarId !== undefined &&
+      (
+        typeof definition.calendarId !== "string" ||
+        !calendarIds.has(definition.calendarId)
+      )
+    ) {
+      issues.push({
+        path: `${path}.calendarId`,
+        code: "unknown_deadline_calendar",
+        message:
+          "calendarId must reference a configured deadline calendar.",
+      });
+    }
+
+    if (
+      definition.dateOnlyAnchorTime !== undefined &&
+      definition.dateOnlyAnchorTime !== "start" &&
+      definition.dateOnlyAnchorTime !== "end"
+    ) {
+      issues.push({
+        path: `${path}.dateOnlyAnchorTime`,
+        code: "invalid_deadline_date_anchor_time",
+        message:
+          "dateOnlyAnchorTime must be start or end.",
+      });
+    }
+
+    if (
+      definition.publiclyVisible !== undefined &&
+      typeof definition.publiclyVisible !== "boolean"
+    ) {
+      issues.push({
+        path: `${path}.publiclyVisible`,
+        code: "invalid_deadline_public_visibility",
+        message:
+          "publiclyVisible must be a boolean when provided.",
+      });
+    }
+
+    const paused = validateDeadlineStatusList(
+      issues,
+      `${path}.pauseWhileStatuses`,
+      definition.pauseWhileStatuses,
+      statusIds,
+    );
+    const completed = validateDeadlineStatusList(
+      issues,
+      `${path}.completeWhenStatuses`,
+      definition.completeWhenStatuses,
+      statusIds,
+    );
+    const cancelled = validateDeadlineStatusList(
+      issues,
+      `${path}.cancelWhenStatuses`,
+      definition.cancelWhenStatuses,
+      statusIds,
+    );
+
+    const terminal = new Set([
+      ...completed,
+      ...cancelled,
+    ]);
+
+    for (const status of paused) {
+      if (terminal.has(status)) {
+        issues.push({
+          path,
+          code: "conflicting_deadline_status_rule",
+          message:
+            `Status ${status} cannot both pause and complete/cancel a deadline.`,
+        });
+      }
+    }
+
+    for (const status of completed) {
+      if (cancelled.includes(status)) {
+        issues.push({
+          path,
+          code: "conflicting_deadline_status_rule",
+          message:
+            `Status ${status} cannot both complete and cancel a deadline.`,
+        });
+      }
+    }
+  });
+
+  return issues;
+}
+
 function validateDisclosure(
   disclosure: unknown,
 ): ConfigValidationIssue[] {
@@ -852,6 +1445,13 @@ export function validateRegistryConfig(
       ),
     );
     issues.push(
+      ...validateDeadlines(
+        value.deadlines,
+        value.registry as RegistryDefinition,
+        value.publicationLifecycle,
+      ),
+    );
+    issues.push(
       ...validateDisclosure(
         value.disclosure,
       ),
@@ -898,4 +1498,11 @@ export function getDisclosureConfig(
   value: RegistryConfigFile,
 ): DisclosureConfig | undefined {
   return value.disclosure;
+}
+
+
+export function getDeadlineConfig(
+  value: RegistryConfigFile,
+): DeadlineEngineConfig | undefined {
+  return value.deadlines;
 }
