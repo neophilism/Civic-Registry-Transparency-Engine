@@ -1,0 +1,100 @@
+schemaVersion: 1
+
+registry:
+  id: public-document-catalog
+  name: Public Document Catalog
+  description: Example configuration demonstrating a registry without custom code.
+  defaultRecordTypeId: document
+  publicByDefault: true
+
+  recordTypes:
+    - id: document
+      name: Document
+      pluralName: Documents
+      titleFieldId: title
+      summaryFieldId: summary
+
+      fields:
+        - id: title
+          label: Title
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: summary
+          label: Summary
+          type: longText
+          searchable: true
+
+        - id: document_type
+          label: Document type
+          type: enum
+          filterable: true
+          options:
+            - value: report
+              label: Report
+            - value: policy
+              label: Policy
+            - value: notice
+              label: Notice
+
+        - id: published_on
+          label: Published on
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: publisher
+          label: Publisher
+          type: entityRef
+          targetRecordTypeIds:
+            - organization
+
+    - id: organization
+      name: Organization
+      pluralName: Organizations
+      titleFieldId: name
+
+      fields:
+        - id: name
+          label: Name
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: website
+          label: Website
+          type: url
+
+  relationshipTypes:
+    - id: published-by
+      label: Published by
+      inverseLabel: Published
+      directed: true
+      fromRecordTypeIds:
+        - document
+      toRecordTypeIds:
+        - organization
+
+presentation:
+  recordTypes:
+    document:
+      listFields:
+        - title
+        - document_type
+        - published_on
+      detailFields:
+        - title
+        - summary
+        - document_type
+        - published_on
+        - publisher
+      defaultSort:
+        fieldId: published_on
+        direction: desc
+
+    organization:
+      listFields:
+        - name
