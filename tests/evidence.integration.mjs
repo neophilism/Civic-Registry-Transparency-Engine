@@ -301,3 +301,46 @@ test("evidence seed data is idempotent", async () => {
     await pool.end();
   }
 });
+
+
+test("public provenance cannot be hidden while public dependents still reference it", async () => {
+  const {
+    pool,
+    sources,
+    documents,
+  } = await setup();
+
+  try {
+    const source = await sources.get(
+      config.registry.id,
+      "example-report-source",
+    );
+    const document = await documents.get(
+      config.registry.id,
+      "example-report-pdf",
+    );
+
+    assert.ok(source);
+    assert.ok(document);
+
+    await assert.rejects(
+      () =>
+        sources.update({
+          ...source,
+          visibility: "private",
+        }),
+      PersistenceConflictError,
+    );
+
+    await assert.rejects(
+      () =>
+        documents.update({
+          ...document,
+          visibility: "private",
+        }),
+      PersistenceConflictError,
+    );
+  } finally {
+    await pool.end();
+  }
+});
