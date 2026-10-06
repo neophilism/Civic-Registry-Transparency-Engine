@@ -554,20 +554,10 @@ export class PostgresDeadlineService
         SELECT *
         FROM civic_registry_deadlines
         WHERE ${where.join(" AND ")}
-        ORDER BY
-          CASE state
-            WHEN 'overdue' THEN 0
-            ELSE 1
-          END,
-          due_at ASC,
-          id ASC
-        LIMIT $${limit}
-        OFFSET $${offset}
-      `
-        .replace(
-          "CASE state\n            WHEN 'overdue' THEN 0\n            ELSE 1\n          END,\n          ",
-          "",
-        ),
+        ORDER BY due_at ASC, id ASC
+        LIMIT ${limit}
+        OFFSET ${offset}
+      `,
       values,
     );
 
