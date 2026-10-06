@@ -157,7 +157,7 @@ BEGIN
     TG_TABLE_NAME
     USING ERRCODE = '55000';
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS civic_registry_record_versions_immutable
   ON civic_registry_record_versions;
@@ -566,7 +566,7 @@ AS $$
     THEN 'public'
     ELSE 'private'
   END;
-$;
+$$;
 
 CREATE OR REPLACE FUNCTION civic_registry_insert_relationship_event(
   relationship_row civic_registry_relationships,
