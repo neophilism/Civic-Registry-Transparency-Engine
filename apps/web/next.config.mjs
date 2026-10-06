@@ -2,6 +2,12 @@
 const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  transpilePackages: [
+    "@civic-registry/core",
+    "@civic-registry/config",
+    "@civic-registry/database",
+    "@civic-registry/registry",
+  ],
 };
 
 export default nextConfig;
