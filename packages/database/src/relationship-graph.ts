@@ -164,7 +164,7 @@ export class PostgresRelationshipGraphRepository {
 
     if (query.visibility) {
       values.push(query.visibility);
-      const visibilityParameter = `${values.length}`;
+      const visibilityParameter = `$${values.length}`;
       where.push(
         `from_record.visibility = ${visibilityParameter}`,
       );
@@ -177,7 +177,7 @@ export class PostgresRelationshipGraphRepository {
 
     if (statusIds.length > 0) {
       values.push(statusIds);
-      const statusParameter = `${values.length}`;
+      const statusParameter = `$${values.length}`;
       where.push(
         `from_record.status = ANY(${statusParameter}::text[])`,
       );
@@ -224,7 +224,7 @@ export class PostgresRelationshipGraphRepository {
     if (query.visibility) {
       rootValues.push(query.visibility);
       rootWhere.push(
-        `visibility = ${rootValues.length}`,
+        `visibility = $${rootValues.length}`,
       );
     }
 
@@ -233,7 +233,7 @@ export class PostgresRelationshipGraphRepository {
     if (statusIds.length > 0) {
       rootValues.push(statusIds);
       rootWhere.push(
-        `status = ANY(${rootValues.length}::text[])`,
+        `status = ANY($${rootValues.length}::text[])`,
       );
     }
 
@@ -320,14 +320,14 @@ export class PostgresRelationshipGraphRepository {
     if (query.visibility) {
       values.push(query.visibility);
       where.push(
-        `visibility = ${values.length}`,
+        `visibility = $${values.length}`,
       );
     }
 
     if (statusIds.length > 0) {
       values.push(statusIds);
       where.push(
-        `status = ANY(${values.length}::text[])`,
+        `status = ANY($${values.length}::text[])`,
       );
     }
 
