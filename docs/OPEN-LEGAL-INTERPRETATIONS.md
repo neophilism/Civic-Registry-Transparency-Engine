@@ -269,3 +269,14 @@ A subsequent milestone can add scheduled refresh orchestration, attachment/PDF i
 PR 21 adds persisted daily refresh jobs for the DOJ OLC and OGE adapters. A recurring worker can poll frequently while PostgreSQL determines which jobs are actually due and prevents overlapping claims.
 
 See [Scheduled source refresh](SOURCE-REFRESH.md) for worker commands, leases, backoff, health states, administrator monitoring, and deployment guidance.
+
+
+## PDF attachment ingestion
+
+PR 22 extends the scheduled official-source refresh pipeline to retrieve discovered PDF attachments, persist exact content-addressed document versions, extract page-level text, create source/document/citation evidence, and enrich the configured `full_text` field when text is available.
+
+See [PDF attachment ingestion](PDF-ATTACHMENTS.md) for storage, security, extraction, versioning, deployment, failure behavior, and test coverage.
+
+## Next milestone
+
+PR 23 can add structured legal-authority extraction from the trusted full-text/evidence corpus with explicit provenance and review state.
