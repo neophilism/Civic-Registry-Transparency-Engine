@@ -53,6 +53,16 @@ export interface PublicRelationshipGraphResult {
   truncated: boolean;
 }
 
+function publicStatusIds(
+  registry: CompiledRegistryConfig,
+): string[] | undefined {
+  const lifecycle = registry.publicationLifecycle;
+
+  if (!lifecycle) return undefined;
+
+  return [...lifecycle.publicStatusIds];
+}
+
 export async function listPublicRegistries(): Promise<
   PublicRegistry[]
 > {
@@ -81,10 +91,24 @@ export async function listPublicRecords(
   registryId: string,
   recordTypeId: string,
 ): Promise<RegistryRecord[]> {
-  const { records } = getRepositories();
+  const { configs, records } = getRepositories();
+  const config = await configs.get(registryId);
+
+  if (!config) return [];
+
+  const registry = compileRegistryConfig(config);
+  const statuses = publicStatusIds(registry);
+
+  if (
+    registry.publicationLifecycle &&
+    statuses?.length === 0
+  ) {
+    return [];
+  }
 
   return records.list(registryId, {
     recordTypeId,
+    statuses,
     visibility: "public",
     limit: 100,
   });
@@ -94,10 +118,28 @@ export async function getPublicRecord(
   registryId: string,
   recordId: string,
 ): Promise<RegistryRecord | null> {
-  const { records } = getRepositories();
-  const record = await records.get(registryId, recordId);
+  const { configs, records } = getRepositories();
+  const [config, record] = await Promise.all([
+    configs.get(registryId),
+    records.get(registryId, recordId),
+  ]);
 
-  if (!record || record.visibility !== "public") {
+  if (
+    !config ||
+    !record ||
+    record.visibility !== "public"
+  ) {
+    return null;
+  }
+
+  const registry = compileRegistryConfig(config);
+
+  if (
+    registry.publicationLifecycle &&
+    !registry.publicationLifecycle.isPublicStatus(
+      record.status,
+    )
+  ) {
     return null;
   }
 
@@ -120,6 +162,7 @@ export async function listPublicRelationships(
     depth: 1,
     relationshipTypeIds: options.relationshipTypeIds,
     visibility: "public",
+    statusIds: publicStatusIds(registry),
     maxNodes: options.maxNodes ?? 101,
   });
 
@@ -190,6 +233,7 @@ export async function getPublicRelationshipGraph(
     depth: options.depth,
     relationshipTypeIds: options.relationshipTypeIds,
     visibility: "public",
+    statusIds: publicStatusIds(registry),
     maxNodes: options.maxNodes ?? 100,
   });
 
@@ -207,9 +251,28 @@ export async function searchPublicRecords(
     Partial<Pick<SearchRequest, "registryId" | "visibility">>,
 ): Promise<SearchResponse> {
   const { search } = getRepositories();
+  const lifecycle = registry.publicationLifecycle;
+  let statuses = request.statuses;
+
+  if (lifecycle) {
+    const publiclyVisible = lifecycle.publicStatusIds;
+    const requested = request.statuses ?? [];
+
+    statuses =
+      requested.length > 0
+        ? requested.filter((status) =>
+            publiclyVisible.has(status),
+          )
+        : [...publiclyVisible];
+
+    if (statuses.length === 0) {
+      statuses = ["__no_public_lifecycle_status__"];
+    }
+  }
 
   return search.search(registry, {
     ...request,
+    statuses,
     registryId: registry.definition.id,
     visibility: "public",
   });
