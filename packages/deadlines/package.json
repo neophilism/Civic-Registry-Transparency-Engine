@@ -1,0 +1,21 @@
+{
+  "name": "@civic-registry/deadlines",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Configurable deadline calculation and presentation engine for civic registries.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@civic-registry/config": "workspace:*",
+    "@civic-registry/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
