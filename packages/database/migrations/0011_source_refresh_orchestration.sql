@@ -19,6 +19,17 @@ CREATE TABLE IF NOT EXISTS civic_registry_source_refresh_jobs (
       failure_backoff_base_seconds
   ),
   adapter_options JSONB NOT NULL DEFAULT '{}'::jsonb,
+  empty_result_behavior TEXT NOT NULL DEFAULT 'warning' CHECK (
+    empty_result_behavior IN (
+      'allow',
+      'warning',
+      'failure'
+    )
+  ),
+  row_count_drop_warning_percent INTEGER NOT NULL DEFAULT 50 CHECK (
+    row_count_drop_warning_percent >= 0
+    AND row_count_drop_warning_percent <= 100
+  ),
   next_run_at TIMESTAMPTZ NOT NULL,
   lease_token TEXT,
   lease_expires_at TIMESTAMPTZ,
