@@ -551,10 +551,15 @@ function validatePublicationLifecycle(
             candidate.approval.approverRoles,
             { required: true },
           );
+          const rawMinApprovals =
+            candidate.approval.minApprovals;
           const minApprovals =
-            candidate.approval.minApprovals ?? 1;
+            rawMinApprovals === undefined
+              ? 1
+              : rawMinApprovals;
 
           if (
+            typeof minApprovals !== "number" ||
             !Number.isInteger(minApprovals) ||
             minApprovals < 1
           ) {
