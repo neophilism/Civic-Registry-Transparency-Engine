@@ -96,7 +96,10 @@ export function SearchControls({
 
   const statusOptions = facets.statuses.map((bucket) => ({
     value: bucket.value,
-    label: bucket.value,
+    label:
+      registry.publicationLifecycle?.statusesById.get(
+        bucket.value,
+      )?.label ?? bucket.value,
     count: bucket.count,
   }));
   const tagOptions = facets.tags.map((bucket) => ({
