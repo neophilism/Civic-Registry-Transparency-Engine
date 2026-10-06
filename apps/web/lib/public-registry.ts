@@ -299,13 +299,28 @@ export async function listPublicRelationships(
     maxNodes?: number;
   } = {},
 ): Promise<PublicRelationshipResult> {
-  const { relationshipGraph } = getRepositories();
+  const { relationshipGraph, disclosure } =
+    getRepositories();
   const statuses = publicStatusIds(registry);
 
   if (
     registry.publicationLifecycle &&
     statuses?.length === 0
   ) {
+    return {
+      relationships: [],
+      groups: [],
+      truncated: false,
+    };
+  }
+
+  const rootDisclosure =
+    await disclosure.getRecordDisclosure(
+      record.registryId,
+      record.id,
+    );
+
+  if (rootDisclosure?.disposition === "withheld") {
     return {
       relationships: [],
       groups: [],
@@ -331,14 +346,25 @@ export async function listPublicRelationships(
     };
   }
 
+  const projectedNodes =
+    await projectPublicRecordSet(
+      registry,
+      raw.nodes.map((node) => node.record),
+    );
   const recordsById = new Map(
-    raw.nodes.map((node) => [
-      node.record.id,
-      node.record,
-    ]),
+    projectedNodes.flatMap((item) =>
+      item.result
+        ? [[item.source.id, item.result.record] as const]
+        : [],
+    ),
   );
 
   const relationships = raw.edges
+    .filter(
+      (relationship) =>
+        recordsById.has(relationship.fromRecordId) &&
+        recordsById.has(relationship.toRecordId),
+    )
     .map((relationship) => {
       const relatedId =
         relationship.fromRecordId === record.id
@@ -385,6 +411,32 @@ export async function getPublicRelationshipGraph(
 ): Promise<PublicRelationshipGraphResult | null> {
   const { relationshipGraph } = getRepositories();
   const statuses = publicStatusIds(registry);
+  const root = await getPublicRecordView(
+    registry.definition.id,
+    recordId,
+  );
+
+  if (!root) return null;
+
+  if (root.disclosure.disposition === "withheld") {
+    return {
+      graph: presentRelationshipGraph(
+        {
+          rootRecordId: recordId,
+          nodes: [
+            {
+              record: root.record,
+              distance: 0,
+            },
+          ],
+          edges: [],
+          truncated: false,
+        },
+        registry,
+      ),
+      truncated: false,
+    };
+  }
 
   if (
     registry.publicationLifecycle &&
@@ -405,8 +457,41 @@ export async function getPublicRelationshipGraph(
 
   if (!raw) return null;
 
+  const projectedNodes =
+    await projectPublicRecordSet(
+      registry,
+      raw.nodes.map((node) => node.record),
+    );
+  const recordsById = new Map(
+    projectedNodes.flatMap((item) =>
+      item.result
+        ? [[item.source.id, item.result.record] as const]
+        : [],
+    ),
+  );
+  const nodes = raw.nodes.flatMap((node) => {
+    const record = recordsById.get(node.record.id);
+
+    return record
+      ? [{ ...node, record }]
+      : [];
+  });
+  const edges = raw.edges.filter(
+    (edge) =>
+      recordsById.has(edge.fromRecordId) &&
+      recordsById.has(edge.toRecordId),
+  );
+  const safeGraph = {
+    ...raw,
+    nodes,
+    edges,
+  };
+
   return {
-    graph: presentRelationshipGraph(raw, registry),
+    graph: presentRelationshipGraph(
+      safeGraph,
+      registry,
+    ),
     truncated: raw.truncated,
   };
 }
