@@ -378,6 +378,66 @@ export function presentHistoryEvent(
       );
       break;
     }
+    case "deadline.created": {
+      const typeId = stringValue(
+        event.metadata?.deadlineTypeId,
+      );
+      const deadline =
+        typeId
+          ? registry.deadlines?.definitionsById.get(
+              typeId,
+            )
+          : undefined;
+      label = deadline
+        ? `${deadline.label} created`
+        : "Deadline created";
+      const dueAt = stringValue(
+        event.metadata?.dueAt,
+      );
+      detail = dueAt
+        ? `Due ${dueAt}.`
+        : undefined;
+      break;
+    }
+    case "deadline.recalculated": {
+      const typeId = stringValue(
+        event.metadata?.deadlineTypeId,
+      );
+      const deadline =
+        typeId
+          ? registry.deadlines?.definitionsById.get(
+              typeId,
+            )
+          : undefined;
+      label = deadline
+        ? `${deadline.label} recalculated`
+        : "Deadline recalculated";
+      const dueAt = stringValue(
+        event.metadata?.dueAt,
+      );
+      detail = dueAt
+        ? `New due time: ${dueAt}.`
+        : undefined;
+      break;
+    }
+    case "deadline.paused":
+      label = "Deadline paused";
+      break;
+    case "deadline.resumed":
+      label = "Deadline resumed";
+      break;
+    case "deadline.completed":
+      label = "Deadline completed";
+      break;
+    case "deadline.cancelled":
+      label = "Deadline cancelled";
+      break;
+    case "deadline.reopened":
+      label = "Deadline reopened";
+      break;
+    case "deadline.deleted":
+      label = "Deadline deleted";
+      break;
     case "lifecycle.transition_requested": {
       const from = statusLabel(
         registry,
