@@ -19,6 +19,7 @@ export interface DeadlineInstance {
   registryId: string;
   recordId: EntityId;
   deadlineTypeId: string;
+  instanceKey: string;
   anchorAt: ISODateTime;
   dueAt: ISODateTime;
   state: DeadlineState;
