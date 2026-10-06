@@ -1,4 +1,6 @@
 import {
+  NOTIFICATION_CHANNELS,
+  NOTIFICATION_EVENT_TYPES,
   validateRegistryDefinition,
   type FieldDefinition,
   type RegistryDefinition,
@@ -1412,6 +1414,100 @@ function validateDisclosure(
   return issues;
 }
 
+
+function validateNotifications(
+  notifications: unknown,
+): ConfigValidationIssue[] {
+  const issues: ConfigValidationIssue[] = [];
+
+  if (notifications === undefined) return issues;
+
+  if (!isPlainObject(notifications)) {
+    return [
+      {
+        path: "notifications",
+        code: "invalid_notification_config",
+        message: "notifications must be an object.",
+      },
+    ];
+  }
+
+  if (
+    notifications.enabled !== undefined &&
+    typeof notifications.enabled !== "boolean"
+  ) {
+    issues.push({
+      path: "notifications.enabled",
+      code: "invalid_notification_enabled",
+      message: "enabled must be a boolean.",
+    });
+  }
+
+  for (const [key, allowed] of [
+    ["eventTypes", NOTIFICATION_EVENT_TYPES],
+    ["allowedChannels", NOTIFICATION_CHANNELS],
+  ] as const) {
+    const value = notifications[key];
+
+    if (value === undefined) continue;
+
+    if (
+      !Array.isArray(value) ||
+      value.length === 0 ||
+      !value.every(
+        (entry) =>
+          typeof entry === "string" &&
+          (allowed as readonly string[]).includes(
+            entry,
+          ),
+      )
+    ) {
+      issues.push({
+        path: `notifications.${key}`,
+        code: "invalid_notification_list",
+        message:
+          `${key} must contain supported notification values.`,
+      });
+      continue;
+    }
+
+    if (new Set(value).size !== value.length) {
+      issues.push({
+        path: `notifications.${key}`,
+        code: "duplicate_notification_value",
+        message:
+          `${key} cannot contain duplicates.`,
+      });
+    }
+  }
+
+  for (const [key, minimum, maximum] of [
+    ["deadlineApproachingDays", 1, 365],
+    ["maxDeliveryAttempts", 1, 20],
+    ["retryBaseSeconds", 1, 86400],
+  ] as const) {
+    const value = notifications[key];
+
+    if (value === undefined) continue;
+
+    if (
+      typeof value !== "number" ||
+      !Number.isInteger(value) ||
+      value < minimum ||
+      value > maximum
+    ) {
+      issues.push({
+        path: `notifications.${key}`,
+        code: "invalid_notification_number",
+        message:
+          `${key} must be an integer from ${minimum} through ${maximum}.`,
+      });
+    }
+  }
+
+  return issues;
+}
+
 export function validateRegistryConfig(
   value: unknown,
 ): ConfigValidationIssue[] {
@@ -1460,6 +1556,11 @@ export function validateRegistryConfig(
       ...validatePresentation(
         value.presentation,
         value.registry as RegistryDefinition,
+      ),
+    );
+    issues.push(
+      ...validateNotifications(
+        value.notifications,
       ),
     );
   }
