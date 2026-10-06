@@ -437,6 +437,10 @@ test("field redactions protect public lookup, search, facets, evidence, and hist
       undefined,
     );
     assert.equal(
+      evidence.citations[0].source.canonicalUrl,
+      undefined,
+    );
+    assert.equal(
       evidence.citations[0].document.disclosure
         .redactions.length,
       1,
