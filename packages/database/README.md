@@ -194,3 +194,16 @@ setting, clearing, and reading disclosure rules.
 
 See [Disclosure and redaction](../../docs/DISCLOSURE-REDACTION.md) for the
 public-safety model.
+
+
+## Import and ingestion
+
+Migration `0008_ingestion_pipeline.sql` persists structured ingestion runs
+and per-row outcomes.
+
+`PostgresIngestionService` runs provider-neutral import profiles from
+`@civic-registry/ingestion` through the canonical record repository, so
+imports receive the same validation, history, indexing, disclosure, and
+deadline behavior as ordinary writes.
+
+See [Import and ingestion pipelines](../../docs/INGESTION.md).
