@@ -27,6 +27,7 @@ export interface PresentedRecordSummary {
   title: string;
   summary?: string;
   status: string;
+  statusLabel: string;
   updatedAt: string;
   fields: PresentedField[];
 }
@@ -166,6 +167,10 @@ export function presentRecordSummary(
     title: fieldValueAsTitle(record, recordType),
     summary: fieldValueAsSummary(record, recordType),
     status: record.status,
+    statusLabel:
+      registry.publicationLifecycle?.statusesById.get(
+        record.status,
+      )?.label ?? record.status,
     updatedAt: record.updatedAt,
     fields: presentFields(record, recordType.listFields),
   };
