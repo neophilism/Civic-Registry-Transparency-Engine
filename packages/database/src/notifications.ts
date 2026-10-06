@@ -53,6 +53,7 @@ export interface NotificationRunResult {
   materialized: number;
   dispatched: number;
   failed: number;
+  suppressed: number;
 }
 
 export class NotificationError extends Error {
@@ -930,7 +931,7 @@ export class PostgresNotificationService {
     registryId: string,
     now = new Date().toISOString(),
   ): Promise<number> {
-    const { settings } =
+    const { config, settings } =
       await this.settings(registryId);
     let collected = 0;
 
@@ -1025,7 +1026,14 @@ export class PostgresNotificationService {
             registry_id,
             dedupe_key
           )
-          DO NOTHING
+          DO UPDATE SET
+            visibility = EXCLUDED.visibility,
+            payload = EXCLUDED.payload
+          WHERE
+            civic_registry_notification_events.visibility
+              IS DISTINCT FROM EXCLUDED.visibility
+            OR civic_registry_notification_events.payload
+              IS DISTINCT FROM EXCLUDED.payload
         `,
         [registryId, auditSources],
       );
@@ -1085,7 +1093,14 @@ export class PostgresNotificationService {
             registry_id,
             dedupe_key
           )
-          DO NOTHING
+          DO UPDATE SET
+            visibility = EXCLUDED.visibility,
+            payload = EXCLUDED.payload
+          WHERE
+            civic_registry_notification_events.visibility
+              IS DISTINCT FROM EXCLUDED.visibility
+            OR civic_registry_notification_events.payload
+              IS DISTINCT FROM EXCLUDED.payload
         `,
         [registryId],
       );
@@ -1192,7 +1207,14 @@ export class PostgresNotificationService {
             registry_id,
             dedupe_key
           )
-          DO NOTHING
+          DO UPDATE SET
+            visibility = EXCLUDED.visibility,
+            payload = EXCLUDED.payload
+          WHERE
+            civic_registry_notification_events.visibility
+              IS DISTINCT FROM EXCLUDED.visibility
+            OR civic_registry_notification_events.payload
+              IS DISTINCT FROM EXCLUDED.payload
         `,
         [
           registryId,
@@ -1213,73 +1235,99 @@ export class PostgresNotificationService {
   ): Promise<number> {
     await this.settings(registryId);
 
-    const [subscriptions, events] =
-      await Promise.all([
-        this.listSubscriptions(registryId, {
+    const subscriptions: NotificationSubscription[] =
+      [];
+    let subscriptionOffset = 0;
+
+    while (true) {
+      const page = await this.listSubscriptions(
+        registryId,
+        {
           enabled: true,
           limit: 500,
-        }),
-        this.listEvents(registryId, {
-          limit: 5000,
-        }),
-      ]);
+          offset: subscriptionOffset,
+        },
+      );
+      subscriptions.push(...page);
+
+      if (page.length < 500) break;
+      subscriptionOffset += page.length;
+    }
+
+    if (subscriptions.length === 0) return 0;
 
     let created = 0;
+    let eventOffset = 0;
 
-    for (const subscription of subscriptions) {
-      const createdAt =
-        Date.parse(subscription.createdAt);
+    while (true) {
+      const events = await this.listEvents(
+        registryId,
+        {
+          limit: 1000,
+          offset: eventOffset,
+        },
+      );
 
-      for (const event of events) {
-        if (
-          Date.parse(event.occurredAt) < createdAt ||
-          !notificationMatchesSubscription(
-            event,
-            subscription,
-          )
-        ) {
-          continue;
+      for (const subscription of subscriptions) {
+        const createdAt =
+          Date.parse(subscription.createdAt);
+
+        for (const event of events) {
+          if (
+            Date.parse(event.occurredAt) < createdAt ||
+            !notificationMatchesSubscription(
+              event,
+              subscription,
+            )
+          ) {
+            continue;
+          }
+
+          const result = await this.pool.query(
+            `
+              INSERT INTO civic_registry_notification_deliveries (
+                registry_id,
+                id,
+                event_id,
+                subscription_id,
+                channel,
+                target,
+                status,
+                attempts,
+                next_attempt_at,
+                created_at
+              )
+              VALUES (
+                $1, $2, $3, $4, $5, $6::jsonb,
+                'pending', 0, $7::timestamptz,
+                $7::timestamptz
+              )
+              ON CONFLICT (
+                registry_id,
+                event_id,
+                subscription_id
+              )
+              DO NOTHING
+            `,
+            [
+              registryId,
+              randomUUID(),
+              event.id,
+              subscription.id,
+              subscription.channel,
+              JSON.stringify(
+                subscription.target,
+              ),
+              now,
+            ],
+          );
+
+          created += result.rowCount ?? 0;
         }
-
-        const result = await this.pool.query(
-          `
-            INSERT INTO civic_registry_notification_deliveries (
-              registry_id,
-              id,
-              event_id,
-              subscription_id,
-              channel,
-              target,
-              status,
-              attempts,
-              next_attempt_at,
-              created_at
-            )
-            VALUES (
-              $1, $2, $3, $4, $5, $6::jsonb,
-              'pending', 0, $7::timestamptz,
-              $7::timestamptz
-            )
-            ON CONFLICT (
-              registry_id,
-              event_id,
-              subscription_id
-            )
-            DO NOTHING
-          `,
-          [
-            registryId,
-            randomUUID(),
-            event.id,
-            subscription.id,
-            subscription.channel,
-            JSON.stringify(subscription.target),
-            now,
-          ],
-        );
-
-        created += result.rowCount ?? 0;
       }
+
+      if (events.length < 1000) break;
+      eventOffset += events.length;
     }
 
     return created;
@@ -1444,6 +1492,7 @@ export class PostgresNotificationService {
   ): Promise<{
     dispatched: number;
     failed: number;
+    suppressed: number;
   }> {
     const { settings } =
       await this.settings(registryId);
@@ -1514,13 +1563,21 @@ export class PostgresNotificationService {
 
     let dispatched = 0;
     let failed = 0;
+    let suppressed = 0;
 
     for (const row of claimed.rows) {
       const delivery = mapDelivery(row);
-      const event = await this.getEvent(
-        registryId,
-        delivery.eventId,
-      );
+      const [event, subscription] =
+        await Promise.all([
+          this.getEvent(
+            registryId,
+            delivery.eventId,
+          ),
+          this.getSubscription(
+            registryId,
+            delivery.subscriptionId,
+          ),
+        ]);
 
       if (!event) {
         await this.failDelivery(
@@ -1530,6 +1587,33 @@ export class PostgresNotificationService {
           new Error("Notification event no longer exists."),
         );
         failed += 1;
+        continue;
+      }
+
+      if (
+        !subscription ||
+        !subscription.enabled
+      ) {
+        await this.suppressDelivery(
+          row,
+          "Subscription is no longer enabled.",
+        );
+        suppressed += 1;
+        continue;
+      }
+
+      if (
+        subscription.scope === "public" &&
+        !(await this.eventStillPublic(
+          event,
+          config,
+        ))
+      ) {
+        await this.suppressDelivery(
+          row,
+          "Event is no longer eligible for public delivery.",
+        );
+        suppressed += 1;
         continue;
       }
 
@@ -1582,6 +1666,7 @@ export class PostgresNotificationService {
     return {
       dispatched,
       failed,
+      suppressed,
     };
   }
 
@@ -1612,7 +1697,181 @@ export class PostgresNotificationService {
       materialized,
       dispatched: dispatched.dispatched,
       failed: dispatched.failed,
+      suppressed: dispatched.suppressed,
     };
+  }
+
+  private async getSubscription(
+    registryId: string,
+    subscriptionId: string,
+  ): Promise<NotificationSubscription | null> {
+    const result =
+      await this.pool.query<SubscriptionRow>(
+        `
+          SELECT *
+          FROM civic_registry_notification_subscriptions
+          WHERE registry_id = $1
+            AND id = $2
+        `,
+        [registryId, subscriptionId],
+      );
+
+    return result.rows[0]
+      ? mapSubscription(result.rows[0])
+      : null;
+  }
+
+  private async eventStillPublic(
+    event: NotificationEvent,
+    config: RegistryConfigFile,
+  ): Promise<boolean> {
+    if (event.visibility !== "public") {
+      return false;
+    }
+
+    if (event.subjectType === "document") {
+      const result = await this.pool.query<{
+        visibility: Visibility;
+        disposition: string | null;
+      }>(
+        `
+          SELECT
+            document.visibility,
+            disclosure.disposition
+          FROM civic_registry_documents AS document
+          LEFT JOIN civic_registry_document_disclosures
+            AS disclosure
+            ON disclosure.registry_id =
+              document.registry_id
+            AND disclosure.document_id =
+              document.id
+          WHERE document.registry_id = $1
+            AND document.id = $2
+        `,
+        [event.registryId, event.subjectId],
+      );
+      const row = result.rows[0];
+
+      return (
+        row?.visibility === "public" &&
+        (row.disposition === null ||
+          row.disposition === "disclosed")
+      );
+    }
+
+    if (event.subjectType === "deadline") {
+      const result = await this.pool.query<{
+        is_public: boolean;
+      }>(
+        `
+          SELECT
+            (
+              deadline.state = 'open'
+              AND civic_registry_deadline_is_public(
+                deadline.registry_id,
+                deadline.record_id,
+                deadline.deadline_type_id
+              )
+              AND NOT EXISTS (
+                SELECT 1
+                FROM civic_registry_record_disclosures
+                  AS disclosure
+                WHERE disclosure.registry_id =
+                    deadline.registry_id
+                  AND disclosure.record_id =
+                    deadline.record_id
+                  AND disclosure.disposition =
+                    'withheld'
+              )
+            ) AS is_public
+          FROM civic_registry_deadlines AS deadline
+          WHERE deadline.registry_id = $1
+            AND deadline.id = $2
+        `,
+        [event.registryId, event.subjectId],
+      );
+
+      if (result.rows[0]?.is_public !== true) {
+        return false;
+      }
+    }
+
+    const payloadRecordId =
+      event.payload.recordId;
+    const recordId =
+      typeof payloadRecordId === "string"
+        ? payloadRecordId
+        : event.subjectType === "record"
+          ? event.subjectId
+          : undefined;
+
+    if (!recordId) {
+      return event.subjectType === "document";
+    }
+
+    const recordResult =
+      await this.pool.query<{
+        visibility: Visibility;
+        status: string;
+        disposition: string | null;
+      }>(
+        `
+          SELECT
+            record.visibility,
+            record.status,
+            disclosure.disposition
+          FROM civic_registry_records AS record
+          LEFT JOIN civic_registry_record_disclosures
+            AS disclosure
+            ON disclosure.registry_id =
+              record.registry_id
+            AND disclosure.record_id =
+              record.id
+          WHERE record.registry_id = $1
+            AND record.id = $2
+        `,
+        [event.registryId, recordId],
+      );
+    const record = recordResult.rows[0];
+
+    if (
+      !record ||
+      record.visibility !== "public" ||
+      record.disposition === "withheld"
+    ) {
+      return false;
+    }
+
+    const compiled = compileRegistryConfig(config);
+
+    return (
+      !compiled.publicationLifecycle ||
+      compiled.publicationLifecycle.isPublicStatus(
+        record.status,
+      )
+    );
+  }
+
+  private async suppressDelivery(
+    delivery: DeliveryRow,
+    reason: string,
+  ): Promise<void> {
+    await this.pool.query(
+      `
+        UPDATE civic_registry_notification_deliveries
+        SET
+          status = 'suppressed',
+          next_attempt_at = NULL,
+          last_error = $3
+        WHERE registry_id = $1
+          AND id = $2
+      `,
+      [
+        delivery.registry_id,
+        delivery.id,
+        reason,
+      ],
+    );
   }
 
   private async getEvent(
