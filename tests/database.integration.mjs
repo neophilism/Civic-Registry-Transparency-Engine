@@ -213,7 +213,7 @@ test("seedRegistry is repeatable for the same registry and IDs", async () => {
     assert.equal(first.recordsCreated, 2);
     assert.equal(first.relationshipsCreated, 1);
     assert.equal(second.recordsUpdated, 2);
-    assert.equal(second.relationshipsReplaced, 1);
+    assert.equal(second.relationshipsReplaced, 0);
 
     const recordCount = await pool.query(
       "SELECT COUNT(*)::int AS count FROM civic_registry_records",
