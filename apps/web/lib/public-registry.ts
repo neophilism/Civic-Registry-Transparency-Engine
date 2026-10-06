@@ -26,7 +26,7 @@ import type {
   SearchResponse,
 } from "@civic-registry/search";
 
-import { getRepositories } from "./database";
+import { getRepositories } from "./database.ts";
 
 export interface PublicRegistry {
   config: CompiledRegistryConfig;
