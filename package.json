@@ -20,6 +20,7 @@
     "db:reindex": "node packages/database/src/cli.ts reindex",
     "db:publish-due": "node packages/database/src/cli.ts publish-due",
     "db:deadlines-reconcile": "node packages/database/src/cli.ts reconcile-deadlines",
-    "db:ingest": "node packages/database/src/cli.ts ingest"
+    "db:ingest": "node packages/database/src/cli.ts ingest",
+    "db:notifications-run": "node packages/database/src/cli.ts notifications-run"
   }
 }
