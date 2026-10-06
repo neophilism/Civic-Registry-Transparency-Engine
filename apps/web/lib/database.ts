@@ -2,6 +2,7 @@ import {
   createDatabasePool,
   PostgresCitationRepository,
   PostgresDocumentRepository,
+  PostgresRecordHistoryRepository,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
   PostgresRelationshipGraphRepository,
@@ -31,10 +32,12 @@ export function getRepositories() {
   const pool = getDatabasePool();
   const configs = new PostgresRegistryConfigRepository(pool);
   const records = new PostgresRecordRepository(pool, configs);
+  const history = new PostgresRecordHistoryRepository(pool);
   const relationships = new PostgresRelationshipRepository(
     pool,
     configs,
     records,
+    history,
   );
   const relationshipGraph =
     new PostgresRelationshipGraphRepository(pool);
