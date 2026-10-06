@@ -4,7 +4,7 @@ import {
 
 import {
   getPublicHistory,
-  getPublicRecord,
+  getPublicRecordView,
   getPublicRegistry,
 } from "../../../../../../../lib/public-registry";
 
@@ -20,12 +20,12 @@ export async function GET(
   },
 ) {
   const { registryId, recordId } = await context.params;
-  const [registry, record] = await Promise.all([
+  const [registry, recordView] = await Promise.all([
     getPublicRegistry(registryId),
-    getPublicRecord(registryId, recordId),
+    getPublicRecordView(registryId, recordId),
   ]);
 
-  if (!registry || !record) {
+  if (!registry || !recordView) {
     return Response.json(
       {
         error: "record_not_found",
@@ -41,7 +41,7 @@ export async function GET(
 
   const history = await getPublicHistory(
     registry.config,
-    record,
+    recordView.record,
   );
 
   return Response.json(
@@ -51,8 +51,9 @@ export async function GET(
         name: registry.config.definition.name,
       },
       record: presentRecordSummary(
-        record,
+        recordView.record,
         registry.config,
+        recordView.disclosure,
       ),
       history,
     },
