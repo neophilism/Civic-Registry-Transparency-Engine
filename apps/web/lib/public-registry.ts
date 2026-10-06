@@ -8,11 +8,15 @@ import type {
 import {
   groupPresentedCitations,
   groupPresentedRelationships,
+  presentHistoryEvent,
+  presentRecordRevisions,
   presentCitation,
   presentRelationship,
   presentRelationshipGraph,
   type PresentedCitation,
   type PresentedCitationGroup,
+  type PresentedHistoryEvent,
+  type PresentedRecordRevision,
   type PresentedRelationship,
   type PresentedRelationshipGraph,
   type PresentedRelationshipGroup,
@@ -26,6 +30,11 @@ import { getRepositories } from "./database";
 
 export interface PublicRegistry {
   config: CompiledRegistryConfig;
+}
+
+export interface PublicHistoryResult {
+  events: PresentedHistoryEvent[];
+  revisions: PresentedRecordRevision[];
 }
 
 export interface PublicEvidenceResult {
@@ -227,5 +236,45 @@ export async function getPublicEvidence(
   return {
     citations: presented,
     groups: groupPresentedCitations(presented),
+  };
+}
+
+
+export async function getPublicHistory(
+  registry: CompiledRegistryConfig,
+  record: RegistryRecord,
+): Promise<PublicHistoryResult> {
+  const { history } = getRepositories();
+  const [events, versions] = await Promise.all([
+    history.listEvents(
+      registry.definition.id,
+      record.id,
+      {
+        visibility: "public",
+        limit: 500,
+      },
+    ),
+    history.listVersions(
+      registry.definition.id,
+      record.id,
+      {
+        visibility: "public",
+        limit: 500,
+      },
+    ),
+  ]);
+
+  return {
+    events: events.map((event) =>
+      presentHistoryEvent(
+        event,
+        record,
+        registry,
+      ),
+    ),
+    revisions: presentRecordRevisions(
+      versions,
+      registry,
+    ),
   };
 }
