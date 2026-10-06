@@ -86,7 +86,11 @@ export interface NotificationDelivery {
   subscriptionId: string;
   channel: NotificationChannel;
   target: NotificationTarget;
-  status: "pending" | "sent" | "failed";
+  status:
+    | "pending"
+    | "sent"
+    | "failed"
+    | "suppressed";
   attempts: number;
   nextAttemptAt?: string;
   lastAttemptAt?: string;
