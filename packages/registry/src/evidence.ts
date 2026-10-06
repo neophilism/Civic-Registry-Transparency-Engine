@@ -1,6 +1,10 @@
 import type {
   CompiledRegistryConfig,
 } from "@civic-registry/config";
+
+import type {
+  PublicDocumentDisclosure,
+} from "./disclosure.ts";
 import type {
   Citation,
   CitationLocator,
@@ -13,6 +17,7 @@ export interface EvidenceCitationInput {
   citation: Citation;
   source?: Source;
   document?: Document;
+  documentDisclosure?: PublicDocumentDisclosure;
 }
 
 export interface PresentedEvidenceSource {
@@ -35,6 +40,7 @@ export interface PresentedEvidenceDocument {
   sha256?: string;
   pageCount?: number;
   language?: string;
+  disclosure?: PublicDocumentDisclosure;
 }
 
 export interface PresentedCitation {
@@ -164,6 +170,7 @@ export function presentCitation(
           sha256: input.document.sha256,
           pageCount: input.document.pageCount,
           language: input.document.language,
+          disclosure: input.documentDisclosure,
         }
       : undefined,
   };
