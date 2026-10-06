@@ -5,6 +5,10 @@ import {
   parseRegistryConfig,
   type RegistryConfigFile,
 } from "@civic-registry/config";
+import {
+  parseIngestionProfile,
+  type IngestionFormat,
+} from "@civic-registry/ingestion";
 
 import { runMigrations } from "./migrations.ts";
 import {
@@ -25,6 +29,9 @@ import {
   seedRegistry,
   type RegistrySeedData,
 } from "./seed.ts";
+import {
+  PostgresIngestionService,
+} from "./ingestion.ts";
 
 async function migrate(): Promise<void> {
   const pool = createDatabasePool();
@@ -252,6 +259,118 @@ async function reconcileDeadlines(
   }
 }
 
+function inferIngestionFormat(
+  inputPath: string,
+  explicit: string | undefined,
+): IngestionFormat {
+  if (
+    explicit === "json" ||
+    explicit === "ndjson" ||
+    explicit === "csv"
+  ) {
+    return explicit;
+  }
+
+  const lower = inputPath.toLowerCase();
+
+  if (
+    lower.endsWith(".ndjson") ||
+    lower.endsWith(".jsonl")
+  ) {
+    return "ndjson";
+  }
+
+  if (lower.endsWith(".csv")) {
+    return "csv";
+  }
+
+  if (lower.endsWith(".json")) {
+    return "json";
+  }
+
+  throw new Error(
+    "Ingestion format must be json, ndjson, or csv when it cannot be inferred from the input filename.",
+  );
+}
+
+async function ingest(
+  registryId: string | undefined,
+  profilePath: string | undefined,
+  inputPath: string | undefined,
+  formatValue: string | undefined,
+  dryRunValue: string | undefined,
+): Promise<void> {
+  if (!registryId || !profilePath || !inputPath) {
+    throw new Error(
+      "Usage: ingest <registry-id> <profile.yaml|json> <input-file> [json|ndjson|csv] [--dry-run]",
+    );
+  }
+
+  const dryRun =
+    formatValue === "--dry-run" ||
+    dryRunValue === "--dry-run";
+  const explicitFormat =
+    formatValue === "--dry-run"
+      ? undefined
+      : formatValue;
+  const format = inferIngestionFormat(
+    inputPath,
+    explicitFormat,
+  );
+  const [profileSource, inputSource] =
+    await Promise.all([
+      readFile(profilePath, "utf8"),
+      readFile(inputPath, "utf8"),
+    ]);
+  const pool = createDatabasePool();
+
+  try {
+    await runMigrations(pool);
+    const configs =
+      new PostgresRegistryConfigRepository(pool);
+    const config = await configs.get(registryId);
+
+    if (!config) {
+      throw new Error(
+        `Registry configuration ${registryId} does not exist.`,
+      );
+    }
+
+    const profile = parseIngestionProfile(
+      profileSource,
+      compileRegistryConfig(config),
+    );
+    const service =
+      new PostgresIngestionService(pool);
+    const result = await service.run({
+      registryId,
+      profile,
+      format,
+      input: inputSource,
+      sourceLabel: inputPath,
+      sourceUri: inputPath,
+      dryRun,
+      actorId: "system:ingestion-cli",
+      reason: dryRun
+        ? "CLI ingestion validation run."
+        : "CLI ingestion run.",
+    });
+
+    console.log(
+      JSON.stringify(
+        {
+          command: "ingest",
+          ...result.run,
+        },
+        null,
+        2,
+      ),
+    );
+  } finally {
+    await pool.end();
+  }
+}
+
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
 
@@ -280,8 +399,19 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === "ingest") {
+    await ingest(
+      args[0],
+      args[1],
+      args[2],
+      args[3],
+      args[4],
+    );
+    return;
+  }
+
   throw new Error(
-    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex|publish-due|reconcile-deadlines> [arguments]",
+    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex|publish-due|reconcile-deadlines|ingest> [arguments]",
   );
 }
 
