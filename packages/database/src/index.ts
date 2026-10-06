@@ -4,3 +4,4 @@ export * from "./repositories.ts";
 export * from "./seed.ts";
 export * from "./search.ts";
 export * from "./search-index.ts";
+export * from "./relationship-graph.ts";
