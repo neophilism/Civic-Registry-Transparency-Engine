@@ -119,3 +119,22 @@ public/private provenance consistency.
 
 Migration `0003_evidence_traceability.sql` creates the shared evidence
 tables. Downstream registries do not need bill-specific evidence tables.
+
+
+## Immutable revision history
+
+Migration `0004_immutable_revision_history.sql` adds database-triggered record
+snapshots and generic audit events.
+
+Meaningful record changes are versioned even when issued through direct SQL.
+Internal search-index-only updates are ignored.
+
+History tables reject normal row updates and deletes. Record deletion does not
+erase that record's version snapshots.
+
+Relationship and evidence citation mutations also emit record audit events.
+Existing records, relationships, and citations are introduced to the history
+system with explicit baseline events instead of fabricated creation events.
+
+The read-side `PostgresRecordHistoryRepository` provides visibility-aware
+version and event queries.
