@@ -16,26 +16,25 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 15 — Administrator console**
+**PR 16 — Registry analytics**
 
-The engine now includes a restricted, domain-neutral operator console for
-managing canonical registry data and operational workflows without weakening
-the public disclosure boundary.
+The engine now includes reusable analytics for both public transparency and
+restricted administrative operations without exposing canonical values through
+aggregate queries.
 
-PR 15 adds:
+PR 16 adds:
 
-- authenticated `/admin` access with explicit operator identity;
-- cross-registry operational summaries;
-- schema-driven record creation and editing;
-- publication lifecycle requests and approval decisions;
-- deadline monitoring, reconciliation, and state actions;
-- ingestion-run and item-level failure visibility;
-- source management;
-- immutable history and audit inspection;
-- installed configuration validation;
-- database-backed audit attribution for administrative record writes.
+- public and internal analytics scopes;
+- record-type and lifecycle/status distributions;
+- monthly publication trends;
+- immutable record-change activity;
+- evidence coverage;
+- open, due-soon, and overdue deadline metrics;
+- configuration-driven field breakdowns using filterable fields;
+- disclosure-safe public aggregation over `public_fields`; and
+- public and administrator analytics views.
 
-See [Administrator console](docs/ADMIN-CONSOLE.md).
+See [Registry analytics](docs/ANALYTICS.md).
 
 ## Local development
 
