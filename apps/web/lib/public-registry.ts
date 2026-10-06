@@ -335,6 +335,9 @@ export async function listPublicRelationships(
     relationshipTypeIds: options.relationshipTypeIds,
     visibility: "public",
     statusIds: statuses,
+    excludeWithheld:
+      registry.disclosure.withheldRecordBehavior ===
+      "hidden",
     maxNodes: options.maxNodes ?? 101,
   });
 
@@ -452,6 +455,9 @@ export async function getPublicRelationshipGraph(
     relationshipTypeIds: options.relationshipTypeIds,
     visibility: "public",
     statusIds: statuses,
+    excludeWithheld:
+      registry.disclosure.withheldRecordBehavior ===
+      "hidden",
     maxNodes: options.maxNodes ?? 100,
   });
 
