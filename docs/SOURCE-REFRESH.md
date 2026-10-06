@@ -307,3 +307,12 @@ Later milestones can add:
 - structured legal-authority extraction;
 - source-specific parsing diagnostics; and
 - additional official legal-interpretation adapters.
+
+
+## Attachment processing
+
+PR 22 extends each successful Open Legal Interpretations adapter run with official PDF attachment processing after the normalized record rows are ingested.
+
+Attachment failures and extraction warnings are folded into the refresh manifest, so the existing refresh-health dashboard surfaces them as warning state without discarding otherwise valid record metadata.
+
+See [PDF attachment ingestion](PDF-ATTACHMENTS.md).
