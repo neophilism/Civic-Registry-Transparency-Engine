@@ -99,7 +99,7 @@ export function publicRegistryDetail(
         toRecordTypeIds:
           relationship.toRecordTypeIds,
         directed:
-          relationship.directed === true,
+          relationship.directed !== false,
       })),
     publicLifecycleStatuses:
       registry.publicationLifecycle
