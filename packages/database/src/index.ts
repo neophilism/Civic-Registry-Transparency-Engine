@@ -7,3 +7,4 @@ export * from "./search-index.ts";
 export * from "./relationship-graph.ts";
 export * from "./evidence.ts";
 export * from "./history.ts";
+export * from "./lifecycle.ts";
