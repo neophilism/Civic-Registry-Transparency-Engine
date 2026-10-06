@@ -247,3 +247,20 @@ presentation:
     organization:
       listFields:
         - name
+
+notifications:
+  enabled: true
+  eventTypes:
+    - record.published
+    - record.changed
+    - record.matching_created
+    - deadline.approaching
+    - deadline.missed
+    - document.added
+  allowedChannels:
+    - email
+    - webhook
+    - internal
+  deadlineApproachingDays: 7
+  maxDeliveryAttempts: 5
+  retryBaseSeconds: 60
