@@ -1,4 +1,7 @@
-import { readFile } from "node:fs/promises";
+import {
+  readFile,
+  writeFile,
+} from "node:fs/promises";
 
 import {
   compileRegistryConfig,
@@ -35,6 +38,10 @@ import {
 import {
   PostgresNotificationService,
 } from "./notifications.ts";
+import {
+  PostgresIntegrityService,
+  type SignedIntegrityCheckpoint,
+} from "./integrity.ts";
 
 async function migrate(): Promise<void> {
   const pool = createDatabasePool();
@@ -426,6 +433,236 @@ async function runNotifications(
   }
 }
 
+
+async function loadIntegrityKey(
+  kind: "private" | "public",
+): Promise<string> {
+  const prefix =
+    "CIVIC_REGISTRY_INTEGRITY_" +
+    kind.toUpperCase();
+  const filePath =
+    process.env[prefix + "_KEY_FILE"]?.trim();
+  const inline =
+    process.env[prefix + "_KEY"]?.trim();
+
+  if (filePath) {
+    return readFile(filePath, "utf8");
+  }
+
+  if (inline) {
+    return inline.includes("\\n")
+      ? inline.replaceAll("\\n", "\n")
+      : inline;
+  }
+
+  throw new Error(
+    `Missing ${prefix}_KEY_FILE or ${prefix}_KEY.`,
+  );
+}
+
+function parseCheckpoint(
+  source: string,
+): SignedIntegrityCheckpoint {
+  const value = JSON.parse(source) as unknown;
+
+  if (
+    !value ||
+    typeof value !== "object" ||
+    !("formatVersion" in value) ||
+    !("registryId" in value) ||
+    !("sequence" in value) ||
+    !("signature" in value)
+  ) {
+    throw new Error(
+      "Integrity checkpoint JSON has an invalid shape.",
+    );
+  }
+
+  return value as SignedIntegrityCheckpoint;
+}
+
+async function verifyIntegrity(
+  registryId: string | undefined,
+  checkpointPath: string | undefined,
+  backupFilePath: string | undefined,
+): Promise<void> {
+  const pool = createDatabasePool();
+
+  try {
+    await runMigrations(pool);
+    const service =
+      new PostgresIntegrityService(pool);
+
+    if (checkpointPath) {
+      const checkpoint = parseCheckpoint(
+        await readFile(checkpointPath, "utf8"),
+      );
+
+      if (
+        registryId &&
+        checkpoint.registryId !== registryId
+      ) {
+        throw new Error(
+          `Checkpoint registry ${checkpoint.registryId} does not match requested registry ${registryId}.`,
+        );
+      }
+
+      const publicKey =
+        await loadIntegrityKey("public");
+      const result =
+        await service.verifySignedCheckpoint(
+          checkpoint,
+          publicKey,
+          {
+            backupFilePath,
+          },
+        );
+
+      console.log(
+        JSON.stringify(
+          {
+            command: "integrity-verify",
+            checkpoint: checkpointPath,
+            registryId:
+              checkpoint.registryId,
+            ...result,
+          },
+          null,
+          2,
+        ),
+      );
+
+      if (!result.valid) {
+        process.exitCode = 2;
+      }
+
+      return;
+    }
+
+    if (registryId) {
+      const result =
+        await service.verifyRegistry(registryId);
+
+      console.log(
+        JSON.stringify(
+          {
+            command: "integrity-verify",
+            registryId,
+            ...result,
+          },
+          null,
+          2,
+        ),
+      );
+
+      if (!result.valid) {
+        process.exitCode = 2;
+      }
+
+      return;
+    }
+
+    const configs =
+      new PostgresRegistryConfigRepository(pool);
+    const installed = await configs.list();
+    const results: Record<
+      string,
+      Awaited<ReturnType<
+        PostgresIntegrityService["verifyRegistry"]
+      >>
+    > = {};
+    let valid = true;
+
+    for (const config of installed) {
+      const result =
+        await service.verifyRegistry(
+          config.registry.id,
+        );
+      results[config.registry.id] = result;
+      valid = valid && result.valid;
+    }
+
+    console.log(
+      JSON.stringify(
+        {
+          command: "integrity-verify",
+          registries: results,
+          valid,
+        },
+        null,
+        2,
+      ),
+    );
+
+    if (!valid) {
+      process.exitCode = 2;
+    }
+  } finally {
+    await pool.end();
+  }
+}
+
+async function createIntegrityCheckpoint(
+  registryId: string | undefined,
+  outputPath: string | undefined,
+  backupFilePath: string | undefined,
+): Promise<void> {
+  if (!registryId || !outputPath) {
+    throw new Error(
+      "Usage: integrity-checkpoint <registry-id> <output.json> [backup-file]",
+    );
+  }
+
+  const privateKey =
+    await loadIntegrityKey("private");
+  const pool = createDatabasePool();
+
+  try {
+    await runMigrations(pool);
+    const service =
+      new PostgresIntegrityService(pool);
+    const checkpoint =
+      await service.createSignedCheckpoint(
+        registryId,
+        privateKey,
+        {
+          keyId:
+            process.env
+              .CIVIC_REGISTRY_INTEGRITY_KEY_ID,
+          backupFilePath,
+        },
+      );
+
+    await writeFile(
+      outputPath,
+      JSON.stringify(checkpoint, null, 2) +
+        "\n",
+      {
+        encoding: "utf8",
+        mode: 0o644,
+      },
+    );
+
+    console.log(
+      JSON.stringify(
+        {
+          command: "integrity-checkpoint",
+          registryId,
+          outputPath,
+          sequence: checkpoint.sequence,
+          headHash: checkpoint.headHash,
+          keyId: checkpoint.keyId,
+          backup: checkpoint.backup,
+        },
+        null,
+        2,
+      ),
+    );
+  } finally {
+    await pool.end();
+  }
+}
+
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
 
@@ -470,8 +707,26 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === "integrity-verify") {
+    await verifyIntegrity(
+      args[0],
+      args[1],
+      args[2],
+    );
+    return;
+  }
+
+  if (command === "integrity-checkpoint") {
+    await createIntegrityCheckpoint(
+      args[0],
+      args[1],
+      args[2],
+    );
+    return;
+  }
+
   throw new Error(
-    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex|publish-due|reconcile-deadlines|ingest|notifications-run> [arguments]",
+    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex|publish-due|reconcile-deadlines|ingest|notifications-run|integrity-verify|integrity-checkpoint> [arguments]",
   );
 }
 
