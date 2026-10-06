@@ -223,3 +223,18 @@ export function stableSlug(
     .replace(/^-+|-+$/g, "")
     .slice(0, 120);
 }
+
+
+export function extractParagraphs(
+  html: string,
+): string[] {
+  return [
+    ...html.matchAll(
+      /<p\b[^>]*>([\s\S]*?)<\/p>/gi,
+    ),
+  ]
+    .map((match) =>
+      normalizeText(match[1] ?? ""),
+    )
+    .filter(Boolean);
+}
