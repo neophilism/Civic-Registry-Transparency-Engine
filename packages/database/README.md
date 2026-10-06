@@ -106,3 +106,16 @@ The default public web layer always supplies `visibility: public`.
 
 Traversal uses the existing relationship endpoint indexes, so PR 7 does not
 require a new database migration.
+
+
+## Evidence traceability
+
+The database package includes repositories for sources, documents, and
+citations.
+
+Evidence objects are registry-scoped and visibility-aware. Citation writes
+validate configured record fields, evidence targets, document page bounds, and
+public/private provenance consistency.
+
+Migration `0003_evidence_traceability.sql` creates the shared evidence
+tables. Downstream registries do not need bill-specific evidence tables.
