@@ -181,6 +181,22 @@ export async function seedRegistry(
     );
 
     if (existing) {
+      const unchanged =
+        existing.relationshipTypeId ===
+          relationship.relationshipTypeId &&
+        existing.fromRecordId ===
+          relationship.fromRecordId &&
+        existing.toRecordId ===
+          relationship.toRecordId &&
+        existing.createdAt ===
+          relationship.createdAt &&
+        JSON.stringify(existing.metadata ?? {}) ===
+          JSON.stringify(relationship.metadata ?? {});
+
+      if (unchanged) {
+        continue;
+      }
+
       await relationships.delete(
         relationship.registryId,
         relationship.id,
