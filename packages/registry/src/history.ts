@@ -282,6 +282,95 @@ export function presentHistoryEvent(
           )} was removed.`
         : "A whole-record citation was removed.";
       break;
+    case "lifecycle.transition_requested": {
+      const from = statusLabel(
+        registry,
+        stringValue(event.metadata?.fromStatusId),
+      );
+      const to = statusLabel(
+        registry,
+        stringValue(event.metadata?.toStatusId),
+      );
+      const approvals = numberValue(
+        event.metadata?.requiredApprovals,
+      );
+      label = "Lifecycle transition requested";
+      detail =
+        from && to
+          ? `Requested transition from ${from} to ${to}${approvals ? ` requiring ${approvals} approval${approvals === 1 ? "" : "s"}` : ""}.`
+          : undefined;
+      break;
+    }
+    case "lifecycle.transition_approved": {
+      const to = statusLabel(
+        registry,
+        stringValue(event.metadata?.toStatusId),
+      );
+      label = "Lifecycle transition approved";
+      detail = to
+        ? `Approved transition to ${to}.`
+        : undefined;
+      break;
+    }
+    case "lifecycle.transition_rejected": {
+      const to = statusLabel(
+        registry,
+        stringValue(event.metadata?.toStatusId),
+      );
+      label = "Lifecycle transition rejected";
+      detail = to
+        ? `Rejected transition to ${to}.`
+        : undefined;
+      break;
+    }
+    case "lifecycle.transition_executed": {
+      const from = statusLabel(
+        registry,
+        stringValue(event.metadata?.fromStatusId),
+      );
+      const to = statusLabel(
+        registry,
+        stringValue(event.metadata?.toStatusId),
+      );
+      label = "Lifecycle transition executed";
+      detail =
+        from && to
+          ? `Transitioned from ${from} to ${to}.`
+          : undefined;
+      break;
+    }
+    case "lifecycle.publication_scheduled": {
+      const target = statusLabel(
+        registry,
+        stringValue(event.metadata?.targetStatusId),
+      );
+      const scheduledFor = stringValue(
+        event.metadata?.scheduledFor,
+      );
+      label = "Publication scheduled";
+      detail =
+        target && scheduledFor
+          ? `Scheduled transition to ${target} for ${scheduledFor}.`
+          : undefined;
+      break;
+    }
+    case "lifecycle.publication_schedule_cancelled":
+      label = "Scheduled publication cancelled";
+      break;
+    case "lifecycle.publication_schedule_failed":
+      label = "Scheduled publication failed";
+      break;
+    case "lifecycle.publication_schedule_executed": {
+      const target = statusLabel(
+        registry,
+        stringValue(event.metadata?.targetStatusId),
+      );
+      label = "Scheduled publication executed";
+      detail = target
+        ? `Scheduled transition to ${target} completed.`
+        : undefined;
+      break;
+    }
     default:
       label = event.eventType
         .replaceAll(".", " ")
