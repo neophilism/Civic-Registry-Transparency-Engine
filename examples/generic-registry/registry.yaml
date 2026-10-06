@@ -169,6 +169,17 @@ publicationLifecycle:
     allowedRoles:
       - publisher
 
+
+disclosure:
+  withheldRecordBehavior: placeholder
+  defaultRedactionText: "[REDACTED]"
+  defaultWithheldFieldText: "[WITHHELD]"
+  withheldRecordTitle: "Record withheld"
+  withheldRecordSummary: "Public contents are withheld."
+  withheldDocumentTitle: "Document withheld"
+  showReasons: true
+  showAuthorities: true
+
 presentation:
   recordTypes:
     document:
