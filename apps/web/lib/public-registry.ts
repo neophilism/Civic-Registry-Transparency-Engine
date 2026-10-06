@@ -731,11 +731,20 @@ export async function getPublicHistory(
       })
     : presentedEvents;
 
+  const currentProjection =
+    projectRecordForPublic(
+      record,
+      registry,
+      recordBundle.record ?? null,
+      recordBundle.fields,
+    );
+
   return {
     events: publicEvents,
     revisions: presentRecordRevisions(
       publicVersions,
       registry,
+      currentProjection.disclosure,
     ),
   };
 }
