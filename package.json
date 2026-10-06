@@ -13,6 +13,9 @@
     "lint": "pnpm -r --if-present run lint",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "node --test tests/*.test.mjs",
-    "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "test:db": "node --test tests/database.integration.mjs",
+    "db:migrate": "node packages/database/src/cli.ts migrate",
+    "db:seed": "node packages/database/src/cli.ts seed",
+    "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm db:migrate && pnpm test:db && pnpm build"
   }
 }
