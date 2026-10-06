@@ -1,6 +1,8 @@
-import type {
-  FieldDefinition,
-  RecordTypeDefinition,
+import {
+  NOTIFICATION_CHANNELS,
+  NOTIFICATION_EVENT_TYPES,
+  type FieldDefinition,
+  type RecordTypeDefinition,
 } from "@civic-registry/core";
 
 import {
@@ -11,6 +13,7 @@ import type {
   CompiledDeadlineCalendarConfig,
   CompiledDeadlineEngineConfig,
   CompiledDisclosureConfig,
+  CompiledNotificationConfig,
   CompiledPublicationLifecycleConfig,
   CompiledRecordTypeConfig,
   CompiledRegistryConfig,
@@ -18,6 +21,7 @@ import type {
   DisclosureConfig,
   FormControlType,
   FormFieldConfig,
+  NotificationConfig,
   PublicationLifecycleConfig,
   RecordTypePresentationConfig,
   RegistryConfigFile,
@@ -231,6 +235,32 @@ function compileDisclosure(
   };
 }
 
+
+function compileNotifications(
+  definition: NotificationConfig | undefined,
+): CompiledNotificationConfig {
+  const config = definition ?? {};
+
+  return {
+    definition: config,
+    enabled: config.enabled ?? false,
+    eventTypes: new Set(
+      config.eventTypes ??
+        NOTIFICATION_EVENT_TYPES,
+    ),
+    allowedChannels: new Set(
+      config.allowedChannels ??
+        NOTIFICATION_CHANNELS,
+    ),
+    deadlineApproachingDays:
+      config.deadlineApproachingDays ?? 7,
+    maxDeliveryAttempts:
+      config.maxDeliveryAttempts ?? 5,
+    retryBaseSeconds:
+      config.retryBaseSeconds ?? 60,
+  };
+}
+
 function transitionKey(
   fromStatusId: string,
   toStatusId: string,
@@ -345,6 +375,9 @@ export function compileRegistryConfig(
   const disclosure = compileDisclosure(
     config.disclosure,
   );
+  const notifications = compileNotifications(
+    config.notifications,
+  );
 
   return {
     schemaVersion: config.schemaVersion,
@@ -354,6 +387,7 @@ export function compileRegistryConfig(
     publicationLifecycle,
     deadlines,
     disclosure,
+    notifications,
     getRecordType(recordTypeId: string) {
       const recordType = recordTypesById.get(recordTypeId);
 
