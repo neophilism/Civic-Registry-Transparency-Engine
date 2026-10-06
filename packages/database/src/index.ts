@@ -5,3 +5,4 @@ export * from "./seed.ts";
 export * from "./search.ts";
 export * from "./search-index.ts";
 export * from "./relationship-graph.ts";
+export * from "./evidence.ts";

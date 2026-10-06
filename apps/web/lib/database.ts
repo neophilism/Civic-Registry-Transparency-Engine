@@ -1,10 +1,13 @@
 import {
   createDatabasePool,
+  PostgresCitationRepository,
+  PostgresDocumentRepository,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
   PostgresRelationshipGraphRepository,
   PostgresRelationshipRepository,
   PostgresSearchProvider,
+  PostgresSourceRepository,
 } from "@civic-registry/database";
 import type { Pool } from "pg";
 
@@ -35,6 +38,22 @@ export function getRepositories() {
   );
   const relationshipGraph =
     new PostgresRelationshipGraphRepository(pool);
+  const sources = new PostgresSourceRepository(
+    pool,
+    configs,
+  );
+  const documents = new PostgresDocumentRepository(
+    pool,
+    configs,
+    sources,
+  );
+  const citations = new PostgresCitationRepository(
+    pool,
+    configs,
+    records,
+    sources,
+    documents,
+  );
   const search = new PostgresSearchProvider(pool);
 
   return {
@@ -42,6 +61,9 @@ export function getRepositories() {
     records,
     relationships,
     relationshipGraph,
+    sources,
+    documents,
+    citations,
     search,
   };
 }

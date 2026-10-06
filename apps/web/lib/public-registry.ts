@@ -6,9 +6,13 @@ import type {
   RegistryRecord,
 } from "@civic-registry/core";
 import {
+  groupPresentedCitations,
   groupPresentedRelationships,
+  presentCitation,
   presentRelationship,
   presentRelationshipGraph,
+  type PresentedCitation,
+  type PresentedCitationGroup,
   type PresentedRelationship,
   type PresentedRelationshipGraph,
   type PresentedRelationshipGroup,
@@ -22,6 +26,11 @@ import { getRepositories } from "./database";
 
 export interface PublicRegistry {
   config: CompiledRegistryConfig;
+}
+
+export interface PublicEvidenceResult {
+  citations: PresentedCitation[];
+  groups: PresentedCitationGroup[];
 }
 
 export interface PublicRelationshipResult {
@@ -195,4 +204,28 @@ export async function searchPublicRecords(
     registryId: registry.definition.id,
     visibility: "public",
   });
+}
+
+
+export async function getPublicEvidence(
+  registry: CompiledRegistryConfig,
+  record: RegistryRecord,
+): Promise<PublicEvidenceResult> {
+  const { citations } = getRepositories();
+  const evidence = await citations.listEvidenceForRecord(
+    registry.definition.id,
+    record.id,
+    {
+      visibility: "public",
+      limit: 500,
+    },
+  );
+  const presented = evidence.map((item) =>
+    presentCitation(item, record, registry),
+  );
+
+  return {
+    citations: presented,
+    groups: groupPresentedCitations(presented),
+  };
 }
