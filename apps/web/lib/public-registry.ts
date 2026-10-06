@@ -433,7 +433,6 @@ export async function getPublicRelationshipGraph(
             },
           ],
           edges: [],
-          truncated: false,
         },
         registry,
       ),
