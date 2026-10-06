@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@civic-registry/analytics": "workspace:*",
     "@civic-registry/api": "workspace:*",
     "@civic-registry/config": "workspace:*",
     "@civic-registry/core": "workspace:*",
