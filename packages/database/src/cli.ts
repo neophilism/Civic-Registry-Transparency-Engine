@@ -1,12 +1,20 @@
 import { readFile } from "node:fs/promises";
 
 import {
+  compileRegistryConfig,
   parseRegistryConfig,
   type RegistryConfigFile,
 } from "@civic-registry/config";
 
 import { runMigrations } from "./migrations.ts";
 import { createDatabasePool } from "./pool.ts";
+import {
+  PostgresRegistryConfigRepository,
+} from "./repositories.ts";
+import {
+  rebuildAllSearchIndexes,
+  rebuildRegistrySearchIndex,
+} from "./search-index.ts";
 import {
   seedRegistry,
   type RegistrySeedData,
@@ -76,6 +84,64 @@ async function seed(
   }
 }
 
+async function reindex(
+  registryId: string | undefined,
+): Promise<void> {
+  const pool = createDatabasePool();
+
+  try {
+    await runMigrations(pool);
+    const configs = new PostgresRegistryConfigRepository(pool);
+
+    if (registryId) {
+      const config = await configs.get(registryId);
+
+      if (!config) {
+        throw new Error(
+          `Registry configuration ${registryId} does not exist.`,
+        );
+      }
+
+      const count = await rebuildRegistrySearchIndex(
+        pool,
+        compileRegistryConfig(config),
+      );
+
+      console.log(
+        JSON.stringify(
+          {
+            command: "reindex",
+            registries: {
+              [registryId]: count,
+            },
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+
+    const result = await rebuildAllSearchIndexes(
+      pool,
+      configs,
+    );
+
+    console.log(
+      JSON.stringify(
+        {
+          command: "reindex",
+          registries: result,
+        },
+        null,
+        2,
+      ),
+    );
+  } finally {
+    await pool.end();
+  }
+}
+
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
 
@@ -89,8 +155,13 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === "reindex") {
+    await reindex(args[0]);
+    return;
+  }
+
   throw new Error(
-    "Usage: node packages/database/src/cli.ts <migrate|seed> [arguments]",
+    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex> [arguments]",
   );
 }
 
