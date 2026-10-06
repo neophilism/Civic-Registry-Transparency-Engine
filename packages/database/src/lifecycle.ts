@@ -484,6 +484,15 @@ async function applyTransition(
   const target = lifecycle.getStatus(targetStatusId);
 
   await setHistoryContext(client, context);
+  await client.query(
+    `
+      SELECT set_config(
+        'civic_registry.lifecycle_transition',
+        'allowed',
+        true
+      )
+    `,
+  );
   await cancelStaleWorkflow(
     client,
     record.registry_id,
