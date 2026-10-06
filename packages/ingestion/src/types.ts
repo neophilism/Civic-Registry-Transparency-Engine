@@ -57,6 +57,7 @@ export interface RecordIngestionProfile {
   updatedAt?: IngestionValueSpec;
   publishedAt?: IngestionValueSpec;
   allowLifecycleBootstrap?: boolean;
+  replaceFields?: boolean;
 }
 
 export interface CompiledRecordIngestionProfile
@@ -64,6 +65,7 @@ export interface CompiledRecordIngestionProfile
   mode: IngestionMode;
   staticTags: string[];
   allowLifecycleBootstrap: boolean;
+  replaceFields: boolean;
 }
 
 export interface IngestionIssue {
