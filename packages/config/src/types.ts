@@ -61,10 +61,38 @@ export interface PublicationLifecycleConfig {
   scheduledPublication?: ScheduledPublicationConfig;
 }
 
+export type WithheldRecordBehavior =
+  | "hidden"
+  | "placeholder";
+
+export interface DisclosureConfig {
+  withheldRecordBehavior?: WithheldRecordBehavior;
+  defaultRedactionText?: string;
+  defaultWithheldFieldText?: string;
+  withheldRecordTitle?: string;
+  withheldRecordSummary?: string;
+  withheldDocumentTitle?: string;
+  showReasons?: boolean;
+  showAuthorities?: boolean;
+}
+
+export interface CompiledDisclosureConfig {
+  definition: DisclosureConfig;
+  withheldRecordBehavior: WithheldRecordBehavior;
+  defaultRedactionText: string;
+  defaultWithheldFieldText: string;
+  withheldRecordTitle: string;
+  withheldRecordSummary: string;
+  withheldDocumentTitle: string;
+  showReasons: boolean;
+  showAuthorities: boolean;
+}
+
 export interface RegistryConfigFileV1 {
   schemaVersion: typeof REGISTRY_CONFIG_SCHEMA_VERSION;
   registry: RegistryDefinition;
   publicationLifecycle?: PublicationLifecycleConfig;
+  disclosure?: DisclosureConfig;
   presentation?: RegistryPresentationConfig;
 }
 
@@ -130,6 +158,7 @@ export interface CompiledRegistryConfig {
   recordTypesById: ReadonlyMap<string, CompiledRecordTypeConfig>;
   relationshipTypesById: ReadonlyMap<string, RelationshipTypeDefinition>;
   publicationLifecycle?: CompiledPublicationLifecycleConfig;
+  disclosure: CompiledDisclosureConfig;
   getRecordType(recordTypeId: string): CompiledRecordTypeConfig;
   getField(recordTypeId: string, fieldId: string): FieldDefinition;
 }
