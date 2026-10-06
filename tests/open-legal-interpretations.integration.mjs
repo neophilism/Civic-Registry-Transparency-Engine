@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import {
+  readFile,
+} from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -7,10 +9,14 @@ import {
   parseRegistryConfig,
 } from "../packages/config/src/index.ts";
 import {
+  parseIngestionProfile,
+} from "../packages/ingestion/src/index.ts";
+import {
   createDatabasePool,
   PostgresCitationRepository,
   PostgresDeadlineService,
   PostgresDocumentRepository,
+  PostgresIngestionService,
   PostgresIntegrityService,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
@@ -29,22 +35,37 @@ if (!databaseUrl) {
   );
 }
 
-const [configSource, seedSource] =
-  await Promise.all([
-    readFile(
-      "examples/open-legal-interpretations/registry.yaml",
-      "utf8",
-    ),
-    readFile(
-      "examples/open-legal-interpretations/seed.json",
-      "utf8",
-    ),
-  ]);
-
-const config = parseRegistryConfig(configSource, {
-  sourceName:
+const [
+  configSource,
+  seedSource,
+  profileSource,
+  importSource,
+] = await Promise.all([
+  readFile(
     "examples/open-legal-interpretations/registry.yaml",
-});
+    "utf8",
+  ),
+  readFile(
+    "examples/open-legal-interpretations/seed.json",
+    "utf8",
+  ),
+  readFile(
+    "examples/open-legal-interpretations/import-profile.yaml",
+    "utf8",
+  ),
+  readFile(
+    "examples/open-legal-interpretations/import.csv",
+    "utf8",
+  ),
+]);
+
+const config = parseRegistryConfig(
+  configSource,
+  {
+    sourceName:
+      "examples/open-legal-interpretations/registry.yaml",
+  },
+);
 const seed = JSON.parse(seedSource);
 
 test("Open Legal Interpretations runs end-to-end on the generic engine", async () => {
@@ -66,22 +87,40 @@ test("Open Legal Interpretations runs end-to-end on the generic engine", async (
       seed,
     );
 
-    assert.equal(
-      seeded.registryId,
-      "open-legal-interpretations",
-    );
-    assert.equal(seeded.recordsCreated, 6);
-    assert.equal(seeded.documentsCreated, 2);
-    assert.equal(seeded.citationsCreated, 3);
-    assert.equal(
-      seeded.relationshipsCreated,
-      6,
+    assert.deepEqual(
+      {
+        registryId: seeded.registryId,
+        sourcesCreated:
+          seeded.sourcesCreated,
+        documentsCreated:
+          seeded.documentsCreated,
+        recordsCreated:
+          seeded.recordsCreated,
+        citationsCreated:
+          seeded.citationsCreated,
+        relationshipsCreated:
+          seeded.relationshipsCreated,
+      },
+      {
+        registryId:
+          "open-legal-interpretations",
+        sourcesCreated: 1,
+        documentsCreated: 2,
+        recordsCreated: 6,
+        citationsCreated: 3,
+        relationshipsCreated: 6,
+      },
     );
 
     const compiled =
       compileRegistryConfig(config);
+    const publicStatuses = [
+      ...compiled.publicationLifecycle!
+        .publicStatusIds,
+    ];
     const search =
       new PostgresSearchProvider(pool);
+
     const result = await search.search(
       compiled,
       {
@@ -90,12 +129,7 @@ test("Open Legal Interpretations runs end-to-end on the generic engine", async (
         text:
           "publication procedural transparency",
         recordTypeId: "interpretation",
-        statuses: [
-          "published",
-          "withdrawn",
-          "superseded",
-          "archived",
-        ],
+        statuses: publicStatuses,
         visibility: "public",
         pageSize: 20,
       },
@@ -118,12 +152,7 @@ test("Open Legal Interpretations runs end-to-end on the generic engine", async (
           "demo-interpretation-2026-02",
         depth: 1,
         visibility: "public",
-        statusIds: [
-          "published",
-          "withdrawn",
-          "superseded",
-          "archived",
-        ],
+        statusIds: publicStatuses,
         maxNodes: 50,
       });
 
@@ -137,11 +166,19 @@ test("Open Legal Interpretations runs end-to-end on the generic engine", async (
             "demo-interpretation-2025-01",
       ),
     );
+    assert.equal(
+      graph.edges.filter(
+        (edge) =>
+          edge.relationshipTypeId ===
+          "interprets-authority",
+      ).length,
+      2,
+    );
     assert.ok(
       graph.edges.some(
         (edge) =>
           edge.relationshipTypeId ===
-          "interprets-authority",
+          "issued-by",
       ),
     );
 
@@ -155,11 +192,18 @@ test("Open Legal Interpretations runs end-to-end on the generic engine", async (
 
     assert.equal(recordDeadlines.length, 1);
     assert.equal(
-      recordDeadlines[0].deadlineTypeId,
+      recordDeadlines[0]?.deadlineTypeId,
       "declassification_review_due",
     );
     assert.equal(
-      recordDeadlines[0].dueAt.slice(0, 10),
+      recordDeadlines[0]?.state,
+      "open",
+    );
+    assert.equal(
+      recordDeadlines[0]?.dueAt.slice(
+        0,
+        10,
+      ),
       "2031-08-25",
     );
 
@@ -204,21 +248,112 @@ test("Open Legal Interpretations runs end-to-end on the generic engine", async (
       evidence.every(
         (item) =>
           item.source &&
-          item.document,
+          item.document?.mimeType ===
+            "application/pdf",
       ),
     );
 
-    const integrity =
-      await new PostgresIntegrityService(
-        pool,
-      ).verifyRegistry(
+    const integrityService =
+      new PostgresIntegrityService(pool);
+    const beforeImport =
+      await integrityService.verifyRegistry(
         config.registry.id,
       );
 
-    assert.equal(integrity.valid, true);
+    assert.equal(beforeImport.valid, true);
     assert.equal(
-      integrity.sourceCount,
-      integrity.entryCount,
+      beforeImport.sourceCount,
+      beforeImport.entryCount,
+    );
+
+    const profile = parseIngestionProfile(
+      profileSource,
+      compiled,
+    );
+    const ingestion =
+      new PostgresIngestionService(pool);
+    const imported = await ingestion.run({
+      registryId: config.registry.id,
+      profile,
+      format: "csv",
+      input: importSource,
+      sourceLabel:
+        "Open Legal Interpretations demonstration CSV",
+      sourceUri:
+        "examples/open-legal-interpretations/import.csv",
+      actorId:
+        "system:reference-app-test",
+      reason:
+        "Verify reusable ingestion for the Open Legal Interpretations reference application.",
+      now:
+        "2026-10-06T16:30:00.000Z",
+    });
+
+    assert.equal(
+      imported.run.status,
+      "completed",
+    );
+    assert.equal(
+      imported.run.createdItems,
+      1,
+    );
+    assert.equal(
+      imported.run.failedItems,
+      0,
+    );
+
+    const importedSearch =
+      await search.search(
+        compiled,
+        {
+          registryId:
+            config.registry.id,
+          projection: "public",
+          text: "records retention",
+          recordTypeId:
+            "interpretation",
+          statuses: publicStatuses,
+          visibility: "public",
+          pageSize: 20,
+        },
+      );
+
+    assert.equal(
+      importedSearch.total,
+      1,
+    );
+    assert.equal(
+      importedSearch.hits[0]?.record.id,
+      "demo-imported-interpretation-2026-03",
+    );
+
+    const importedDeadlines =
+      await deadlines.listForRecord(
+        config.registry.id,
+        "demo-imported-interpretation-2026-03",
+      );
+
+    assert.equal(
+      importedDeadlines[0]?.deadlineTypeId,
+      "declassification_review_due",
+    );
+    assert.equal(
+      importedDeadlines[0]?.dueAt.slice(
+        0,
+        10,
+      ),
+      "2031-09-20",
+    );
+
+    const afterImport =
+      await integrityService.verifyRegistry(
+        config.registry.id,
+      );
+
+    assert.equal(afterImport.valid, true);
+    assert.ok(
+      afterImport.entryCount >
+        beforeImport.entryCount,
     );
   } finally {
     await pool.end();
