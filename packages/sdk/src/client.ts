@@ -21,11 +21,11 @@ export interface CivicRegistryClientOptions {
   headers?: HeadersInit;
 }
 
-export interface ExportRequest
-  extends ApiQuery {
-  format?: ApiExportFormat;
-  maxRecords?: number;
-}
+export type ExportRequest =
+  ApiQuery & {
+    format?: ApiExportFormat;
+    maxRecords?: number;
+  };
 
 export interface ExportResponse {
   body: string;
