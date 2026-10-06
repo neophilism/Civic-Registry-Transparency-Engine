@@ -262,7 +262,7 @@ export function parseDojOlcOpinion(
     );
   const slug = opinionSlug(url);
   const externalId =
-    \`doj-olc:\${slug}\`;
+    `doj-olc:${slug}`;
 
   return {
     id: stableRecordId(
