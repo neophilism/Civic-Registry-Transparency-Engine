@@ -161,6 +161,24 @@ export default async function RegistryAdminPage({
           </strong>
           <span>Overdue deadlines</span>
         </div>
+        <div>
+          <strong>
+            {
+              registry.summary
+                .sourceRefreshJobCount
+            }
+          </strong>
+          <span>Source refresh jobs</span>
+        </div>
+        <div>
+          <strong>
+            {
+              registry.summary
+                .sourceRefreshIssueCount
+            }
+          </strong>
+          <span>Refresh issues</span>
+        </div>
       </section>
 
       <section className="section-block">
