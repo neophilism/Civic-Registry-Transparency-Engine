@@ -1247,3 +1247,230 @@ h3 {
     grid-template-columns: 1fr;
   }
 }
+
+
+.history-timeline {
+  position: relative;
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-timeline::before {
+  content: "";
+  position: absolute;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  left: 0.42rem;
+  width: 1px;
+  background: var(--line);
+}
+
+.history-event {
+  position: relative;
+  display: grid;
+  grid-template-columns: 0.9rem minmax(0, 1fr);
+  gap: 0.9rem;
+  padding: 0 0 1rem;
+}
+
+.history-event__marker {
+  position: relative;
+  z-index: 1;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-top: 0.35rem;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.history-event article {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--surface);
+}
+
+.history-event__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.history-event__heading h3 {
+  font-size: 1rem;
+}
+
+.history-event__heading time {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.history-event article > p {
+  margin: 0.65rem 0 0;
+  color: #48534e;
+  line-height: 1.5;
+}
+
+.history-reason {
+  padding-left: 0.7rem;
+  border-left: 2px solid var(--line);
+  font-size: 0.82rem;
+}
+
+.history-more {
+  padding: 0.4rem 0 0 1.8rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.revision-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.revision-card {
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.revision-card > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.revision-card > summary::marker {
+  color: var(--accent);
+}
+
+.revision-card > summary > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.revision-card > summary time {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.revision-version {
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.revision-card__body {
+  padding: 0 1.1rem 1.1rem;
+  border-top: 1px solid var(--line);
+}
+
+.revision-card__body > .notice,
+.revision-card__body > .history-reason {
+  margin-top: 1rem;
+}
+
+.revision-changes {
+  margin-top: 1rem;
+}
+
+.revision-changes h4,
+.revision-snapshot h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.revision-changes dl {
+  margin: 0.65rem 0 0;
+}
+
+.revision-changes dl > div {
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.revision-changes dt {
+  margin-bottom: 0.4rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.revision-changes dd {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  margin: 0;
+}
+
+.revision-changes dd > div {
+  min-width: 0;
+  padding: 0.7rem;
+  border-radius: 0.45rem;
+  background: var(--paper);
+}
+
+.revision-changes dd > div > span:first-child {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.revision-snapshot {
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--paper);
+}
+
+.revision-snapshot__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.revision-snapshot .detail-list > div {
+  border-color: #d3d9d5;
+}
+
+@media (max-width: 760px) {
+  .history-event__heading,
+  .revision-card > summary,
+  .revision-snapshot__heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .revision-card > summary > div {
+    align-items: start;
+    flex-wrap: wrap;
+  }
+
+  .revision-changes dd {
+    grid-template-columns: 1fr;
+  }
+}
