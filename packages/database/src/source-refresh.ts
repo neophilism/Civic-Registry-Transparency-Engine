@@ -1369,7 +1369,8 @@ export class PostgresSourceRefreshService {
         );
       }
 
-      await client.query(
+      const jobResult =
+        await client.query(
         `
           UPDATE civic_registry_source_refresh_jobs
           SET
@@ -1391,6 +1392,7 @@ export class PostgresSourceRefreshService {
           WHERE registry_id = $1
             AND id = $2
             AND lease_token = $3
+          RETURNING id
         `,
         [
           claim.job.registryId,
@@ -1405,6 +1407,12 @@ export class PostgresSourceRefreshService {
           nextRunAt,
         ],
       );
+
+      if (!jobResult.rows[0]) {
+        throw new Error(
+          "Source refresh job lease is no longer valid.",
+        );
+      }
 
       await client.query("COMMIT");
       return mapRun(
@@ -1486,7 +1494,8 @@ export class PostgresSourceRefreshService {
         );
       }
 
-      await client.query(
+      const jobResult =
+        await client.query(
         `
           UPDATE civic_registry_source_refresh_jobs
           SET
@@ -1505,6 +1514,7 @@ export class PostgresSourceRefreshService {
           WHERE registry_id = $1
             AND id = $2
             AND lease_token = $3
+          RETURNING id
         `,
         [
           claim.job.registryId,
@@ -1516,6 +1526,12 @@ export class PostgresSourceRefreshService {
           nextRunAt,
         ],
       );
+
+      if (!jobResult.rows[0]) {
+        throw new Error(
+          "Source refresh job lease is no longer valid.",
+        );
+      }
 
       await client.query("COMMIT");
       return mapRun(
