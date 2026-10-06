@@ -1786,7 +1786,7 @@ export class PostgresNotificationService {
           : undefined;
 
     if (!recordId) {
-      return event.subjectType === "document";
+      return false;
     }
 
     const recordResult =
