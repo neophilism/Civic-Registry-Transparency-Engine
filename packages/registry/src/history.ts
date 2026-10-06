@@ -127,6 +127,42 @@ function relationshipLabel(
   return type.label;
 }
 
+function disclosureBasisDetail(
+  registry: CompiledRegistryConfig,
+  event: AuditEvent,
+): string | undefined {
+  const parts: string[] = [];
+  const publicNote = stringValue(
+    event.metadata?.publicNote,
+  );
+  const reason = stringValue(
+    event.metadata?.reason,
+  );
+  const authority = stringValue(
+    event.metadata?.authority,
+  );
+
+  if (publicNote) parts.push(publicNote);
+
+  if (
+    registry.disclosure.showReasons &&
+    reason
+  ) {
+    parts.push(`Reason: ${reason}.`);
+  }
+
+  if (
+    registry.disclosure.showAuthorities &&
+    authority
+  ) {
+    parts.push(`Authority: ${authority}.`);
+  }
+
+  return parts.length > 0
+    ? parts.join(" ")
+    : undefined;
+}
+
 function fieldListDetail(
   registry: CompiledRegistryConfig,
   record: RegistryRecord,
@@ -282,6 +318,63 @@ export function presentHistoryEvent(
           )} was removed.`
         : "A whole-record citation was removed.";
       break;
+    case "disclosure.record_changed": {
+      const disposition = stringValue(
+        event.metadata?.disposition,
+      );
+      label =
+        disposition === "withheld"
+          ? "Record withheld from public disclosure"
+          : "Record disclosure restored";
+      detail = disclosureBasisDetail(
+        registry,
+        event,
+      );
+      break;
+    }
+    case "disclosure.record_cleared":
+      label = "Record disclosure restriction cleared";
+      detail = disclosureBasisDetail(
+        registry,
+        event,
+      );
+      break;
+    case "disclosure.field_changed": {
+      const disposition = stringValue(
+        event.metadata?.disposition,
+      );
+      const field = fieldId
+        ? fieldLabel(
+            registry,
+            record,
+            fieldId,
+          )
+        : "Field";
+      label =
+        disposition === "withheld"
+          ? `${field} withheld`
+          : `${field} redacted`;
+      detail = disclosureBasisDetail(
+        registry,
+        event,
+      );
+      break;
+    }
+    case "disclosure.field_cleared": {
+      const field = fieldId
+        ? fieldLabel(
+            registry,
+            record,
+            fieldId,
+          )
+        : "Field";
+      label = `${field} disclosure restriction cleared`;
+      detail = disclosureBasisDetail(
+        registry,
+        event,
+      );
+      break;
+    }
     case "lifecycle.transition_requested": {
       const from = statusLabel(
         registry,
