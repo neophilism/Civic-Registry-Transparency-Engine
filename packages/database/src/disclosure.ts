@@ -45,6 +45,10 @@ export interface DisclosureRepository {
     registryId: string,
     recordId: string,
   ): Promise<RecordDisclosureBundle>;
+  listRecordBundles(
+    registryId: string,
+    recordIds: string[],
+  ): Promise<Map<string, RecordDisclosureBundle>>;
   setRecordDisclosure(
     disclosure: RecordDisclosure,
   ): Promise<RecordDisclosure>;
@@ -72,6 +76,10 @@ export interface DisclosureRepository {
     registryId: string,
     documentId: string,
   ): Promise<DocumentDisclosureBundle>;
+  listDocumentBundles(
+    registryId: string,
+    documentIds: string[],
+  ): Promise<Map<string, DocumentDisclosureBundle>>;
   setDocumentDisclosure(
     disclosure: DocumentDisclosure,
   ): Promise<DocumentDisclosure>;
@@ -371,6 +379,72 @@ export class PostgresDisclosureRepository
     };
   }
 
+  async listRecordBundles(
+    registryId: string,
+    recordIds: string[],
+  ): Promise<Map<string, RecordDisclosureBundle>> {
+    const ids = [
+      ...new Set(
+        recordIds
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ),
+    ];
+    const result = new Map<
+      string,
+      RecordDisclosureBundle
+    >();
+
+    for (const id of ids) {
+      result.set(id, { fields: [] });
+    }
+
+    if (ids.length === 0) return result;
+
+    const [recordRows, fieldRows] =
+      await Promise.all([
+        this.pool.query<RecordDisclosureRow>(
+          `
+            SELECT *
+            FROM civic_registry_record_disclosures
+            WHERE registry_id = $1
+              AND record_id = ANY($2::text[])
+          `,
+          [registryId, ids],
+        ),
+        this.pool.query<FieldDisclosureRow>(
+          `
+            SELECT *
+            FROM civic_registry_field_disclosures
+            WHERE registry_id = $1
+              AND record_id = ANY($2::text[])
+            ORDER BY record_id, field_id
+          `,
+          [registryId, ids],
+        ),
+      ]);
+
+    for (const row of recordRows.rows) {
+      const bundle =
+        result.get(row.record_id) ??
+        { fields: [] };
+      bundle.record = mapRecordDisclosure(row);
+      result.set(row.record_id, bundle);
+    }
+
+    for (const row of fieldRows.rows) {
+      const bundle =
+        result.get(row.record_id) ??
+        { fields: [] };
+      bundle.fields.push(
+        mapFieldDisclosure(row),
+      );
+      result.set(row.record_id, bundle);
+    }
+
+    return result;
+  }
+
   async setRecordDisclosure(
     disclosure: RecordDisclosure,
   ): Promise<RecordDisclosure> {
@@ -632,6 +706,73 @@ export class PostgresDisclosureRepository
       document: document ?? undefined,
       redactions,
     };
+  }
+
+  async listDocumentBundles(
+    registryId: string,
+    documentIds: string[],
+  ): Promise<Map<string, DocumentDisclosureBundle>> {
+    const ids = [
+      ...new Set(
+        documentIds
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ),
+    ];
+    const result = new Map<
+      string,
+      DocumentDisclosureBundle
+    >();
+
+    for (const id of ids) {
+      result.set(id, { redactions: [] });
+    }
+
+    if (ids.length === 0) return result;
+
+    const [documentRows, redactionRows] =
+      await Promise.all([
+        this.pool.query<DocumentDisclosureRow>(
+          `
+            SELECT *
+            FROM civic_registry_document_disclosures
+            WHERE registry_id = $1
+              AND document_id = ANY($2::text[])
+          `,
+          [registryId, ids],
+        ),
+        this.pool.query<DocumentRedactionRow>(
+          `
+            SELECT *
+            FROM civic_registry_document_redactions
+            WHERE registry_id = $1
+              AND document_id = ANY($2::text[])
+            ORDER BY document_id, created_at, id
+          `,
+          [registryId, ids],
+        ),
+      ]);
+
+    for (const row of documentRows.rows) {
+      const bundle =
+        result.get(row.document_id) ??
+        { redactions: [] };
+      bundle.document =
+        mapDocumentDisclosure(row);
+      result.set(row.document_id, bundle);
+    }
+
+    for (const row of redactionRows.rows) {
+      const bundle =
+        result.get(row.document_id) ??
+        { redactions: [] };
+      bundle.redactions.push(
+        mapDocumentRedaction(row),
+      );
+      result.set(row.document_id, bundle);
+    }
+
+    return result;
   }
 
   async setDocumentDisclosure(
