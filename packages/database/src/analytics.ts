@@ -390,6 +390,9 @@ export class PostgresRegistryAnalyticsRepository {
           FROM (
             SELECT citation.source_id
             FROM civic_registry_citations AS citation
+            JOIN civic_registry_sources AS source
+              ON source.registry_id = citation.registry_id
+             AND source.id = citation.source_id
             JOIN civic_registry_records AS r
               ON r.registry_id = citation.registry_id
              AND r.id = citation.record_id
@@ -397,7 +400,10 @@ export class PostgresRegistryAnalyticsRepository {
               AND citation.source_id IS NOT NULL
               AND (
                 NOT $2::boolean
-                OR citation.visibility = 'public'
+                OR (
+                  citation.visibility = 'public'
+                  AND source.visibility = 'public'
+                )
               )
 
             UNION
@@ -407,6 +413,9 @@ export class PostgresRegistryAnalyticsRepository {
             JOIN civic_registry_documents AS document
               ON document.registry_id = citation.registry_id
              AND document.id = citation.document_id
+            JOIN civic_registry_sources AS source
+              ON source.registry_id = document.registry_id
+             AND source.id = document.source_id
             JOIN civic_registry_records AS r
               ON r.registry_id = citation.registry_id
              AND r.id = citation.record_id
@@ -417,6 +426,7 @@ export class PostgresRegistryAnalyticsRepository {
                 OR (
                   citation.visibility = 'public'
                   AND document.visibility = 'public'
+                  AND source.visibility = 'public'
                 )
               )
           ) AS cited
@@ -589,6 +599,8 @@ export class PostgresRegistryAnalyticsRepository {
       recordType.fieldsById.get(dimension.fieldId)!;
     const labels = await this.dimensionLabels(
       registry,
+      query,
+      scope,
       field,
       result.rows.map((row) => row.value),
     );
@@ -603,8 +615,31 @@ export class PostgresRegistryAnalyticsRepository {
         FROM civic_registry_records AS r
         WHERE ${predicate}
           AND r.record_type_id = $6
+          AND (
+            NOT $2::boolean
+            OR (
+              NOT EXISTS (
+                SELECT 1
+                FROM civic_registry_record_disclosures AS record_disclosure
+                WHERE record_disclosure.registry_id = r.registry_id
+                  AND record_disclosure.record_id = r.id
+                  AND record_disclosure.disposition = 'withheld'
+              )
+              AND NOT EXISTS (
+                SELECT 1
+                FROM civic_registry_field_disclosures AS field_disclosure
+                WHERE field_disclosure.registry_id = r.registry_id
+                  AND field_disclosure.record_id = r.id
+                  AND field_disclosure.field_id = $7
+              )
+            )
+          )
       `,
-      [...scope, dimension.recordTypeId],
+      [
+        ...scope,
+        dimension.recordTypeId,
+        dimension.fieldId,
+      ],
     );
     const eligibleCount =
       count(eligible.rows[0]?.count);
@@ -628,6 +663,8 @@ export class PostgresRegistryAnalyticsRepository {
 
   private async dimensionLabels(
     registry: CompiledRegistryConfig,
+    query: RegistryAnalyticsQuery,
+    scope: [string, boolean, string[], boolean, boolean],
     field: FieldDefinition,
     values: string[],
   ): Promise<Map<string, string>> {
@@ -651,15 +688,29 @@ export class PostgresRegistryAnalyticsRepository {
 
     if (ids.length === 0) return labels;
 
+    const predicate = recordScopePredicate("label_record");
     const result = await this.pool.query<RecordLabelRow>(
       `
-        SELECT id, record_type_id, fields
-        FROM civic_registry_records
-        WHERE registry_id = $1
-          AND id = ANY($2::text[])
+        SELECT
+          label_record.id,
+          label_record.record_type_id,
+          label_record.fields
+        FROM civic_registry_records AS label_record
+        WHERE ${predicate}
+          AND label_record.id = ANY($6::text[])
       `,
-      [registry.definition.id, ids],
+      [...scope, ids],
     );
+
+    if (query.scope === "public") {
+      for (const id of ids) {
+        if (
+          !result.rows.some((row) => row.id === id)
+        ) {
+          labels.set(id, "Unavailable");
+        }
+      }
+    }
 
     for (const row of result.rows) {
       const recordType =
