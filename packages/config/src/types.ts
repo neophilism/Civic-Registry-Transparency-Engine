@@ -1,5 +1,7 @@
 import type {
   FieldDefinition,
+  NotificationChannel,
+  NotificationEventType,
   RecordTypeDefinition,
   RegistryDefinition,
   RelationshipTypeDefinition,
@@ -170,6 +172,25 @@ export interface CompiledDisclosureConfig {
   showAuthorities: boolean;
 }
 
+export interface NotificationConfig {
+  enabled?: boolean;
+  eventTypes?: NotificationEventType[];
+  allowedChannels?: NotificationChannel[];
+  deadlineApproachingDays?: number;
+  maxDeliveryAttempts?: number;
+  retryBaseSeconds?: number;
+}
+
+export interface CompiledNotificationConfig {
+  definition: NotificationConfig;
+  enabled: boolean;
+  eventTypes: ReadonlySet<NotificationEventType>;
+  allowedChannels: ReadonlySet<NotificationChannel>;
+  deadlineApproachingDays: number;
+  maxDeliveryAttempts: number;
+  retryBaseSeconds: number;
+}
+
 export interface RegistryConfigFileV1 {
   schemaVersion: typeof REGISTRY_CONFIG_SCHEMA_VERSION;
   registry: RegistryDefinition;
@@ -177,6 +198,7 @@ export interface RegistryConfigFileV1 {
   deadlines?: DeadlineEngineConfig;
   disclosure?: DisclosureConfig;
   presentation?: RegistryPresentationConfig;
+  notifications?: NotificationConfig;
 }
 
 export type RegistryConfigFile = RegistryConfigFileV1;
@@ -243,6 +265,7 @@ export interface CompiledRegistryConfig {
   publicationLifecycle?: CompiledPublicationLifecycleConfig;
   deadlines?: CompiledDeadlineEngineConfig;
   disclosure: CompiledDisclosureConfig;
+  notifications: CompiledNotificationConfig;
   getRecordType(recordTypeId: string): CompiledRecordTypeConfig;
   getField(recordTypeId: string, fieldId: string): FieldDefinition;
 }

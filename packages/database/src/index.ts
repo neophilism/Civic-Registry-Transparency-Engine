@@ -14,3 +14,4 @@ export * from "./deadlines.ts";
 export * from "./ingestion.ts";
 export * from "./admin.ts";
 export * from "./analytics.ts";
+export * from "./notifications.ts";
