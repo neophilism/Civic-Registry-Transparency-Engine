@@ -1,0 +1,24 @@
+{
+  "name": "@civic-registry/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Versioned public API contracts, OpenAPI metadata, and export serializers for Civic Registry.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@civic-registry/config": "workspace:*",
+    "@civic-registry/core": "workspace:*",
+    "@civic-registry/deadlines": "workspace:*",
+    "@civic-registry/registry": "workspace:*",
+    "@civic-registry/search": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}

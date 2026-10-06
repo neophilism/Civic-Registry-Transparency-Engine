@@ -16,28 +16,29 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 13 — Import and ingestion pipelines**
+**PR 14 — Public API, TypeScript SDK & exports**
 
-The engine now includes configurable publication lifecycle, immutable history,
-disclosure/redaction controls, evidence traceability, relationships, public
-search, deadline tracking, and resilient structured ingestion.
+The engine now exposes a stable read-only integration surface on top of the
+same lifecycle, disclosure, search, evidence, history, relationship, and
+deadline boundaries used by the public site.
 
-PR 13 adds:
+PR 14 adds:
 
-- JSON, NDJSON, and CSV decoding;
-- source-specific YAML/JSON import profiles kept outside registry policy;
-- nested path mapping and schema-aware type coercion;
-- stable input/row SHA-256 fingerprints;
-- create and idempotent upsert modes;
-- safe patch-style updates with explicit full-field replacement;
-- lifecycle-safe historical-state bootstrap;
-- row-level failure isolation;
-- dry-run validation;
-- durable ingestion run/item diagnostics;
-- immutable record audit linkage to ingestion runs;
-- CLI-driven imports and example fixtures.
+- versioned `/api/v1` public endpoints;
+- consistent JSON envelopes and machine-readable errors;
+- read-only cross-origin access;
+- public registry metadata;
+- record/search/evidence/history/relationship/graph/deadline endpoints;
+- OpenAPI 3.1;
+- reusable `@civic-registry/api` contracts;
+- reusable `@civic-registry/sdk` TypeScript client;
+- JSON, NDJSON, and CSV exports;
+- multi-page export collection with explicit truncation metadata;
+- spreadsheet-formula protection for CSV exports;
+- integration tests proving redacted canonical values do not leak through the
+  API or exports.
 
-See [Import and ingestion pipelines](docs/INGESTION.md).
+See [Public API, SDK, and exports](docs/PUBLIC-API.md).
 
 ## Local development
 
