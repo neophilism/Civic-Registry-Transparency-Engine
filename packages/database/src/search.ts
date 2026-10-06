@@ -190,7 +190,7 @@ function buildWhere(
 
   if (request.tags.length > 0) {
     const parameter = parameters.add(request.tags);
-    clauses.push(`tags && ${parameter}::text[]`);
+    clauses.push(`${tagExpression} && ${parameter}::text[]`);
   }
 
   const recordType = request.recordTypeId
