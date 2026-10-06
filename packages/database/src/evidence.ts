@@ -166,6 +166,7 @@ interface CitationRow extends QueryResultRow {
 }
 
 interface EvidenceJoinRow extends CitationRow {
+  resolved_source_id: string | null;
   source_title: string | null;
   source_type: SourceType | null;
   source_visibility: Visibility | null;
@@ -921,6 +922,7 @@ export class PostgresCitationRepository
       `
         SELECT
           citation.*,
+          COALESCE(citation.source_id, document.source_id) AS resolved_source_id,
           source.title AS source_title,
           source.source_type AS source_type,
           source.visibility AS source_visibility,
@@ -942,12 +944,15 @@ export class PostgresCitationRepository
           document.language AS document_language,
           document.created_at AS document_created_at
         FROM civic_registry_citations AS citation
-        LEFT JOIN civic_registry_sources AS source
-          ON source.registry_id = citation.registry_id
-          AND source.id = citation.source_id
         LEFT JOIN civic_registry_documents AS document
           ON document.registry_id = citation.registry_id
           AND document.id = citation.document_id
+        LEFT JOIN civic_registry_sources AS source
+          ON source.registry_id = citation.registry_id
+          AND source.id = COALESCE(
+            citation.source_id,
+            document.source_id
+          )
         WHERE ${where.join(" AND ")}
         ORDER BY citation.field_id NULLS FIRST,
           citation.created_at ASC,
@@ -965,7 +970,7 @@ export class PostgresCitationRepository
         row.source_visibility &&
         row.source_created_at
           ? {
-              id: row.source_id!,
+              id: row.resolved_source_id!,
               registryId: row.registry_id,
               title: row.source_title,
               sourceType: row.source_type,
