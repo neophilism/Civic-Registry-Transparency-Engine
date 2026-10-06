@@ -141,7 +141,7 @@ $$;
 CREATE OR REPLACE FUNCTION civic_registry_prevent_history_mutation()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
   IF TG_OP = 'DELETE' AND NOT EXISTS (
     SELECT 1
@@ -547,7 +547,7 @@ CREATE OR REPLACE FUNCTION civic_registry_relationship_event_visibility(
 RETURNS TEXT
 LANGUAGE SQL
 STABLE
-AS $
+AS $$
   SELECT CASE
     WHEN
       (
