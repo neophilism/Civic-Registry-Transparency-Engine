@@ -62,7 +62,7 @@ export function buildRecordSearchText(
   const recordType = registry.getRecordType(
     record.recordTypeId,
   );
-  const parts = [record.id, ...record.tags];
+  const parts = [record.id, ...(record.tags ?? [])];
 
   for (const field of recordType.definition.fields) {
     if (!field.searchable) continue;
