@@ -358,9 +358,17 @@ function isRangeField(field: FieldDefinition): boolean {
 
 function formatRangeValue(
   value: string | number | Date | null,
+  field: FieldDefinition,
 ): string | null {
   if (value === null) return null;
-  if (value instanceof Date) return value.toISOString();
+
+  if (value instanceof Date) {
+    const iso = value.toISOString();
+    return field.type === "date"
+      ? iso.slice(0, 10)
+      : iso;
+  }
+
   return String(value);
 }
 
@@ -471,8 +479,14 @@ export class PostgresSearchProvider implements SearchProvider {
               kind: "range",
               id: field.id,
               label: field.label,
-              min: formatRangeValue(range.rows[0]?.min ?? null),
-              max: formatRangeValue(range.rows[0]?.max ?? null),
+              min: formatRangeValue(
+                range.rows[0]?.min ?? null,
+                field,
+              ),
+              max: formatRangeValue(
+                range.rows[0]?.max ?? null,
+                field,
+              ),
             };
             return;
           }
