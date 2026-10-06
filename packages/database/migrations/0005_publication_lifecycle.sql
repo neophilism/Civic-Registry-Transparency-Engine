@@ -120,3 +120,128 @@ CREATE INDEX IF NOT EXISTS
     registry_id
   )
   WHERE status = 'pending';
+
+
+CREATE OR REPLACE FUNCTION civic_registry_enforce_lifecycle_status()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  lifecycle JSONB;
+  initial_status TEXT;
+  status_exists BOOLEAN;
+  transition_exists BOOLEAN;
+  bootstrap_allowed BOOLEAN;
+  transition_allowed BOOLEAN;
+BEGIN
+  SELECT config -> 'publicationLifecycle'
+  INTO lifecycle
+  FROM civic_registry_configurations
+  WHERE registry_id = NEW.registry_id;
+
+  IF lifecycle IS NULL
+    OR lifecycle = 'null'::jsonb
+  THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(
+      COALESCE(
+        lifecycle -> 'statuses',
+        '[]'::jsonb
+      )
+    ) AS status
+    WHERE status ->> 'id' = NEW.status
+  )
+  INTO status_exists;
+
+  IF NOT status_exists THEN
+    RAISE EXCEPTION
+      'Status % is not configured in the publication lifecycle for registry %.',
+      NEW.status,
+      NEW.registry_id
+      USING ERRCODE = '23514';
+  END IF;
+
+  IF TG_OP = 'INSERT' THEN
+    initial_status :=
+      lifecycle ->> 'initialStatusId';
+    bootstrap_allowed :=
+      COALESCE(
+        current_setting(
+          'civic_registry.lifecycle_bootstrap',
+          true
+        ),
+        ''
+      ) = 'allowed';
+
+    IF
+      NEW.status IS DISTINCT FROM initial_status
+      AND NOT bootstrap_allowed
+    THEN
+      RAISE EXCEPTION
+        'New records in registry % must begin in lifecycle status %.',
+        NEW.registry_id,
+        initial_status
+        USING ERRCODE = '23514';
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  IF OLD.status IS NOT DISTINCT FROM NEW.status THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(
+      COALESCE(
+        lifecycle -> 'transitions',
+        '[]'::jsonb
+      )
+    ) AS transition
+    WHERE transition ->> 'fromStatusId' = OLD.status
+      AND transition ->> 'toStatusId' = NEW.status
+  )
+  INTO transition_exists;
+
+  IF NOT transition_exists THEN
+    RAISE EXCEPTION
+      'Lifecycle transition % -> % is not configured for registry %.',
+      OLD.status,
+      NEW.status,
+      NEW.registry_id
+      USING ERRCODE = '23514';
+  END IF;
+
+  transition_allowed :=
+    COALESCE(
+      current_setting(
+        'civic_registry.lifecycle_transition',
+        true
+      ),
+      ''
+    ) = 'allowed';
+
+  IF NOT transition_allowed THEN
+    RAISE EXCEPTION
+      'Lifecycle status changes must use the publication lifecycle service.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS
+  civic_registry_lifecycle_status_guard
+  ON civic_registry_records;
+
+CREATE TRIGGER civic_registry_lifecycle_status_guard
+BEFORE INSERT OR UPDATE OF status
+ON civic_registry_records
+FOR EACH ROW
+EXECUTE FUNCTION civic_registry_enforce_lifecycle_status();
