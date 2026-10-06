@@ -87,7 +87,6 @@ export async function extractPdfText(
   const loadingTask =
     getDocument({
       data,
-      isEvalSupported: false,
       useSystemFonts: false,
       disableFontFace: true,
       stopAtErrors: true,
