@@ -45,7 +45,7 @@ function positiveInteger(
     number < 1
   ) {
     throw new Error(
-      \`\${label} must be a positive integer.\`,
+      `${label} must be a positive integer.`,
     );
   }
 
@@ -84,7 +84,7 @@ async function main(): Promise<void> {
 
   if (!adapter) {
     throw new Error(
-      \`Unknown source adapter: \${adapterId}.\`,
+      `Unknown source adapter: ${adapterId}.`,
     );
   }
 
