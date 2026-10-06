@@ -14,6 +14,9 @@ import {
   presentRecordDetail,
   type PresentedRecordDetail,
 } from "./presentation.ts";
+import type {
+  PublicRecordDisclosure,
+} from "./disclosure.ts";
 
 export interface PresentedHistoryEvent {
   id: string;
@@ -628,6 +631,7 @@ function operationLabel(
 export function presentRecordRevisions(
   versions: RecordVersion[],
   registry: CompiledRegistryConfig,
+  disclosure?: PublicRecordDisclosure,
 ): PresentedRecordRevision[] {
   const ascending = [...versions].sort(
     (left, right) => left.version - right.version,
@@ -656,6 +660,7 @@ export function presentRecordRevisions(
       record: presentRecordDetail(
         version.snapshot,
         registry,
+        disclosure,
       ),
       changes: fieldChanges(
         previousByVersion.get(version.version),
