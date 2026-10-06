@@ -1,8 +1,14 @@
 import { parse } from "yaml";
 
 import { compileRegistryConfig } from "./compile.ts";
-import { RegistryConfigError } from "./validation.ts";
-import type { CompiledRegistryConfig } from "./types.ts";
+import {
+  assertValidRegistryConfig,
+  RegistryConfigError,
+} from "./validation.ts";
+import type {
+  CompiledRegistryConfig,
+  RegistryConfigFile,
+} from "./types.ts";
 
 export type RegistryConfigFormat = "yaml" | "json" | "auto";
 
@@ -47,10 +53,10 @@ function parseYaml(source: string, sourceName: string): unknown {
   }
 }
 
-export function loadRegistryConfig(
+export function parseRegistryConfig(
   source: string,
   options: LoadRegistryConfigOptions = {},
-): CompiledRegistryConfig {
+): RegistryConfigFile {
   const sourceName = options.sourceName ?? "registry configuration";
   const format = options.format ?? "auto";
   const trimmed = source.trimStart();
@@ -62,5 +68,15 @@ export function loadRegistryConfig(
       ? parseJson(source, sourceName)
       : parseYaml(source, sourceName);
 
-  return compileRegistryConfig(parsed);
+  assertValidRegistryConfig(parsed);
+  return parsed;
+}
+
+export function loadRegistryConfig(
+  source: string,
+  options: LoadRegistryConfigOptions = {},
+): CompiledRegistryConfig {
+  return compileRegistryConfig(
+    parseRegistryConfig(source, options),
+  );
 }
