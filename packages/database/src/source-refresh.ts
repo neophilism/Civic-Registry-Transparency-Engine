@@ -915,52 +915,125 @@ export class PostgresSourceRefreshService {
         new Date().toISOString(),
       "now",
     );
-    const result =
-      await this.pool.query<JobRow>(
-        `
-          UPDATE civic_registry_source_refresh_jobs
-          SET
-            enabled = $3,
-            next_run_at = CASE
-              WHEN $3
-                THEN LEAST(
-                  next_run_at,
-                  $4::timestamptz
+    const client =
+      await this.pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const currentResult =
+        await client.query<JobRow>(
+          `
+            SELECT *
+            FROM civic_registry_source_refresh_jobs
+            WHERE registry_id = $1
+              AND id = $2
+            FOR UPDATE
+          `,
+          [
+            registryId,
+            jobId,
+          ],
+        );
+      const current =
+        currentResult.rows[0];
+
+      if (!current) {
+        throw new PersistenceNotFoundError(
+          "Source refresh job " +
+            registryId +
+            "/" +
+            jobId +
+            " does not exist.",
+        );
+      }
+
+      if (
+        !enabled &&
+        current.lease_token &&
+        current.lease_expires_at &&
+        current.lease_expires_at >
+          new Date(now)
+      ) {
+        throw new Error(
+          "A running source refresh job cannot be disabled until its worker lease completes or expires.",
+        );
+      }
+
+      if (
+        !enabled &&
+        current.lease_token
+      ) {
+        await client.query(
+          `
+            UPDATE civic_registry_source_refresh_runs
+            SET
+              status = 'failed',
+              completed_at =
+                $3::timestamptz,
+              error_message =
+                COALESCE(
+                  error_message,
+                  'Expired worker lease was cleared while disabling the refresh job.'
                 )
-              ELSE next_run_at
-            END,
-            lease_token = CASE
-              WHEN $3 THEN lease_token
-              ELSE NULL
-            END,
-            lease_expires_at = CASE
-              WHEN $3 THEN lease_expires_at
-              ELSE NULL
-            END,
-            updated_at = $4::timestamptz
-          WHERE registry_id = $1
-            AND id = $2
-          RETURNING *
-        `,
-        [
-          registryId,
-          jobId,
-          enabled,
-          now,
-        ],
-      );
+            WHERE registry_id = $1
+              AND job_id = $2
+              AND status = 'running'
+          `,
+          [
+            registryId,
+            jobId,
+            now,
+          ],
+        );
+      }
 
-    if (!result.rows[0]) {
-      throw new PersistenceNotFoundError(
-        "Source refresh job " +
-          registryId +
-          "/" +
-          jobId +
-          " does not exist.",
-      );
+      const result =
+        await client.query<JobRow>(
+          `
+            UPDATE civic_registry_source_refresh_jobs
+            SET
+              enabled = $3,
+              next_run_at = CASE
+                WHEN $3
+                  THEN LEAST(
+                    next_run_at,
+                    $4::timestamptz
+                  )
+                ELSE next_run_at
+              END,
+              lease_token = CASE
+                WHEN $3
+                  THEN lease_token
+                ELSE NULL
+              END,
+              lease_expires_at = CASE
+                WHEN $3
+                  THEN lease_expires_at
+                ELSE NULL
+              END,
+              updated_at =
+                $4::timestamptz
+            WHERE registry_id = $1
+              AND id = $2
+            RETURNING *
+          `,
+          [
+            registryId,
+            jobId,
+            enabled,
+            now,
+          ],
+        );
+
+      await client.query("COMMIT");
+      return mapJob(result.rows[0]);
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
     }
-
-    return mapJob(result.rows[0]);
   }
 
   async queueNow(
