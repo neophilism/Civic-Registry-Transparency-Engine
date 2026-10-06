@@ -192,3 +192,12 @@ A source adapter is considered healthy only when it continues to discover and pa
 - ingestion failures.
 
 Future work can add scheduled refresh orchestration, attachment/PDF ingestion, structured legal-authority extraction, and source-specific health dashboards without changing the canonical registry model.
+
+
+## Scheduled refresh orchestration
+
+PR 21 adds database-backed recurring execution, worker leases, retry backoff, row-count/empty-result health checks, and administrator monitoring around these adapters.
+
+See [Scheduled source refresh](SOURCE-REFRESH.md).
+
+The adapter package remains responsible only for safe retrieval and deterministic normalization. Scheduling and operational state are generic engine capabilities, while the DOJ/OGE job definitions remain in the Open Legal Interpretations thin application.
