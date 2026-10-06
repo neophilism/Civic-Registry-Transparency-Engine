@@ -86,3 +86,23 @@ pnpm db:reindex
 ```
 
 New creates and updates maintain their index text automatically.
+
+
+## Relationship graph traversal
+
+`PostgresRelationshipGraphRepository` provides bounded graph traversal without
+requiring a separate graph database.
+
+Traversal supports:
+
+- one to three hops;
+- relationship-type filters;
+- inbound, outbound, or either stored endpoint direction;
+- visibility constraints;
+- node caps;
+- cycle-safe expansion.
+
+The default public web layer always supplies `visibility: public`.
+
+Traversal uses the existing relationship endpoint indexes, so PR 7 does not
+require a new database migration.
