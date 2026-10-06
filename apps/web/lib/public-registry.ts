@@ -83,6 +83,7 @@ function lifecycleStatusAtEvent(
   const eventTime = Date.parse(event.occurredAt);
   let selected:
     | {
+        version: number;
         createdAt: string;
         snapshot: RegistryRecord;
       }
@@ -90,11 +91,20 @@ function lifecycleStatusAtEvent(
 
   for (const version of versions) {
     const versionTime = Date.parse(version.createdAt);
+    const selectedTime = selected
+      ? Date.parse(selected.createdAt)
+      : Number.NEGATIVE_INFINITY;
 
     if (
       versionTime <= eventTime &&
-      (!selected ||
-        versionTime >= Date.parse(selected.createdAt))
+      (
+        !selected ||
+        versionTime > selectedTime ||
+        (
+          versionTime === selectedTime &&
+          version.version > selected.version
+        )
+      )
     ) {
       selected = version;
     }
@@ -196,13 +206,26 @@ export async function listPublicRelationships(
   } = {},
 ): Promise<PublicRelationshipResult> {
   const { relationshipGraph } = getRepositories();
+  const statuses = publicStatusIds(registry);
+
+  if (
+    registry.publicationLifecycle &&
+    statuses?.length === 0
+  ) {
+    return {
+      relationships: [],
+      groups: [],
+      truncated: false,
+    };
+  }
+
   const raw = await relationshipGraph.getGraph({
     registryId: record.registryId,
     rootRecordId: record.id,
     depth: 1,
     relationshipTypeIds: options.relationshipTypeIds,
     visibility: "public",
-    statusIds: publicStatusIds(registry),
+    statusIds: statuses,
     maxNodes: options.maxNodes ?? 101,
   });
 
@@ -267,13 +290,22 @@ export async function getPublicRelationshipGraph(
   } = {},
 ): Promise<PublicRelationshipGraphResult | null> {
   const { relationshipGraph } = getRepositories();
+  const statuses = publicStatusIds(registry);
+
+  if (
+    registry.publicationLifecycle &&
+    statuses?.length === 0
+  ) {
+    return null;
+  }
+
   const raw = await relationshipGraph.getGraph({
     registryId: registry.definition.id,
     rootRecordId: recordId,
     depth: options.depth,
     relationshipTypeIds: options.relationshipTypeIds,
     visibility: "public",
-    statusIds: publicStatusIds(registry),
+    statusIds: statuses,
     maxNodes: options.maxNodes ?? 100,
   });
 
