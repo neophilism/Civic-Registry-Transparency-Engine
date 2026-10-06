@@ -570,6 +570,13 @@ export function mapIngestionRow(
   const domainIssues = validateRegistryRecord(
     record,
     registry.definition,
+  ).filter(
+    (issue) =>
+      !(
+        profile.mode === "upsert" &&
+        issue.code ===
+          "required_field_missing"
+      ),
   );
 
   if (domainIssues.length > 0) {
