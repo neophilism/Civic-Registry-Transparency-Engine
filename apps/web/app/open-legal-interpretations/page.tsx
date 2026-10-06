@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 
 import {
   getPublicAnalytics,
-} from "../lib/analytics";
+} from "../../lib/analytics";
 import {
   getPublicRegistry,
   listPublicRecords,
-} from "../lib/public-registry";
+} from "../../lib/public-registry";
 
 export const dynamic = "force-dynamic";
 
