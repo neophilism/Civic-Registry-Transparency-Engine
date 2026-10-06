@@ -63,6 +63,46 @@ function publicStatusIds(
   return [...lifecycle.publicStatusIds];
 }
 
+function lifecycleStatusAtEvent(
+  event: {
+    occurredAt: string;
+    version?: number;
+  },
+  versions: Array<{
+    version: number;
+    createdAt: string;
+    snapshot: RegistryRecord;
+  }>,
+): string | undefined {
+  if (event.version !== undefined) {
+    return versions.find(
+      (version) => version.version === event.version,
+    )?.snapshot.status;
+  }
+
+  const eventTime = Date.parse(event.occurredAt);
+  let selected:
+    | {
+        createdAt: string;
+        snapshot: RegistryRecord;
+      }
+    | undefined;
+
+  for (const version of versions) {
+    const versionTime = Date.parse(version.createdAt);
+
+    if (
+      versionTime <= eventTime &&
+      (!selected ||
+        versionTime >= Date.parse(selected.createdAt))
+    ) {
+      selected = version;
+    }
+  }
+
+  return selected?.snapshot.status;
+}
+
 export async function listPublicRegistries(): Promise<
   PublicRegistry[]
 > {
@@ -327,16 +367,39 @@ export async function getPublicHistory(
     ),
   ]);
 
-  return {
-    events: events.map((event) =>
-      presentHistoryEvent(
-        event,
-        record,
-        registry,
-      ),
+  const lifecycle = registry.publicationLifecycle;
+  const publicVersions = lifecycle
+    ? versions.filter((version) =>
+        lifecycle.isPublicStatus(
+          version.snapshot.status,
+        ),
+      )
+    : versions;
+  const presentedEvents = events.map((event) =>
+    presentHistoryEvent(
+      event,
+      record,
+      registry,
     ),
+  );
+  const publicEvents = lifecycle
+    ? presentedEvents.filter((event) => {
+        const status = lifecycleStatusAtEvent(
+          event,
+          versions,
+        );
+
+        return (
+          status !== undefined &&
+          lifecycle.isPublicStatus(status)
+        );
+      })
+    : presentedEvents;
+
+  return {
+    events: publicEvents,
     revisions: presentRecordRevisions(
-      versions,
+      publicVersions,
       registry,
     ),
   };
