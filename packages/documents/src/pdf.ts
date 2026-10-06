@@ -106,9 +106,14 @@ export async function extractPdfText(
     );
   }
 
+  // PDF.js may transfer/detach the ArrayBuffer it receives.
+  // Keep the caller's original evidence bytes untouched for
+  // hashing and durable storage after extraction.
+  const extractionData = data.slice();
+
   const loadingTask =
     getDocument({
-      data,
+      data: extractionData,
       standardFontDataUrl,
       useSystemFonts: false,
       disableFontFace: true,
