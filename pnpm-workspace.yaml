@@ -1,6 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "examples/open-legal-interpretations"
 
 allowBuilds:
   unrs-resolver: true
