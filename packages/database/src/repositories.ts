@@ -427,7 +427,7 @@ export class PostgresRecordRepository implements RecordRepository {
         ),
       ]);
       where.push(
-        `status = ANY(${values.length}::text[])`,
+        `status = ANY($${values.length}::text[])`,
       );
     }
 
