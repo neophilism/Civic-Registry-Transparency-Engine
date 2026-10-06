@@ -290,6 +290,8 @@ test("record deletion preserves immutable versions and deletion history", async 
       createdAt: "2026-03-01T00:00:00.000Z",
       updatedAt: "2026-03-01T00:00:00.000Z",
       publishedAt: "2026-03-01T00:00:00.000Z",
+    }, {
+      bootstrapLifecycle: true,
     });
 
     assert.equal(
