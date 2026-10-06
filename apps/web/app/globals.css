@@ -1117,3 +1117,133 @@ h3 {
     text-align: left;
   }
 }
+
+
+.evidence-groups {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.evidence-group {
+  padding: 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: var(--surface);
+}
+
+.evidence-group__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.evidence-scope {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.evidence-group__heading h3 {
+  font-size: 1.2rem;
+}
+
+.evidence-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.evidence-card {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--paper);
+}
+
+.evidence-card__primary > span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.evidence-card__primary h4 {
+  margin: 0.3rem 0 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.evidence-locator {
+  width: fit-content;
+  margin: 0.75rem 0 0;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.35rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.evidence-note {
+  margin: 0.7rem 0 0;
+  color: #48534e;
+  line-height: 1.55;
+}
+
+.evidence-metadata {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.7rem 1rem;
+  margin: 1rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.evidence-metadata > div {
+  min-width: 0;
+}
+
+.evidence-metadata dt {
+  margin-bottom: 0.2rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.evidence-metadata dd {
+  margin: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.evidence-hash {
+  grid-column: 1 / -1;
+}
+
+.evidence-hash dd {
+  word-break: break-all;
+}
+
+.evidence-more {
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 760px) {
+  .evidence-group__heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .evidence-metadata {
+    grid-template-columns: 1fr;
+  }
+}
