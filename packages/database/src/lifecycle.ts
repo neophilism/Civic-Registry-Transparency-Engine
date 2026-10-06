@@ -17,6 +17,10 @@ import type {
   QueryResultRow,
 } from "pg";
 
+import type {
+  DeadlineReconciler,
+} from "./deadlines.ts";
+
 import {
   PersistenceConflictError,
   PersistenceNotFoundError,
@@ -565,9 +569,14 @@ function isUniqueViolation(error: unknown): boolean {
 
 export class PostgresPublicationLifecycleService {
   private readonly pool: Pool;
+  private readonly deadlines?: DeadlineReconciler;
 
-  constructor(pool: Pool) {
+  constructor(
+    pool: Pool,
+    deadlines?: DeadlineReconciler,
+  ) {
     this.pool = pool;
+    this.deadlines = deadlines;
   }
 
   async requestTransition(input: {
@@ -620,6 +629,18 @@ export class PostgresPublicationLifecycleService {
           input.toStatusId,
           context,
           now,
+        );
+        await this.deadlines?.reconcileRecordWithClient(
+          client,
+          input.registryId,
+          input.recordId,
+          {
+            now,
+            context: {
+              actorId: context.actorId,
+              reason: context.reason,
+            },
+          },
         );
         await client.query("COMMIT");
 
@@ -977,6 +998,21 @@ export class PostgresPublicationLifecycleService {
         now,
         {
           keepRequestId: input.requestId,
+        },
+      );
+      await this.deadlines?.reconcileRecordWithClient(
+        client,
+        input.registryId,
+        request.record_id,
+        {
+          now,
+          context: {
+            actorId: input.actorId,
+            reason:
+              request.reason ??
+              input.note ??
+              undefined,
+          },
         },
       );
       const completed =
@@ -1519,6 +1555,21 @@ export class PostgresPublicationLifecycleService {
           now,
           {
             keepScheduleId: schedule.id,
+          },
+        );
+        await this.deadlines?.reconcileRecordWithClient(
+          client,
+          schedule.registry_id,
+          schedule.record_id,
+          {
+            now,
+            context: {
+              actorId:
+                "system:publication-scheduler",
+              reason:
+                schedule.reason ??
+                "Scheduled publication.",
+            },
           },
         );
         await client.query(
