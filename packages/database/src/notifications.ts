@@ -1196,11 +1196,14 @@ export class PostgresNotificationService {
             OR civic_registry_notification_events.payload
               IS DISTINCT FROM EXCLUDED.payload
         `,
-        [
-          registryId,
-          now,
-          settings.deadlineApproachingDays,
-        ],
+        entry.eventType ===
+        "deadline.approaching"
+          ? [
+              registryId,
+              now,
+              settings.deadlineApproachingDays,
+            ]
+          : [registryId, now],
       );
 
       collected += result.rowCount ?? 0;
