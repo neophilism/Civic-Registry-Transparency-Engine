@@ -7,8 +7,14 @@ import {
   compileRegistryConfig,
 } from "@civic-registry/config";
 import {
+  FileSystemDocumentStorage,
+} from "@civic-registry/documents";
+import {
   createDatabasePool,
+  PostgresDeadlineService,
   PostgresIngestionService,
+  PostgresPdfAttachmentService,
+  PostgresRecordRepository,
   PostgresRegistryConfigRepository,
   PostgresSourceRefreshService,
   runMigrations,
@@ -81,6 +87,23 @@ async function makeExecutor(
     );
   const ingestion =
     new PostgresIngestionService(pool);
+  const records =
+    new PostgresRecordRepository(
+      pool,
+      configs,
+      new PostgresDeadlineService(pool),
+    );
+  const attachmentStorage =
+    new FileSystemDocumentStorage(
+      process.env
+        .CIVIC_REGISTRY_DOCUMENT_STORAGE_DIR ??
+        "data/documents",
+    );
+  const attachments =
+    new PostgresPdfAttachmentService(
+      pool,
+      attachmentStorage,
+    );
 
   return async (
     claim: SourceRefreshClaim,
@@ -139,9 +162,121 @@ async function makeExecutor(
         },
       });
 
+    const refreshWarnings = [
+      ...adapterRun.manifest.warnings,
+    ];
+    let attachmentCreated = 0;
+    let attachmentExisting = 0;
+    let attachmentFailed = 0;
+    let attachmentWarnings = 0;
+    let fullTextUpdates = 0;
+
+    for (const row of adapterRun.rows) {
+      const attachmentUrls =
+        Array.isArray(
+          row.attachment_urls,
+        )
+          ? row.attachment_urls
+          : [];
+
+      if (
+        attachmentUrls.length === 0
+      ) {
+        continue;
+      }
+
+      const attachmentResult =
+        await attachments.ingest({
+          registryId:
+            claim.job.registryId,
+          recordId: row.id,
+          recordTitle: row.title,
+          attachmentUrls,
+          allowedHosts:
+            adapter.allowedHosts,
+          visibility: "public",
+          fieldId: "full_text",
+        });
+
+      attachmentCreated +=
+        attachmentResult.created;
+      attachmentExisting +=
+        attachmentResult.existing;
+      attachmentFailed +=
+        attachmentResult.failed;
+      attachmentWarnings +=
+        attachmentResult.warnings;
+
+      for (const item of
+        attachmentResult.items) {
+        if (item.status === "failed") {
+          refreshWarnings.push({
+            code:
+              "pdf_attachment_failed",
+            message:
+              item.error ??
+              "PDF attachment ingestion failed.",
+            url: item.url,
+          });
+        }
+
+        for (const warning of
+          item.warnings) {
+          refreshWarnings.push({
+            code:
+              "pdf_attachment_warning",
+            message: warning,
+            url:
+              item.finalUrl ??
+              item.url,
+          });
+        }
+      }
+
+      if (
+        attachmentResult.extractedText
+      ) {
+        const record =
+          await records.get(
+            claim.job.registryId,
+            row.id,
+          );
+
+        if (
+          record &&
+          record.fields.full_text !==
+            attachmentResult.extractedText
+        ) {
+          await records.update(
+            {
+              ...record,
+              fields: {
+                ...record.fields,
+                full_text:
+                  attachmentResult.extractedText,
+              },
+              updatedAt:
+                new Date().toISOString(),
+            },
+            {
+              context: {
+                actorId:
+                  "system:source-refresh-worker",
+                reason:
+                  "Refresh full text from retrieved PDF attachment.",
+              },
+            },
+          );
+          fullTextUpdates += 1;
+        }
+      }
+    }
+
     return {
-      manifest:
-        adapterRun.manifest,
+      manifest: {
+        ...adapterRun.manifest,
+        warnings: refreshWarnings,
+      },
       ingestionRunId:
         ingestionResult.run.id,
       ingestionStatus:
@@ -158,6 +293,11 @@ async function makeExecutor(
         ingestionUnchangedItems:
           ingestionResult.run
             .unchangedItems,
+        attachmentCreated,
+        attachmentExisting,
+        attachmentFailed,
+        attachmentWarnings,
+        fullTextUpdates,
       },
     };
   };
