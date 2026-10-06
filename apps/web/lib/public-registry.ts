@@ -11,6 +11,8 @@ import {
   presentHistoryEvent,
   presentRecordRevisions,
   presentCitation,
+  projectDocumentForPublic,
+  projectRecordForPublic,
   presentRelationship,
   presentRelationshipGraph,
   type PresentedCitation,
@@ -20,6 +22,7 @@ import {
   type PresentedRelationship,
   type PresentedRelationshipGraph,
   type PresentedRelationshipGroup,
+  type PublicRecordDisclosure,
 } from "@civic-registry/registry";
 import type {
   SearchRequest,
@@ -30,6 +33,11 @@ import { getRepositories } from "./database.ts";
 
 export interface PublicRegistry {
   config: CompiledRegistryConfig;
+}
+
+export interface PublicRecordResult {
+  record: RegistryRecord;
+  disclosure: PublicRecordDisclosure;
 }
 
 export interface PublicHistoryResult {
@@ -51,6 +59,57 @@ export interface PublicRelationshipResult {
 export interface PublicRelationshipGraphResult {
   graph: PresentedRelationshipGraph;
   truncated: boolean;
+}
+
+function isLifecyclePublic(
+  registry: CompiledRegistryConfig,
+  record: RegistryRecord,
+): boolean {
+  return (
+    !registry.publicationLifecycle ||
+    registry.publicationLifecycle.isPublicStatus(
+      record.status,
+    )
+  );
+}
+
+async function projectPublicRecordSet(
+  registry: CompiledRegistryConfig,
+  records: RegistryRecord[],
+): Promise<
+  Array<{
+    source: RegistryRecord;
+    result: PublicRecordResult | null;
+  }>
+> {
+  const { disclosure } = getRepositories();
+  const bundles =
+    await disclosure.listRecordBundles(
+      registry.definition.id,
+      records.map((record) => record.id),
+    );
+
+  return records.map((record) => {
+    const bundle = bundles.get(record.id) ?? {
+      fields: [],
+    };
+    const projection = projectRecordForPublic(
+      record,
+      registry,
+      bundle.record ?? null,
+      bundle.fields,
+    );
+
+    return {
+      source: record,
+      result: projection.record
+        ? {
+            record: projection.record,
+            disclosure: projection.disclosure,
+          }
+        : null,
+    };
+  });
 }
 
 function publicStatusIds(
@@ -156,19 +215,31 @@ export async function listPublicRecords(
     return [];
   }
 
-  return records.list(registryId, {
+  const stored = await records.list(registryId, {
     recordTypeId,
     statuses,
     visibility: "public",
+    excludeWithheld:
+      registry.disclosure.withheldRecordBehavior ===
+      "hidden",
     limit: 100,
   });
+  const projected = await projectPublicRecordSet(
+    registry,
+    stored,
+  );
+
+  return projected.flatMap((item) =>
+    item.result ? [item.result.record] : [],
+  );
 }
 
-export async function getPublicRecord(
+export async function getPublicRecordView(
   registryId: string,
   recordId: string,
-): Promise<RegistryRecord | null> {
-  const { configs, records } = getRepositories();
+): Promise<PublicRecordResult | null> {
+  const { configs, records, disclosure } =
+    getRepositories();
   const [config, record] = await Promise.all([
     configs.get(registryId),
     records.get(registryId, recordId),
@@ -184,16 +255,39 @@ export async function getPublicRecord(
 
   const registry = compileRegistryConfig(config);
 
-  if (
-    registry.publicationLifecycle &&
-    !registry.publicationLifecycle.isPublicStatus(
-      record.status,
-    )
-  ) {
+  if (!isLifecyclePublic(registry, record)) {
     return null;
   }
 
-  return record;
+  const bundle = await disclosure.getRecordBundle(
+    registryId,
+    recordId,
+  );
+  const projection = projectRecordForPublic(
+    record,
+    registry,
+    bundle.record ?? null,
+    bundle.fields,
+  );
+
+  return projection.record
+    ? {
+        record: projection.record,
+        disclosure: projection.disclosure,
+      }
+    : null;
+}
+
+export async function getPublicRecord(
+  registryId: string,
+  recordId: string,
+): Promise<RegistryRecord | null> {
+  return (
+    await getPublicRecordView(
+      registryId,
+      recordId,
+    )
+  )?.record ?? null;
 }
 
 export async function listPublicRelationships(
@@ -342,12 +436,35 @@ export async function searchPublicRecords(
     }
   }
 
-  return search.search(registry, {
+  const result = await search.search(registry, {
     ...request,
     statuses,
+    projection: "public",
     registryId: registry.definition.id,
     visibility: "public",
   });
+  const projected = await projectPublicRecordSet(
+    registry,
+    result.hits.map((hit) => hit.record),
+  );
+  const byId = new Map(
+    projected.flatMap((item) =>
+      item.result
+        ? [[item.source.id, item.result.record] as const]
+        : [],
+    ),
+  );
+
+  return {
+    ...result,
+    hits: result.hits.flatMap((hit) => {
+      const record = byId.get(hit.record.id);
+
+      return record
+        ? [{ ...hit, record }]
+        : [];
+    }),
+  };
 }
 
 
