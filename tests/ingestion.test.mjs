@@ -399,3 +399,52 @@ test("fingerprints are stable across object key ordering", () => {
     }),
   );
 });
+
+
+test("partial upsert mappings may defer required fields to an existing record", () => {
+  const compiled = compileIngestionProfile(
+    {
+      id: "partial-upsert",
+      recordTypeId: "item",
+      mode: "upsert",
+      recordId: {
+        path: "id",
+        required: true,
+      },
+      fields: {
+        count: {
+          path: "count",
+        },
+      },
+    },
+    registry(),
+  );
+  const decoded = decodeIngestionInput(
+    JSON.stringify([
+      {
+        id: "item-1",
+        count: "7",
+      },
+    ]),
+    "json",
+  );
+  const mapped = mapIngestionRow(
+    decoded.rows[0],
+    compiled,
+    registry(),
+    {
+      now: "2026-01-01T12:00:00.000Z",
+    },
+  );
+
+  assert.equal(mapped.ok, true);
+
+  if (!mapped.ok) return;
+
+  assert.deepEqual(
+    mapped.item.record.fields,
+    {
+      count: 7,
+    },
+  );
+});
