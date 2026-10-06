@@ -7,7 +7,6 @@ import { isIP } from "node:net";
 
 import {
   compileRegistryConfig,
-  type NotificationConfig,
   type RegistryConfigFile,
 } from "@civic-registry/config";
 import {
@@ -68,8 +67,8 @@ export class NotificationError extends Error {
 
 interface NotificationSettings {
   registryName: string;
-  eventTypes: Set<NotificationEventType>;
-  allowedChannels: Set<NotificationChannel>;
+  eventTypes: ReadonlySet<NotificationEventType>;
+  allowedChannels: ReadonlySet<NotificationChannel>;
   deadlineApproachingDays: number;
   maxDeliveryAttempts: number;
   retryBaseSeconds: number;
@@ -234,26 +233,6 @@ function normalizeFilters(
       filters?.statusIds,
     ),
     tags: normalizedStrings(filters?.tags),
-  };
-}
-
-function notificationDefaults(
-  config: NotificationConfig | undefined,
-): Required<NotificationConfig> {
-  return {
-    enabled: config?.enabled ?? false,
-    eventTypes:
-      config?.eventTypes ??
-      [...NOTIFICATION_EVENT_TYPES],
-    allowedChannels:
-      config?.allowedChannels ??
-      [...NOTIFICATION_CHANNELS],
-    deadlineApproachingDays:
-      config?.deadlineApproachingDays ?? 7,
-    maxDeliveryAttempts:
-      config?.maxDeliveryAttempts ?? 5,
-    retryBaseSeconds:
-      config?.retryBaseSeconds ?? 60,
   };
 }
 
@@ -645,9 +624,10 @@ export class PostgresNotificationService {
       );
     }
 
-    const resolved = notificationDefaults(
-      config.notifications,
-    );
+    const compiled =
+      compileRegistryConfig(config);
+    const resolved =
+      compiled.notifications;
 
     if (!resolved.enabled) {
       throw new NotificationError(
@@ -660,9 +640,9 @@ export class PostgresNotificationService {
       config,
       settings: {
         registryName: config.registry.name,
-        eventTypes: new Set(resolved.eventTypes),
+        eventTypes: resolved.eventTypes,
         allowedChannels:
-          new Set(resolved.allowedChannels),
+          resolved.allowedChannels,
         deadlineApproachingDays:
           resolved.deadlineApproachingDays,
         maxDeliveryAttempts:
