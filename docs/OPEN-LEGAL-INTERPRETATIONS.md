@@ -246,8 +246,10 @@ The database test:
 3. performs public full-text search;
 4. traverses legal-authority and supersession relationships;
 5. verifies the configured declassification deadline;
-6. resolves public evidence/source documents; and
-7. verifies the PR 18 cryptographic audit chain.
+6. resolves public evidence/source documents;
+7. imports a CSV interpretation through the generic ingestion service;
+8. verifies the imported interpretation is searchable and receives its configured deadline; and
+9. verifies the PR 18 cryptographic audit chain remains valid after ingestion.
 
 The engine packages are not modified to special-case the app.
 
