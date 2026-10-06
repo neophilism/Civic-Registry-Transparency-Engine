@@ -4,9 +4,11 @@ import {
   compileRegistryConfig,
   type CompiledRegistryConfig,
 } from "@civic-registry/config";
-import type {
-  JsonFieldValue,
-  RegistryRecord,
+import {
+  assertValidRegistryRecord,
+  DomainValidationError,
+  type JsonFieldValue,
+  type RegistryRecord,
 } from "@civic-registry/core";
 import {
   compileIngestionProfile,
@@ -268,6 +270,18 @@ function failureFromError(
   message: string;
   details: IngestionIssue[];
 } {
+  if (error instanceof DomainValidationError) {
+    return {
+      code: "domain_validation_error",
+      message: error.message,
+      details: error.issues.map((issue) => ({
+        code: issue.code,
+        message: issue.message,
+        path: issue.path,
+      })),
+    };
+  }
+
   if (error instanceof PersistenceConflictError) {
     return {
       code: "persistence_conflict",
@@ -877,6 +891,17 @@ export class PostgresIngestionService {
         seenRecordIds.add(item.record.id);
 
         try {
+          if (
+            registry.publicationLifecycle &&
+            !registry.publicationLifecycle.statusesById.has(
+              item.record.status,
+            )
+          ) {
+            throw new PersistenceConflictError(
+              `Status ${item.record.status} is not configured in the publication lifecycle.`,
+            );
+          }
+
           const existing =
             await this.records.get(
               input.registryId,
@@ -888,6 +913,11 @@ export class PostgresIngestionService {
             | "unchanged";
 
           if (!existing) {
+            assertValidRegistryRecord(
+              item.record,
+              registry.definition,
+            );
+
             if (
               registry.publicationLifecycle &&
               item.record.status !==
@@ -949,6 +979,11 @@ export class PostgresIngestionService {
                 profile,
                 startedAt,
               );
+
+            assertValidRegistryRecord(
+              candidate,
+              registry.definition,
+            );
 
             if (
               registry.publicationLifecycle &&
