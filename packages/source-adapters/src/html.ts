@@ -124,11 +124,14 @@ export function extractHeadingText(
   html: string,
   level = 1,
 ): string | undefined {
+  const pattern =
+    "<h" +
+    level +
+    "\\b[^>]*>([\\s\\S]*?)<\\/h" +
+    level +
+    ">";
   const match = html.match(
-    new RegExp(
-      \`<h\${level}\\\\b[^>]*>([\\\\s\\\\S]*?)<\\\\/h\${level}>\`,
-      "i",
-    ),
+    new RegExp(pattern, "i"),
   );
 
   return match?.[1]
@@ -146,15 +149,17 @@ export function extractMetaContent(
     /[.*+?^$()|[\]\\{}]/g,
     "\\$&",
   );
+  const first =
+    "<meta\\b[^>]*(?:name|property)=[\"']" +
+    escaped +
+    "[\"'][^>]*content=[\"']([^\"']*)[\"'][^>]*>";
+  const second =
+    "<meta\\b[^>]*content=[\"']([^\"']*)[\"'][^>]*(?:name|property)=[\"']" +
+    escaped +
+    "[\"'][^>]*>";
   const patterns = [
-    new RegExp(
-      \`<meta\\\\b[^>]*(?:name|property)=["']\${escaped}["'][^>]*content=["']([^"']*)["'][^>]*>\`,
-      "i",
-    ),
-    new RegExp(
-      \`<meta\\\\b[^>]*content=["']([^"']*)["'][^>]*(?:name|property)=["']\${escaped}["'][^>]*>\`,
-      "i",
-    ),
+    new RegExp(first, "i"),
+    new RegExp(second, "i"),
   ];
 
   for (const pattern of patterns) {
