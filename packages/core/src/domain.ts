@@ -154,18 +154,23 @@ export type SourceType = (typeof SOURCE_TYPES)[number];
 
 export interface Source {
   id: EntityId;
+  registryId: string;
   title: string;
   sourceType: SourceType;
+  visibility: Visibility;
   publisherActorId?: EntityId;
   canonicalUrl?: string;
   publishedAt?: ISODateTime;
   retrievedAt?: ISODateTime;
   description?: string;
+  createdAt: ISODateTime;
 }
 
 export interface Document {
   id: EntityId;
+  registryId: string;
   title: string;
+  visibility: Visibility;
   sourceId?: EntityId;
   fileName?: string;
   mimeType?: string;
@@ -174,10 +179,12 @@ export interface Document {
   sha256?: string;
   pageCount?: number;
   language?: string;
+  createdAt: ISODateTime;
 }
 
 export interface CitationLocator {
   page?: number;
+  pageEnd?: number;
   section?: string;
   paragraph?: string;
   lineStart?: number;
@@ -187,11 +194,15 @@ export interface CitationLocator {
 
 export interface Citation {
   id: EntityId;
+  registryId: string;
   recordId: EntityId;
+  fieldId?: string;
   sourceId?: EntityId;
   documentId?: EntityId;
   locator?: CitationLocator;
   note?: string;
+  visibility: Visibility;
+  createdAt: ISODateTime;
 }
 
 export interface Relationship {
