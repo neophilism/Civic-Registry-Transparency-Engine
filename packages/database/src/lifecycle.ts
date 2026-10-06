@@ -719,6 +719,14 @@ export class PostgresPublicationLifecycleService {
     const actorRoles = normalizedRoles(
       input.actorRoles,
     );
+
+    if (!input.actorId.trim()) {
+      throw new PublicationLifecycleError(
+        "actor_required",
+        "Approval decisions require a non-empty actorId.",
+      );
+    }
+
     const now =
       input.now ?? new Date().toISOString();
 
@@ -1079,6 +1087,12 @@ export class PostgresPublicationLifecycleService {
         );
       }
 
+      requireAnyRole(
+        context.roles,
+        transition.allowedRoles,
+        "schedule this lifecycle transition",
+      );
+
       const id = randomUUID();
       let result;
 
@@ -1431,6 +1445,14 @@ export class PostgresPublicationLifecycleService {
           } else if (transition.approval) {
             failure =
               "The scheduled publication transition now requires approval.";
+          } else if (
+            transition.allowedRoles?.length &&
+            !transition.allowedRoles.some((role) =>
+              schedule.requested_roles.includes(role),
+            )
+          ) {
+            failure =
+              "The original scheduler no longer satisfies the configured transition permission.";
           }
         }
 
