@@ -16,29 +16,30 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 19 — Open Legal Interpretations reference application**
+**PR 20 — Public source adapters**
 
-The first thin domain application now runs on the reusable engine without adding
-legal-specific concepts to core packages.
+The engine now has a hardened, provider-neutral source-adapter boundary plus the
+first real official-source adapters for Open Legal Interpretations.
 
-PR 19 adds:
+PR 20 adds:
 
-- a complete Open Legal Interpretations registry configuration;
-- legal-interpretation, issuing-body, and legal-authority record schemas;
-- authority, issuing-body, supersession, and related-opinion relationships;
-- publication/withdrawal/supersession lifecycle configuration;
-- disclosure/redaction behavior;
-- public declassification/release-review deadlines;
-- synthetic source/document/evidence fixtures;
-- a CSV ingestion profile and fixture;
-- a dedicated public reference-app landing page;
-- one-command seed/import scripts; and
-- PostgreSQL end-to-end proof that search, relationships, deadlines, evidence,
-  and cryptographic integrity work through existing engine primitives.
+- `@civic-registry/source-adapters` for safe HTTPS retrieval and deterministic normalization;
+- per-adapter host allowlists with DNS private/reserved-address rejection;
+- redirect revalidation, response-size limits, and request timeouts;
+- deterministic NDJSON output and SHA-256 run manifests;
+- a DOJ Office of Legal Counsel opinion adapter;
+- a U.S. Office of Government Ethics Legal Advisory adapter;
+- a dedicated adapter-to-registry ingestion profile;
+- official OLC and OGE issuing-body records;
+- offline structural parser/security tests; and
+- PostgreSQL proof that adapter output flows through ordinary ingestion and
+  remains covered by immutable history and cryptographic integrity.
 
-All included interpretation data is explicitly synthetic demonstration data.
+The external-source boundary stays separate from database writes: adapters fetch
+and normalize; the existing ingestion service validates and persists.
 
-See [Open Legal Interpretations](docs/OPEN-LEGAL-INTERPRETATIONS.md).
+See [Public source adapters](docs/PUBLIC-SOURCE-ADAPTERS.md) and
+[Open Legal Interpretations](docs/OPEN-LEGAL-INTERPRETATIONS.md).
 
 ## Local development
 

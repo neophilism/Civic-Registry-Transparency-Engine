@@ -253,8 +253,12 @@ The database test:
 
 The engine packages are not modified to special-case the app.
 
+## Public source adapters
+
+PR 20 adds the first live official-source adapters while preserving the same thin-application boundary.
+
+See [Public source adapters](PUBLIC-SOURCE-ADAPTERS.md) for the DOJ OLC and OGE adapters, security model, commands, provenance manifests, and ingestion workflow.
+
 ## Next milestone
 
-PR 20 should add real public-source adapter infrastructure and one or more actual legal-interpretation source adapters.
-
-That work should preserve the same rule used by PR 13: source-specific extraction and mapping remain downstream of the canonical registry model rather than becoming hard-coded policy in engine core.
+A subsequent milestone can add scheduled refresh orchestration, attachment/PDF ingestion, structured legal-authority extraction, and adapter health monitoring without changing the canonical registry model.

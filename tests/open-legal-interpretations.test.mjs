@@ -121,3 +121,35 @@ test("installed-registry home routes the reference application to its dedicated 
     /\/open-legal-interpretations/,
   );
 });
+
+
+test("public source adapter ingestion profile compiles against the interpretation schema", () => {
+  const profileSource = fs.readFileSync(
+    "examples/open-legal-interpretations/adapter-import-profile.yaml",
+    "utf8",
+  );
+  const profile = parseIngestionProfile(
+    profileSource,
+    compiled,
+  );
+
+  assert.equal(
+    profile.recordTypeId,
+    "interpretation",
+  );
+  assert.equal(profile.mode, "upsert");
+  assert.equal(
+    profile.allowLifecycleBootstrap,
+    true,
+  );
+  assert.ok(
+    "issuing_body" in profile.fields,
+  );
+  assert.ok(
+    profile.externalIdentifiers?.some(
+      (entry) =>
+        entry.scheme ===
+        "official-source",
+    ),
+  );
+});

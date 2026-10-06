@@ -1,0 +1,78 @@
+id: open-legal-interpretations-public-source-adapter
+recordTypeId: interpretation
+mode: upsert
+
+recordId:
+  path: id
+  required: true
+  trim: true
+
+sourceKey:
+  path: external_id
+  required: true
+  trim: true
+
+fields:
+  title:
+    path: title
+    required: true
+    trim: true
+
+  summary:
+    path: summary
+    trim: true
+
+  interpretation_number:
+    path: interpretation_number
+    trim: true
+
+  interpretation_type:
+    path: interpretation_type
+    trim: true
+
+  subject:
+    path: subject
+    trim: true
+
+  issued_on:
+    path: issued_on
+    trim: true
+
+  issuing_body:
+    path: issuing_body
+    trim: true
+
+  key_holding:
+    path: key_holding
+    trim: true
+
+  full_text:
+    path: full_text
+    trim: true
+
+  source_reference:
+    path: source_reference
+    trim: true
+
+status:
+  literal: published
+
+visibility:
+  literal: public
+
+tags:
+  path: tags
+
+externalIdentifiers:
+  - scheme: official-source
+    value:
+      path: external_id
+      required: true
+      trim: true
+    url:
+      path: canonical_url
+      required: true
+      trim: true
+
+allowLifecycleBootstrap: true
+replaceFields: false
