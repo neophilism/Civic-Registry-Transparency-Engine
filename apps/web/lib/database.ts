@@ -37,7 +37,6 @@ export function getRepositories() {
     pool,
     configs,
     records,
-    history,
   );
   const relationshipGraph =
     new PostgresRelationshipGraphRepository(pool);
@@ -62,6 +61,7 @@ export function getRepositories() {
   return {
     configs,
     records,
+    history,
     relationships,
     relationshipGraph,
     sources,
