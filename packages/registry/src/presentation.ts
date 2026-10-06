@@ -22,6 +22,8 @@ export interface PresentedRecordSummary {
   registryId: string;
   recordTypeId: string;
   recordTypeName: string;
+  titleFieldId: string;
+  summaryFieldId?: string;
   title: string;
   summary?: string;
   status: string;
@@ -159,6 +161,8 @@ export function presentRecordSummary(
     registryId: record.registryId,
     recordTypeId: record.recordTypeId,
     recordTypeName: recordType.definition.name,
+    titleFieldId: recordType.definition.titleFieldId,
+    summaryFieldId: recordType.definition.summaryFieldId,
     title: fieldValueAsTitle(record, recordType),
     summary: fieldValueAsSummary(record, recordType),
     status: record.status,
