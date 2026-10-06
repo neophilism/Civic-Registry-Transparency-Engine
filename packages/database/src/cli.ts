@@ -10,6 +10,9 @@ import { runMigrations } from "./migrations.ts";
 import {
   PostgresPublicationLifecycleService,
 } from "./lifecycle.ts";
+import {
+  PostgresDeadlineService,
+} from "./deadlines.ts";
 import { createDatabasePool } from "./pool.ts";
 import {
   PostgresRegistryConfigRepository,
@@ -165,8 +168,13 @@ async function publishDue(
 
   try {
     await runMigrations(pool);
+    const deadlines =
+      new PostgresDeadlineService(pool);
     const lifecycle =
-      new PostgresPublicationLifecycleService(pool);
+      new PostgresPublicationLifecycleService(
+        pool,
+        deadlines,
+      );
     const result = await lifecycle.processDueSchedules({
       limit,
     });
@@ -175,6 +183,45 @@ async function publishDue(
       JSON.stringify(
         {
           command: "publish-due",
+          ...result,
+        },
+        null,
+        2,
+      ),
+    );
+  } finally {
+    await pool.end();
+  }
+}
+
+async function reconcileDeadlines(
+  registryId: string | undefined,
+): Promise<void> {
+  if (!registryId) {
+    throw new Error(
+      "Usage: reconcile-deadlines <registry-id>",
+    );
+  }
+
+  const pool = createDatabasePool();
+
+  try {
+    await runMigrations(pool);
+    const deadlines =
+      new PostgresDeadlineService(pool);
+    const result =
+      await deadlines.reconcileRegistry(
+        registryId,
+        {
+          limit: 500,
+        },
+      );
+
+    console.log(
+      JSON.stringify(
+        {
+          command: "reconcile-deadlines",
+          registryId,
           ...result,
         },
         null,
@@ -209,8 +256,13 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (command === "reconcile-deadlines") {
+    await reconcileDeadlines(args[0]);
+    return;
+  }
+
   throw new Error(
-    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex|publish-due> [arguments]",
+    "Usage: node packages/database/src/cli.ts <migrate|seed|reindex|publish-due|reconcile-deadlines> [arguments]",
   );
 }
 
