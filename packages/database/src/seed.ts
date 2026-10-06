@@ -18,6 +18,9 @@ import {
   PostgresRegistryConfigRepository,
   PostgresRelationshipRepository,
 } from "./repositories.ts";
+import {
+  PostgresDeadlineService,
+} from "./deadlines.ts";
 
 export interface RegistrySeedData {
   sources?: Source[];
@@ -47,7 +50,12 @@ export async function seedRegistry(
   seed: RegistrySeedData,
 ): Promise<SeedResult> {
   const configs = new PostgresRegistryConfigRepository(pool);
-  const records = new PostgresRecordRepository(pool, configs);
+  const deadlines = new PostgresDeadlineService(pool);
+  const records = new PostgresRecordRepository(
+    pool,
+    configs,
+    deadlines,
+  );
   const sources = new PostgresSourceRepository(pool, configs);
   const documents = new PostgresDocumentRepository(
     pool,
