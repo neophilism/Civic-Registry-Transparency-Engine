@@ -372,6 +372,41 @@ export class PostgresSourceRepository
   async update(source: Source): Promise<Source> {
     await this.validate(source);
 
+    if (source.visibility !== "public") {
+      const dependencies = await this.pool.query<{
+        has_public_dependency: boolean;
+      }>(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM civic_registry_documents AS document
+            WHERE document.registry_id = $1
+              AND document.source_id = $2
+              AND document.visibility = 'public'
+            UNION ALL
+            SELECT 1
+            FROM civic_registry_citations AS citation
+            LEFT JOIN civic_registry_documents AS document
+              ON document.registry_id = citation.registry_id
+              AND document.id = citation.document_id
+            WHERE citation.registry_id = $1
+              AND COALESCE(
+                citation.source_id,
+                document.source_id
+              ) = $2
+              AND citation.visibility = 'public'
+          ) AS has_public_dependency
+        `,
+        [source.registryId, source.id],
+      );
+
+      if (dependencies.rows[0]?.has_public_dependency) {
+        throw new PersistenceConflictError(
+          "A source with public dependent documents or citations cannot be made non-public.",
+        );
+      }
+    }
+
     const result = await this.pool.query<SourceRow>(
       `
         UPDATE civic_registry_sources
@@ -596,6 +631,29 @@ export class PostgresDocumentRepository
 
   async update(document: Document): Promise<Document> {
     await this.validate(document);
+
+    if (document.visibility !== "public") {
+      const dependencies = await this.pool.query<{
+        has_public_dependency: boolean;
+      }>(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM civic_registry_citations
+            WHERE registry_id = $1
+              AND document_id = $2
+              AND visibility = 'public'
+          ) AS has_public_dependency
+        `,
+        [document.registryId, document.id],
+      );
+
+      if (dependencies.rows[0]?.has_public_dependency) {
+        throw new PersistenceConflictError(
+          "A document with public citations cannot be made non-public.",
+        );
+      }
+    }
 
     const result = await this.pool.query<DocumentRow>(
       `
