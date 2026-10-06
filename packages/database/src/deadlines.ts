@@ -350,7 +350,15 @@ async function resolveStatusEnteredAnchor(
             AND metadata ->> 'toStatus' = $3
           )
         )
-      ORDER BY occurred_at DESC, id DESC
+      ORDER BY
+        CASE
+          WHEN event_type =
+            'lifecycle.transition_executed'
+          THEN 0
+          ELSE 1
+        END,
+        occurred_at DESC,
+        id DESC
       LIMIT 1
     `,
     [
