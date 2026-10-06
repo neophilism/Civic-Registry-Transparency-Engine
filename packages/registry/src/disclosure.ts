@@ -242,6 +242,7 @@ export function projectDocumentForPublic(
     return {
       document: {
         ...document,
+        fileName: undefined,
         storageKey:
           documentDisclosure?.publicStorageKey,
         canonicalUrl:
