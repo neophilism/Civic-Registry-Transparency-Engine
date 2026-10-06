@@ -49,6 +49,10 @@ const config = parseRegistryConfig(
 );
 const compiled = compileRegistryConfig(config);
 
+test.after(async () => {
+  await getDatabasePool().end();
+});
+
 function publicDocument(id, title) {
   return {
     id,
@@ -469,7 +473,6 @@ test("field redactions protect public lookup, search, facets, evidence, and hist
     );
   } finally {
     await pool.end();
-    await getDatabasePool().end();
   }
 });
 
@@ -599,6 +602,5 @@ test("whole-record withholding supports placeholders and hidden-mode search excl
     );
   } finally {
     await pool.end();
-    await getDatabasePool().end();
   }
 });
