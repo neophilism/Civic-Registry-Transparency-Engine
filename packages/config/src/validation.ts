@@ -1335,6 +1335,188 @@ function validateDeadlines(
   return issues;
 }
 
+function validateAnalytics(
+  analytics: unknown,
+  registry: RegistryDefinition,
+): ConfigValidationIssue[] {
+  const issues: ConfigValidationIssue[] = [];
+
+  if (analytics === undefined) return issues;
+
+  if (!isPlainObject(analytics)) {
+    return [{
+      path: "analytics",
+      code: "invalid_analytics",
+      message: "analytics must be an object.",
+    }];
+  }
+
+  for (const key of [
+    "publicationTrendDays",
+    "changeActivityDays",
+    "deadlineHorizonDays",
+  ] as const) {
+    const value = analytics[key];
+
+    if (
+      value !== undefined &&
+      (
+        typeof value !== "number" ||
+        !Number.isInteger(value) ||
+        value < 1 ||
+        value > 3650
+      )
+    ) {
+      issues.push({
+        path: `analytics.${key}`,
+        code: "invalid_analytics_window",
+        message:
+          `${key} must be an integer from 1 through 3650.`,
+      });
+    }
+  }
+
+  if (analytics.dimensions === undefined) {
+    return issues;
+  }
+
+  if (!Array.isArray(analytics.dimensions)) {
+    issues.push({
+      path: "analytics.dimensions",
+      code: "invalid_analytics_dimensions",
+      message: "analytics.dimensions must be an array.",
+    });
+    return issues;
+  }
+
+  const recordTypes = new Map(
+    registry.recordTypes.map((recordType) => [
+      recordType.id,
+      recordType,
+    ]),
+  );
+  const seen = new Set<string>();
+
+  analytics.dimensions.forEach((candidate, index) => {
+    const path = `analytics.dimensions[${index}]`;
+
+    if (!isPlainObject(candidate)) {
+      issues.push({
+        path,
+        code: "invalid_analytics_dimension",
+        message: "Each analytics dimension must be an object.",
+      });
+      return;
+    }
+
+    if (
+      typeof candidate.id !== "string" ||
+      !CONFIG_IDENTIFIER_PATTERN.test(candidate.id)
+    ) {
+      issues.push({
+        path: `${path}.id`,
+        code: "invalid_analytics_dimension_id",
+        message:
+          "Analytics dimension ids must be lowercase configuration identifiers.",
+      });
+    } else if (seen.has(candidate.id)) {
+      issues.push({
+        path: `${path}.id`,
+        code: "duplicate_analytics_dimension",
+        message:
+          `Duplicate analytics dimension: ${candidate.id}.`,
+      });
+    } else {
+      seen.add(candidate.id);
+    }
+
+    if (
+      typeof candidate.label !== "string" ||
+      candidate.label.trim().length === 0
+    ) {
+      issues.push({
+        path: `${path}.label`,
+        code: "invalid_analytics_dimension_label",
+        message:
+          "Analytics dimension labels must be non-empty strings.",
+      });
+    }
+
+    const recordType =
+      typeof candidate.recordTypeId === "string"
+        ? recordTypes.get(candidate.recordTypeId)
+        : undefined;
+
+    if (!recordType) {
+      issues.push({
+        path: `${path}.recordTypeId`,
+        code: "unknown_analytics_record_type",
+        message:
+          "recordTypeId must reference a configured record type.",
+      });
+    }
+
+    const field =
+      recordType &&
+      typeof candidate.fieldId === "string"
+        ? recordType.fields.find(
+            (item) => item.id === candidate.fieldId,
+          )
+        : undefined;
+
+    if (!field) {
+      issues.push({
+        path: `${path}.fieldId`,
+        code: "unknown_analytics_field",
+        message:
+          "fieldId must reference a field on the configured record type.",
+      });
+    } else if (
+      !["text", "enum", "boolean", "entityRef"].includes(
+        field.type,
+      )
+    ) {
+      issues.push({
+        path: `${path}.fieldId`,
+        code: "unsupported_analytics_field_type",
+        message:
+          "Analytics dimensions support text, enum, boolean, and entityRef fields.",
+      });
+    }
+
+    if (
+      candidate.publiclyVisible !== undefined &&
+      typeof candidate.publiclyVisible !== "boolean"
+    ) {
+      issues.push({
+        path: `${path}.publiclyVisible`,
+        code: "invalid_analytics_public_visibility",
+        message:
+          "publiclyVisible must be a boolean when provided.",
+      });
+    }
+
+    if (
+      candidate.limit !== undefined &&
+      (
+        typeof candidate.limit !== "number" ||
+        !Number.isInteger(candidate.limit) ||
+        candidate.limit < 1 ||
+        candidate.limit > 50
+      )
+    ) {
+      issues.push({
+        path: `${path}.limit`,
+        code: "invalid_analytics_dimension_limit",
+        message:
+          "Analytics dimension limit must be an integer from 1 through 50.",
+      });
+    }
+  });
+
+  return issues;
+}
+
 function validateDisclosure(
   disclosure: unknown,
 ): ConfigValidationIssue[] {
@@ -1459,6 +1641,12 @@ export function validateRegistryConfig(
     issues.push(
       ...validatePresentation(
         value.presentation,
+        value.registry as RegistryDefinition,
+      ),
+    );
+    issues.push(
+      ...validateAnalytics(
+        value.analytics,
         value.registry as RegistryDefinition,
       ),
     );
