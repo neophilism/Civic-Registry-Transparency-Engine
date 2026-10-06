@@ -1,17 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminShell } from "../../../../../../components/admin-shell";
+import { AdminShell } from "../../../../../components/admin-shell";
 import {
   analyticsDimensionCandidates,
   getAdminAnalytics,
-} from "../../../../../../lib/analytics";
+} from "../../../../../lib/analytics";
 import {
   requireAdminSession,
-} from "../../../../../../lib/admin-auth";
+} from "../../../../../lib/admin-auth";
 import {
   getAdminRegistry,
-} from "../../../../../../lib/admin-console";
+} from "../../../../../lib/admin-console";
 
 export const dynamic = "force-dynamic";
 
