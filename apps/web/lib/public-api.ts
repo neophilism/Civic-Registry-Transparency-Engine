@@ -10,7 +10,11 @@ import {
 } from "@civic-registry/api";
 import {
   SearchValidationError,
+  type SearchRequest,
 } from "@civic-registry/search";
+import type {
+  RegistryRecord,
+} from "@civic-registry/core";
 
 import {
   getPublicDeadlines,
@@ -204,9 +208,11 @@ async function publicSearchData(
   | {
       ok: true;
       registry:
-        Awaited<
-          ReturnType<typeof getPublicRegistry>
-        > & {};
+        NonNullable<
+          Awaited<
+            ReturnType<typeof getPublicRegistry>
+          >
+        >;
       data: ApiSearchData;
     }
   | {
@@ -695,7 +701,7 @@ export async function handleApiExport(
     );
   }
 
-  let baseRequest;
+  let baseRequest: SearchRequest;
 
   try {
     baseRequest =
@@ -723,7 +729,7 @@ export async function handleApiExport(
     throw error;
   }
 
-  const records = [];
+  const records: RegistryRecord[] = [];
   let page = 1;
   let total = 0;
 
