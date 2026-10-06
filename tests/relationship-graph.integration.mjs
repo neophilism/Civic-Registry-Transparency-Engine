@@ -299,3 +299,41 @@ test("graph traversal enforces node caps and hides non-public roots", async () =
     await pool.end();
   }
 });
+
+
+test("graph traversal does not cross hidden withheld records", async () => {
+  const { pool, graph } = await setup();
+
+  try {
+    await pool.query(
+      `
+        INSERT INTO civic_registry_record_disclosures (
+          registry_id,
+          record_id,
+          disposition,
+          updated_at
+        )
+        VALUES ($1, 'b', 'withheld', NOW())
+      `,
+      [compiled.definition.id],
+    );
+
+    const result = await graph.getGraph({
+      registryId: compiled.definition.id,
+      rootRecordId: "a",
+      depth: 3,
+      direction: "outbound",
+      visibility: "public",
+      excludeWithheld: true,
+    });
+
+    assert.ok(result);
+    assert.deepEqual(
+      result.nodes.map((node) => node.record.id),
+      ["a"],
+    );
+    assert.deepEqual(result.edges, []);
+  } finally {
+    await pool.end();
+  }
+});
