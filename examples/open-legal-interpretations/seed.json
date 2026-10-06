@@ -88,6 +88,65 @@
       "publishedAt": "2025-01-01T12:05:00.000Z"
     },
     {
+      "id": "usdoj-office-of-legal-counsel",
+      "registryId": "open-legal-interpretations",
+      "recordTypeId": "issuing_body",
+      "fields": {
+        "name": "Office of Legal Counsel",
+        "acronym": "OLC",
+        "body_type": "office",
+        "website": "https://www.justice.gov/olc",
+        "description": "U.S. Department of Justice office that provides legal advice to the President and executive branch agencies and publishes selected legal opinions."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [
+        {
+          "scheme": "official-source",
+          "value": "usdoj-olc",
+          "url": "https://www.justice.gov/olc"
+        }
+      ],
+      "tags": [
+        "official-source",
+        "doj",
+        "olc",
+        "issuing-body"
+      ],
+      "createdAt": "2026-10-06T12:00:00.000Z",
+      "updatedAt": "2026-10-06T12:00:00.000Z",
+      "publishedAt": "2026-10-06T12:00:00.000Z"
+    },
+    {
+      "id": "us-office-government-ethics",
+      "registryId": "open-legal-interpretations",
+      "recordTypeId": "issuing_body",
+      "fields": {
+        "name": "U.S. Office of Government Ethics",
+        "acronym": "OGE",
+        "body_type": "agency",
+        "website": "https://www.oge.gov/",
+        "description": "Independent executive branch agency that provides interpretive guidance and oversight for the executive branch ethics program."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [
+        {
+          "scheme": "official-source",
+          "value": "us-oge",
+          "url": "https://www.oge.gov/"
+        }
+      ],
+      "tags": [
+        "official-source",
+        "oge",
+        "issuing-body"
+      ],
+      "createdAt": "2026-10-06T12:00:00.000Z",
+      "updatedAt": "2026-10-06T12:00:00.000Z",
+      "publishedAt": "2026-10-06T12:00:00.000Z"
+    },
+    {
       "id": "authority-foia",
       "registryId": "open-legal-interpretations",
       "recordTypeId": "legal_authority",
