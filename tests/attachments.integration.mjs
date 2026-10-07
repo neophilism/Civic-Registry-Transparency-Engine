@@ -18,7 +18,6 @@ import {
   PostgresCitationRepository,
   PostgresDocumentRepository,
   PostgresIntegrityService,
-  PostgresPdfAttachmentService,
   PostgresRecordHistoryRepository,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
@@ -29,6 +28,9 @@ import {
 import {
   PostgresDeadlineService,
 } from "../packages/database/src/deadlines.ts";
+import {
+  PostgresPdfAttachmentService,
+} from "../packages/database/src/attachments.ts";
 
 import {
   createTextPdf,
