@@ -9,6 +9,7 @@ import {
 } from "../packages/config/src/index.ts";
 import {
   createDatabasePool,
+  PostgresAdminRepository,
   PostgresIntegrityService,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
@@ -180,6 +181,17 @@ test("relationship candidates require review, preserve evidence provenance, and 
         "authority-review-rejected",
         "42 U.S.C. § 1002",
         "Rejected test authority",
+        now,
+      ),
+      {
+        bootstrapLifecycle: true,
+      },
+    );
+    await records.create(
+      authorityRecord(
+        "authority-review-concurrent",
+        "42 U.S.C. § 1004",
+        "Concurrent approval test authority",
         now,
       ),
       {
@@ -450,6 +462,117 @@ test("relationship candidates require review, preserve evidence provenance, and 
         [config.registry.id],
       ),
       /review history is immutable/i,
+    );
+
+    const concurrentOne =
+      await candidates.propose(
+        proposal(
+          "candidate-concurrent-1",
+          "authority-review-concurrent",
+          "42 U.S.C. § 1004",
+        ),
+      );
+    const concurrentTwo =
+      await candidates.propose({
+        ...proposal(
+          "candidate-concurrent-2",
+          "authority-review-concurrent",
+          "42 U.S.C. § 1004",
+        ),
+        proposedAt:
+          "2026-10-07T14:30:01.000Z",
+      });
+
+    assert.equal(
+      concurrentOne.kind,
+      "candidate",
+    );
+    assert.equal(
+      concurrentTwo.kind,
+      "candidate",
+    );
+
+    const pendingSummary =
+      await new PostgresAdminRepository(
+        pool,
+      ).getRegistrySummary(
+        config.registry.id,
+      );
+
+    assert.equal(
+      pendingSummary
+        .pendingRelationshipCandidateCount,
+      2,
+    );
+
+    const [
+      concurrentApprovedOne,
+      concurrentApprovedTwo,
+    ] = await Promise.all([
+      candidates.review({
+        registryId:
+          config.registry.id,
+        candidateId:
+          "candidate-concurrent-1",
+        decision: "approved",
+        actorId:
+          "reviewer-one@example.org",
+        reviewedAt:
+          "2026-10-07T14:31:00.000Z",
+      }),
+      candidates.review({
+        registryId:
+          config.registry.id,
+        candidateId:
+          "candidate-concurrent-2",
+        decision: "approved",
+        actorId:
+          "reviewer-two@example.org",
+        reviewedAt:
+          "2026-10-07T14:31:01.000Z",
+      }),
+    ]);
+
+    assert.ok(
+      concurrentApprovedOne
+        .relationshipId,
+    );
+    assert.equal(
+      concurrentApprovedTwo
+        .relationshipId,
+      concurrentApprovedOne
+        .relationshipId,
+    );
+
+    const concurrentRelationships =
+      await relationships.list(
+        config.registry.id,
+        {
+          relationshipTypeId:
+            "interprets-authority",
+          recordId:
+            "authority-review-concurrent",
+          direction: "to",
+          limit: 10,
+        },
+      );
+
+    assert.equal(
+      concurrentRelationships.length,
+      1,
+    );
+
+    const reviewedSummary =
+      await new PostgresAdminRepository(
+        pool,
+      ).getRegistrySummary(
+        config.registry.id,
+      );
+
+    assert.equal(
+      reviewedSummary
+        .pendingRelationshipCandidateCount,
+      0,
     );
 
     const tamperedProposal =
