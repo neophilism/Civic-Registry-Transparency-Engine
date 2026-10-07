@@ -16,27 +16,28 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 22 — PDF attachment ingestion and extraction**
+**PR 23 — Structured relationship candidates and legal-authority extraction**
 
-The engine now materializes official PDF attachments as durable, versioned
-evidence and extracts searchable page-level text.
+The engine now supports generic machine-proposed relationships with an explicit
+human review boundary, and Open Legal Interpretations uses that capability to
+propose authority links from page-level primary-source PDF text.
 
-PR 22 adds:
+PR 23 adds:
 
-- `@civic-registry/documents` with a generic document-storage interface;
-- content-addressed filesystem storage keyed by SHA-256;
-- hardened binary retrieval through the existing safe source client;
-- PDF signature validation and text extraction with `pdfjs-dist`;
-- persisted extraction text, page text, extractor/version metadata, and hashes;
-- generic attachment-to-source/document/citation materialization;
-- preservation of changed official files as new immutable document versions;
-- Open Legal Interpretations full-text enrichment from retrieved official PDFs;
-- scheduled-refresh warning propagation for attachment failures/extraction warnings; and
-- offline unit/PostgreSQL tests for storage, extraction, idempotency, versioning,
-  evidence linkage, record history, and cryptographic integrity.
+- immutable, evidence-hashed relationship candidates;
+- proposal/approval/rejection audit events covered by PR 18 integrity chaining;
+- transaction-safe approve/reject materialization;
+- direct-SQL review bypass protection;
+- concurrent duplicate-relationship protection;
+- an administrator relationship-review queue;
+- pending-review metrics;
+- exact canonical/explicit-alias legal citation matching;
+- explicit U.S.C./C.F.R. recognition without unsafe range-membership inference;
+- page/document/excerpt provenance for every proposed authority link; and
+- source-refresh metrics for candidate and unresolved citation activity.
 
-See [PDF attachment ingestion](docs/PDF-ATTACHMENTS.md),
-[Scheduled source refresh](docs/SOURCE-REFRESH.md), and
+See [Relationship candidates and authority extraction](docs/RELATIONSHIP-CANDIDATES.md),
+[PDF attachment ingestion](docs/PDF-ATTACHMENTS.md), and
 [Open Legal Interpretations](docs/OPEN-LEGAL-INTERPRETATIONS.md).
 
 ## Local development
