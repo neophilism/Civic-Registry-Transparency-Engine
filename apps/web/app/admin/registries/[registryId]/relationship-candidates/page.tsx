@@ -272,14 +272,6 @@ export default async function RelationshipCandidatesPage({
                 evidenceMentions(
                   candidate.evidence,
                 );
-              const authorityCitation =
-                typeof candidate.evidence
-                  .authorityCitation ===
-                "string"
-                  ? candidate.evidence
-                      .authorityCitation
-                  : undefined;
-
               return (
                 <article
                   className="admin-card"
@@ -302,14 +294,6 @@ export default async function RelationshipCandidatesPage({
                         candidate.toRecordId,
                       )}
                     </h3>
-                    {authorityCitation ? (
-                      <p>
-                        Matched authority:{" "}
-                        <strong>
-                          {authorityCitation}
-                        </strong>
-                      </p>
-                    ) : null}
                     <small>
                       Confidence{" "}
                       {(
