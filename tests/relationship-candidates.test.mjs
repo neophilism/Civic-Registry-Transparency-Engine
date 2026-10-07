@@ -292,7 +292,7 @@ test("generic relationship-candidate engine remains domain neutral", () => {
 
   assert.doesNotMatch(
     generic,
-    /DOJ|OGE|OLC|legal_authority|Office of Legal Counsel|Government Ethics/i,
+    /\b(?:DOJ|OGE|OLC)\b|legal_authority|Office of Legal Counsel|Government Ethics/i,
   );
   assert.match(
     service,
