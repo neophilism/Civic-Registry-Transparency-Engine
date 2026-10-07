@@ -7,13 +7,21 @@ import {
   compileRegistryConfig,
 } from "@civic-registry/config";
 import {
+  FileSystemDocumentStorage,
+} from "@civic-registry/documents";
+import {
   createDatabasePool,
+  PostgresDeadlineService,
   PostgresIngestionService,
+  PostgresRecordRepository,
   PostgresRegistryConfigRepository,
   PostgresSourceRefreshService,
   runMigrations,
   type SourceRefreshClaim,
 } from "@civic-registry/database";
+import {
+  PostgresPdfAttachmentService,
+} from "@civic-registry/database/attachments";
 import {
   parseIngestionProfile,
 } from "@civic-registry/ingestion";
@@ -29,6 +37,9 @@ import {
 import {
   openLegalInterpretationsRefreshJobs,
 } from "./refresh-jobs.ts";
+import {
+  processOpenLegalInterpretationAttachments,
+} from "./attachment-processing.ts";
 
 const REGISTRY_ID =
   "open-legal-interpretations";
@@ -81,6 +92,23 @@ async function makeExecutor(
     );
   const ingestion =
     new PostgresIngestionService(pool);
+  const records =
+    new PostgresRecordRepository(
+      pool,
+      configs,
+      new PostgresDeadlineService(pool),
+    );
+  const attachmentStorage =
+    new FileSystemDocumentStorage(
+      process.env
+        .CIVIC_REGISTRY_DOCUMENT_STORAGE_DIR ??
+        "data/documents",
+    );
+  const attachments =
+    new PostgresPdfAttachmentService(
+      pool,
+      attachmentStorage,
+    );
 
   return async (
     claim: SourceRefreshClaim,
@@ -139,9 +167,49 @@ async function makeExecutor(
         },
       });
 
+    const refreshWarnings = [
+      ...adapterRun.manifest.warnings,
+    ];
+    let attachmentCreated = 0;
+    let attachmentExisting = 0;
+    let attachmentFailed = 0;
+    let attachmentWarnings = 0;
+    let fullTextUpdates = 0;
+
+    for (const row of adapterRun.rows) {
+      const processed =
+        await processOpenLegalInterpretationAttachments({
+          registryId:
+            claim.job.registryId,
+          row,
+          allowedHosts:
+            adapter.allowedHosts,
+          attachments,
+          records,
+        });
+
+      attachmentCreated +=
+        processed.attachmentCreated;
+      attachmentExisting +=
+        processed.attachmentExisting;
+      attachmentFailed +=
+        processed.attachmentFailed;
+      attachmentWarnings +=
+        processed.attachmentWarnings;
+      fullTextUpdates +=
+        processed.fullTextUpdated
+          ? 1
+          : 0;
+      refreshWarnings.push(
+        ...processed.warnings,
+      );
+    }
+
     return {
-      manifest:
-        adapterRun.manifest,
+      manifest: {
+        ...adapterRun.manifest,
+        warnings: refreshWarnings,
+      },
       ingestionRunId:
         ingestionResult.run.id,
       ingestionStatus:
@@ -158,6 +226,11 @@ async function makeExecutor(
         ingestionUnchangedItems:
           ingestionResult.run
             .unchangedItems,
+        attachmentCreated,
+        attachmentExisting,
+        attachmentFailed,
+        attachmentWarnings,
+        fullTextUpdates,
       },
     };
   };

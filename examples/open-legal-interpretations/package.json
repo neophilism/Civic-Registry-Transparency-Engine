@@ -11,7 +11,8 @@
     "@civic-registry/source-adapters": "workspace:*",
     "@civic-registry/config": "workspace:*",
     "@civic-registry/database": "workspace:*",
-    "@civic-registry/ingestion": "workspace:*"
+    "@civic-registry/ingestion": "workspace:*",
+    "@civic-registry/documents": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

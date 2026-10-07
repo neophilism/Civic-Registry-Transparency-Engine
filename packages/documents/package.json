@@ -1,0 +1,20 @@
+{
+  "name": "@civic-registry/documents",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generic document storage and PDF extraction primitives for civic registry evidence.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "pdfjs-dist": "6.4.299"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}

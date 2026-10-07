@@ -16,28 +16,27 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 21 — Scheduled source refresh and health monitoring**
+**PR 22 — PDF attachment ingestion and extraction**
 
-The engine now has database-backed recurring source refresh orchestration around
-the public-source adapters introduced in PR 20.
+The engine now materializes official PDF attachments as durable, versioned
+evidence and extracts searchable page-level text.
 
-PR 21 adds:
+PR 22 adds:
 
-- persisted refresh job definitions and run history;
-- PostgreSQL worker leases with `FOR UPDATE SKIP LOCKED`;
-- safe concurrent polling by multiple workers;
-- expired-lease recovery and stale-worker protection;
-- exponential failure backoff;
-- empty-result and row-count regression monitoring;
-- adapter-run to ingestion-run linkage;
-- reusable healthy/warning/failing/stale status computation;
-- an administrator source-refresh health dashboard;
-- queue/enable/disable operator controls that never fetch from the web process;
-- thin-app daily OLC and OGE refresh definitions; and
-- PostgreSQL concurrency tests proving duplicate workers cannot claim the same job.
+- `@civic-registry/documents` with a generic document-storage interface;
+- content-addressed filesystem storage keyed by SHA-256;
+- hardened binary retrieval through the existing safe source client;
+- PDF signature validation and text extraction with `pdfjs-dist`;
+- persisted extraction text, page text, extractor/version metadata, and hashes;
+- generic attachment-to-source/document/citation materialization;
+- preservation of changed official files as new immutable document versions;
+- Open Legal Interpretations full-text enrichment from retrieved official PDFs;
+- scheduled-refresh warning propagation for attachment failures/extraction warnings; and
+- offline unit/PostgreSQL tests for storage, extraction, idempotency, versioning,
+  evidence linkage, record history, and cryptographic integrity.
 
-See [Scheduled source refresh](docs/SOURCE-REFRESH.md),
-[Public source adapters](docs/PUBLIC-SOURCE-ADAPTERS.md), and
+See [PDF attachment ingestion](docs/PDF-ATTACHMENTS.md),
+[Scheduled source refresh](docs/SOURCE-REFRESH.md), and
 [Open Legal Interpretations](docs/OPEN-LEGAL-INTERPRETATIONS.md).
 
 ## Local development

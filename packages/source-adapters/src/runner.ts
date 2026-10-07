@@ -69,6 +69,7 @@ export async function runSourceAdapter(
   adapter: SourceAdapter,
   options: SourceAdapterRunOptions = {},
 ): Promise<{
+  rows: SourceAdapterRow[];
   output: string;
   manifest: SourceAdapterRunManifest;
 }> {
@@ -109,6 +110,7 @@ export async function runSourceAdapter(
     serializeAdapterRows(rows);
 
   return {
+    rows,
     output,
     manifest: {
       formatVersion: 1,

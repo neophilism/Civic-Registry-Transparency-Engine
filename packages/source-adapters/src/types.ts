@@ -56,14 +56,23 @@ export interface SourceAdapter {
   ): Promise<SourceAdapterCollection>;
 }
 
-export interface PublicSourceFetchResult {
+export interface PublicSourceFetchMetadata {
   requestedUrl: string;
   finalUrl: string;
   contentType: string;
-  body: string;
   fetchedAt: string;
   etag?: string;
   lastModified?: string;
+}
+
+export interface PublicSourceFetchResult
+  extends PublicSourceFetchMetadata {
+  body: string;
+}
+
+export interface PublicSourceBinaryFetchResult
+  extends PublicSourceFetchMetadata {
+  body: Uint8Array;
 }
 
 export interface PublicSourceClient {
@@ -71,6 +80,11 @@ export interface PublicSourceClient {
     url: string,
     allowedHosts: readonly string[],
   ): Promise<PublicSourceFetchResult>;
+
+  fetchBytes(
+    url: string,
+    allowedHosts: readonly string[],
+  ): Promise<PublicSourceBinaryFetchResult>;
 }
 
 export interface PublicSourceClientOptions {
