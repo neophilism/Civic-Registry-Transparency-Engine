@@ -167,6 +167,20 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
+  IF TG_OP = 'DELETE' THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM civic_registry_configurations
+      WHERE registry_id = OLD.registry_id
+    ) THEN
+      RETURN OLD;
+    END IF;
+
+    RAISE EXCEPTION
+      'Relationship candidate review history is immutable; direct DELETE is not permitted.'
+      USING ERRCODE = '55000';
+  END IF;
+
   IF
     OLD.registry_id IS DISTINCT FROM NEW.registry_id
     OR OLD.id IS DISTINCT FROM NEW.id
@@ -187,6 +201,27 @@ BEGIN
       USING ERRCODE = '55000';
   END IF;
 
+  IF
+    (
+      OLD.status IS DISTINCT FROM NEW.status
+      OR OLD.reviewed_at IS DISTINCT FROM NEW.reviewed_at
+      OR OLD.reviewed_by IS DISTINCT FROM NEW.reviewed_by
+      OR OLD.review_note IS DISTINCT FROM NEW.review_note
+      OR OLD.relationship_id IS DISTINCT FROM NEW.relationship_id
+    )
+    AND COALESCE(
+      current_setting(
+        'civic_registry.relationship_candidate_review',
+        true
+      ),
+      ''
+    ) <> 'allowed'
+  THEN
+    RAISE EXCEPTION
+      'Relationship candidate decisions must use the review service.'
+      USING ERRCODE = '55000';
+  END IF;
+
   RETURN NEW;
 END;
 $$;
@@ -197,7 +232,7 @@ DROP TRIGGER IF EXISTS
 
 CREATE TRIGGER
   civic_registry_relationship_candidates_proposal_immutable
-BEFORE UPDATE
+BEFORE UPDATE OR DELETE
 ON civic_registry_relationship_candidates
 FOR EACH ROW
 EXECUTE FUNCTION
