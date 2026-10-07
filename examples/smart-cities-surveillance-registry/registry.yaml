@@ -1,0 +1,806 @@
+schemaVersion: 1
+
+registry:
+  id: smart-cities-surveillance-registry
+  name: Smart Cities Surveillance Registry
+  description: Public registry for civic surveillance technologies, deployments, agencies, vendors, approved-use policies, retention and sharing rules, audits, and reported violations.
+  defaultRecordTypeId: deployment
+  publicByDefault: true
+
+  recordTypes:
+    - id: deployment
+      name: Surveillance deployment
+      pluralName: Surveillance deployments
+      description: Public, non-operational descriptions of approved civic surveillance deployments and their governing controls.
+      titleFieldId: name
+      summaryFieldId: public_summary
+      fields:
+        - id: name
+          label: Deployment name
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: jurisdiction
+          label: Jurisdiction
+          type: text
+          required: true
+          searchable: true
+          filterable: true
+          sortable: true
+
+        - id: deployment_status
+          label: Deployment status
+          type: enum
+          filterable: true
+          options:
+            - value: planned
+              label: Planned
+            - value: pilot
+              label: Pilot
+            - value: active
+              label: Active
+            - value: suspended
+              label: Suspended
+            - value: retired
+              label: Retired
+
+        - id: purpose
+          label: Approved purpose
+          type: longText
+          searchable: true
+
+        - id: public_summary
+          label: Public summary
+          type: longText
+          searchable: true
+
+        - id: location_scope
+          label: Public location scope
+          description: Aggregate public description only; do not store sensitive operational positioning.
+          type: text
+          searchable: true
+
+        - id: data_collected
+          label: Data collected
+          type: json
+
+        - id: retention_days
+          label: Maximum retention period in days
+          type: number
+          sortable: true
+
+        - id: sharing_rules
+          label: Sharing rules
+          type: longText
+          searchable: true
+
+        - id: warrant_requirement
+          label: Warrant or legal-process requirement
+          type: enum
+          filterable: true
+          options:
+            - value: warrant_required
+              label: Warrant required
+            - value: legal_process_required
+              label: Other legal process required
+            - value: policy_authorized
+              label: Policy-authorized use
+            - value: emergency_exception
+              label: Emergency exception available
+            - value: not_applicable
+              label: Not applicable
+            - value: not_specified
+              label: Not specified
+
+        - id: approved_on
+          label: Approved on
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: deployed_on
+          label: Deployed on
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: next_audit_due_on
+          label: Next public audit due
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: compliance_resource_id
+          label: Compliance Engine resource ID
+          description: Optional opaque resource identifier used to retrieve a public-safe compliance projection through the separate Compliance Engine API.
+          type: text
+
+    - id: technology
+      name: Surveillance technology
+      pluralName: Surveillance technologies
+      description: Technology categories used by public agencies, described without operational secrets.
+      titleFieldId: name
+      summaryFieldId: description
+      fields:
+        - id: name
+          label: Technology name
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: category
+          label: Technology category
+          type: enum
+          filterable: true
+          options:
+            - value: camera
+              label: Camera system
+            - value: automated_license_plate_reader
+              label: Automated license plate reader
+            - value: acoustic_sensor
+              label: Acoustic sensor
+            - value: biometric
+              label: Biometric system
+            - value: aerial
+              label: Aerial sensing
+            - value: network_sensor
+              label: Network or device sensor
+            - value: analytics
+              label: Analytics software
+            - value: other
+              label: Other
+
+        - id: sensors
+          label: Sensors or inputs
+          type: json
+
+        - id: data_categories
+          label: Data categories
+          type: json
+
+        - id: description
+          label: Description
+          type: longText
+          searchable: true
+
+        - id: manufacturer_model
+          label: Manufacturer or model
+          type: text
+          searchable: true
+
+    - id: agency
+      name: Agency
+      pluralName: Agencies
+      description: Public agencies or departments responsible for surveillance deployments.
+      titleFieldId: name
+      summaryFieldId: description
+      fields:
+        - id: name
+          label: Agency name
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: jurisdiction
+          label: Jurisdiction
+          type: text
+          searchable: true
+          filterable: true
+
+        - id: agency_type
+          label: Agency type
+          type: enum
+          filterable: true
+          options:
+            - value: police
+              label: Police
+            - value: transportation
+              label: Transportation
+            - value: emergency_management
+              label: Emergency management
+            - value: public_safety
+              label: Public safety
+            - value: information_technology
+              label: Information technology
+            - value: other
+              label: Other
+
+        - id: website
+          label: Website
+          type: url
+
+        - id: description
+          label: Description
+          type: longText
+          searchable: true
+
+    - id: vendor
+      name: Vendor
+      pluralName: Vendors
+      description: Companies supplying technologies or services to public agencies.
+      titleFieldId: name
+      summaryFieldId: description
+      fields:
+        - id: name
+          label: Vendor name
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: website
+          label: Website
+          type: url
+
+        - id: description
+          label: Description
+          type: longText
+          searchable: true
+
+    - id: policy
+      name: Surveillance policy
+      pluralName: Surveillance policies
+      description: Approved-use, privacy, retention, access, sharing, and legal-process policies governing deployments.
+      titleFieldId: title
+      summaryFieldId: summary
+      fields:
+        - id: title
+          label: Policy title
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: policy_type
+          label: Policy type
+          type: enum
+          filterable: true
+          options:
+            - value: approved_use
+              label: Approved use
+            - value: retention
+              label: Retention and deletion
+            - value: access
+              label: Access control
+            - value: sharing
+              label: Sharing
+            - value: legal_process
+              label: Warrant or legal process
+            - value: privacy
+              label: Privacy
+            - value: other
+              label: Other
+
+        - id: summary
+          label: Summary
+          type: longText
+          searchable: true
+
+        - id: adopted_on
+          label: Adopted on
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: effective_on
+          label: Effective on
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: review_due_on
+          label: Review due
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: canonical_url
+          label: Public policy URL
+          type: url
+
+    - id: audit
+      name: Surveillance audit
+      pluralName: Surveillance audits
+      description: Public audit or oversight review of a deployment.
+      titleFieldId: title
+      summaryFieldId: summary
+      fields:
+        - id: title
+          label: Audit title
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: audit_type
+          label: Audit type
+          type: enum
+          filterable: true
+          options:
+            - value: annual
+              label: Annual audit
+            - value: privacy
+              label: Privacy audit
+            - value: access
+              label: Access audit
+            - value: retention
+              label: Retention/deletion audit
+            - value: incident
+              label: Incident review
+            - value: other
+              label: Other
+
+        - id: period_start
+          label: Period start
+          type: date
+          sortable: true
+
+        - id: period_end
+          label: Period end
+          type: date
+          sortable: true
+
+        - id: completed_on
+          label: Completed on
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: overall_status
+          label: Overall status
+          type: enum
+          filterable: true
+          options:
+            - value: compliant
+              label: Compliant
+            - value: compliant_with_findings
+              label: Compliant with findings
+            - value: noncompliant
+              label: Noncompliant
+            - value: inconclusive
+              label: Inconclusive
+
+        - id: summary
+          label: Public findings summary
+          type: longText
+          searchable: true
+
+        - id: next_audit_due_on
+          label: Next audit due
+          type: date
+          filterable: true
+          sortable: true
+
+    - id: violation
+      name: Reported violation
+      pluralName: Reported violations
+      description: Publicly reportable violation, finding, or misuse allegation associated with a deployment.
+      titleFieldId: title
+      summaryFieldId: summary
+      fields:
+        - id: title
+          label: Violation title
+          type: text
+          required: true
+          searchable: true
+          sortable: true
+
+        - id: category
+          label: Category
+          type: enum
+          filterable: true
+          options:
+            - value: unauthorized_access
+              label: Unauthorized access
+            - value: retention
+              label: Retention/deletion
+            - value: sharing
+              label: Improper sharing
+            - value: unauthorized_use
+              label: Unauthorized use
+            - value: policy_failure
+              label: Policy failure
+            - value: other
+              label: Other
+
+        - id: reported_on
+          label: Reported on
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: status
+          label: Status
+          type: enum
+          filterable: true
+          options:
+            - value: reported
+              label: Reported
+            - value: investigating
+              label: Investigating
+            - value: substantiated
+              label: Substantiated
+            - value: unsubstantiated
+              label: Unsubstantiated
+            - value: remediated
+              label: Remediated
+
+        - id: summary
+          label: Public summary
+          type: longText
+          searchable: true
+
+        - id: remediation_due_on
+          label: Remediation due
+          type: date
+          filterable: true
+          sortable: true
+
+        - id: resolved_on
+          label: Resolved on
+          type: date
+          filterable: true
+          sortable: true
+
+  relationshipTypes:
+    - id: uses-technology
+      label: Uses technology
+      inverseLabel: Used by deployment
+      directed: true
+      fromRecordTypeIds:
+        - deployment
+      toRecordTypeIds:
+        - technology
+
+    - id: operated-by
+      label: Operated by
+      inverseLabel: Operates deployment
+      directed: true
+      fromRecordTypeIds:
+        - deployment
+      toRecordTypeIds:
+        - agency
+
+    - id: supplied-by
+      label: Supplied by
+      inverseLabel: Supplies technology
+      directed: true
+      fromRecordTypeIds:
+        - technology
+      toRecordTypeIds:
+        - vendor
+
+    - id: governed-by
+      label: Governed by
+      inverseLabel: Governs deployment
+      directed: true
+      fromRecordTypeIds:
+        - deployment
+      toRecordTypeIds:
+        - policy
+
+    - id: audits-deployment
+      label: Audits deployment
+      inverseLabel: Audited by
+      directed: true
+      fromRecordTypeIds:
+        - audit
+      toRecordTypeIds:
+        - deployment
+
+    - id: concerns-deployment
+      label: Concerns deployment
+      inverseLabel: Has reported violation
+      directed: true
+      fromRecordTypeIds:
+        - violation
+      toRecordTypeIds:
+        - deployment
+
+    - id: identified-violation
+      label: Identified violation
+      inverseLabel: Identified by audit
+      directed: true
+      fromRecordTypeIds:
+        - audit
+      toRecordTypeIds:
+        - violation
+
+publicationLifecycle:
+  initialStatusId: draft
+
+  statuses:
+    - id: draft
+      label: Draft
+    - id: under_review
+      label: Under review
+    - id: approved
+      label: Approved for publication
+    - id: published
+      label: Published
+      publiclyVisible: true
+      marksPublished: true
+    - id: withdrawn
+      label: Withdrawn
+      publiclyVisible: true
+    - id: archived
+      label: Archived
+      publiclyVisible: true
+      terminal: true
+
+  transitions:
+    - fromStatusId: draft
+      toStatusId: under_review
+      label: Submit for review
+      allowedRoles:
+        - editor
+    - fromStatusId: under_review
+      toStatusId: draft
+      label: Return to draft
+      allowedRoles:
+        - reviewer
+    - fromStatusId: under_review
+      toStatusId: approved
+      label: Approve for publication
+      allowedRoles:
+        - reviewer
+      approval:
+        approverRoles:
+          - reviewer
+          - publisher
+        minApprovals: 1
+        requesterCannotApprove: true
+    - fromStatusId: approved
+      toStatusId: published
+      label: Publish
+      allowedRoles:
+        - publisher
+    - fromStatusId: published
+      toStatusId: withdrawn
+      label: Withdraw
+      allowedRoles:
+        - publisher
+    - fromStatusId: withdrawn
+      toStatusId: published
+      label: Republish
+      allowedRoles:
+        - publisher
+    - fromStatusId: published
+      toStatusId: archived
+      label: Archive
+      allowedRoles:
+        - publisher
+    - fromStatusId: withdrawn
+      toStatusId: archived
+      label: Archive
+      allowedRoles:
+        - publisher
+
+  scheduledPublication:
+    enabled: true
+    fromStatusIds:
+      - approved
+    targetStatusId: published
+    allowedRoles:
+      - publisher
+
+deadlines:
+  definitions:
+    - id: deployment_audit_due
+      label: Deployment audit due
+      description: Public accountability deadline for the next scheduled deployment audit.
+      recordTypeIds:
+        - deployment
+      anchor:
+        kind: field
+        fieldId: next_audit_due_on
+      offset:
+        value: 0
+        unit: calendarDays
+      warningOffset:
+        value: 30
+        unit: calendarDays
+      dateOnlyAnchorTime: end
+      pauseWhileStatuses:
+        - withdrawn
+      completeWhenStatuses:
+        - archived
+      publiclyVisible: true
+
+    - id: policy_review_due
+      label: Policy review due
+      description: Public deadline for the next scheduled policy review.
+      recordTypeIds:
+        - policy
+      anchor:
+        kind: field
+        fieldId: review_due_on
+      offset:
+        value: 0
+        unit: calendarDays
+      warningOffset:
+        value: 30
+        unit: calendarDays
+      dateOnlyAnchorTime: end
+      pauseWhileStatuses:
+        - withdrawn
+      completeWhenStatuses:
+        - archived
+      publiclyVisible: true
+
+    - id: violation_remediation_due
+      label: Violation remediation due
+      description: Public deadline for remediation of a substantiated or open report when a due date is published.
+      recordTypeIds:
+        - violation
+      anchor:
+        kind: field
+        fieldId: remediation_due_on
+      offset:
+        value: 0
+        unit: calendarDays
+      warningOffset:
+        value: 14
+        unit: calendarDays
+      dateOnlyAnchorTime: end
+      pauseWhileStatuses:
+        - withdrawn
+      completeWhenStatuses:
+        - archived
+      publiclyVisible: true
+
+disclosure:
+  withheldRecordBehavior: placeholder
+  defaultRedactionText: "[REDACTED]"
+  defaultWithheldFieldText: "[WITHHELD]"
+  withheldRecordTitle: "Surveillance registry record withheld"
+  withheldRecordSummary: "Public contents of this registry record are withheld."
+  withheldDocumentTitle: "Surveillance registry document withheld"
+  showReasons: true
+  showAuthorities: true
+
+presentation:
+  recordTypes:
+    deployment:
+      listFields:
+        - name
+        - jurisdiction
+        - deployment_status
+        - approved_on
+        - retention_days
+        - warrant_requirement
+      detailFields:
+        - name
+        - jurisdiction
+        - deployment_status
+        - public_summary
+        - purpose
+        - location_scope
+        - data_collected
+        - retention_days
+        - sharing_rules
+        - warrant_requirement
+        - approved_on
+        - deployed_on
+        - next_audit_due_on
+      defaultSort:
+        fieldId: approved_on
+        direction: desc
+
+    technology:
+      listFields:
+        - name
+        - category
+        - manufacturer_model
+      detailFields:
+        - name
+        - category
+        - sensors
+        - data_categories
+        - manufacturer_model
+        - description
+      defaultSort:
+        fieldId: name
+        direction: asc
+
+    agency:
+      listFields:
+        - name
+        - jurisdiction
+        - agency_type
+      detailFields:
+        - name
+        - jurisdiction
+        - agency_type
+        - website
+        - description
+      defaultSort:
+        fieldId: name
+        direction: asc
+
+    vendor:
+      listFields:
+        - name
+      detailFields:
+        - name
+        - website
+        - description
+      defaultSort:
+        fieldId: name
+        direction: asc
+
+    policy:
+      listFields:
+        - title
+        - policy_type
+        - adopted_on
+        - review_due_on
+      detailFields:
+        - title
+        - policy_type
+        - summary
+        - adopted_on
+        - effective_on
+        - review_due_on
+        - canonical_url
+      defaultSort:
+        fieldId: adopted_on
+        direction: desc
+
+    audit:
+      listFields:
+        - title
+        - audit_type
+        - completed_on
+        - overall_status
+      detailFields:
+        - title
+        - audit_type
+        - period_start
+        - period_end
+        - completed_on
+        - overall_status
+        - summary
+        - next_audit_due_on
+      defaultSort:
+        fieldId: completed_on
+        direction: desc
+
+    violation:
+      listFields:
+        - title
+        - category
+        - reported_on
+        - status
+        - remediation_due_on
+      detailFields:
+        - title
+        - category
+        - reported_on
+        - status
+        - summary
+        - remediation_due_on
+        - resolved_on
+      defaultSort:
+        fieldId: reported_on
+        direction: desc
+
+notifications:
+  enabled: true
+  eventTypes:
+    - record.published
+    - record.changed
+    - deadline.approaching
+    - deadline.missed
+    - document.added
+  allowedChannels:
+    - email
+    - webhook
+    - internal
+  deadlineApproachingDays: 30
+  maxDeliveryAttempts: 5
+  retryBaseSeconds: 60
