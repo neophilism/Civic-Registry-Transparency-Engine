@@ -1,7 +1,9 @@
 import type {
-  PostgresPdfAttachmentService,
   PostgresRecordRepository,
 } from "@civic-registry/database";
+import type {
+  PostgresPdfAttachmentService,
+} from "@civic-registry/database/attachments";
 import type {
   SourceAdapterRow,
   SourceAdapterWarning,
