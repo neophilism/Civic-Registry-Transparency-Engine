@@ -68,7 +68,7 @@ registry:
 
         - id: retention_days
           label: Maximum retention period in days
-          type: number
+          type: integer
           sortable: true
 
         - id: sharing_rules
