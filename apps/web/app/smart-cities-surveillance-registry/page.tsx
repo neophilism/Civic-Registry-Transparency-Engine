@@ -6,7 +6,7 @@ import {
   getPublicAnalytics,
 } from "../../lib/analytics";
 import {
-  getConfiguredComplianceProjection,
+  getConfiguredComplianceProjectionByExternalRef,
   type ComplianceProjectionResult,
 } from "../../lib/compliance-projection";
 import {
@@ -116,13 +116,13 @@ export default async function SmartCitiesSurveillanceRegistryPage() {
   const compliancePairs =
     await Promise.all(
       latest.map(async (record) => {
-        const resourceId =
+        const externalRef =
           textField(
             record.fields
-              .compliance_resource_id,
+              .compliance_external_ref,
           );
 
-        if (!resourceId) {
+        if (!externalRef) {
           return [
             record.id,
             undefined,
@@ -131,8 +131,9 @@ export default async function SmartCitiesSurveillanceRegistryPage() {
 
         return [
           record.id,
-          await getConfiguredComplianceProjection(
-            resourceId,
+          await getConfiguredComplianceProjectionByExternalRef(
+            externalRef,
+            "surveillance-deployment",
           ),
         ] as const;
       }),
