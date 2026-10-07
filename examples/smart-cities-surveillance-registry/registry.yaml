@@ -112,9 +112,9 @@ registry:
           filterable: true
           sortable: true
 
-        - id: compliance_resource_id
-          label: Compliance Engine resource ID
-          description: Optional opaque resource identifier used to retrieve a public-safe compliance projection through the separate Compliance Engine API.
+        - id: compliance_external_ref
+          label: Compliance Engine external reference
+          description: Stable cross-engine reference used to resolve a public-safe compliance projection through the separate Compliance Engine API without coupling to environment-specific resource UUIDs.
           type: text
 
     - id: technology
