@@ -13,13 +13,15 @@ import {
   createDatabasePool,
   PostgresDeadlineService,
   PostgresIngestionService,
-  PostgresPdfAttachmentService,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
   PostgresSourceRefreshService,
   runMigrations,
   type SourceRefreshClaim,
 } from "@civic-registry/database";
+import {
+  PostgresPdfAttachmentService,
+} from "@civic-registry/database/attachments";
 import {
   parseIngestionProfile,
 } from "@civic-registry/ingestion";
