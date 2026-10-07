@@ -280,3 +280,16 @@ See [PDF attachment ingestion](PDF-ATTACHMENTS.md) for storage, security, extrac
 ## Next milestone
 
 PR 23 can add structured legal-authority extraction from the trusted full-text/evidence corpus with explicit provenance and review state.
+
+
+## Structured legal-authority extraction
+
+PR 23 reads the page-level PDF extraction corpus created by PR 22 and proposes reviewable `interprets-authority` relationships when the text explicitly matches a known legal-authority canonical citation or configured alias.
+
+No proposed link becomes canonical automatically.
+
+See [Relationship candidates and authority extraction](RELATIONSHIP-CANDIDATES.md) for the exact-match rules, explicit alias model, provenance evidence, human review queue, audit/integrity behavior, and tests.
+
+## Next milestone
+
+A later milestone can expand legal-authority source ingestion and unresolved-citation triage while preserving the explicit review boundary.
