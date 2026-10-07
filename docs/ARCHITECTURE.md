@@ -2,69 +2,95 @@
 
 ## Purpose
 
-The Civic Registry & Transparency Engine is an upstream platform for multiple
-public-interest applications. A new registry should primarily require
-configuration, schemas, ingestion adapters, terminology, and presentation—not
-duplicated infrastructure.
+The Civic Registry & Transparency Engine is upstream infrastructure for many
+independent public-interest applications. A downstream registry should mainly
+supply configuration, schemas, ingestion adapters, terminology, branding, and
+specialized presentation rather than duplicating infrastructure.
 
 ## Architectural rules
 
-1. **No bill-specific concepts in the engine core.** Downstream applications may
-   define legal interpretations, surveillance technologies, algorithms, federal
-   programs, or other domain records. The core understands generic registry
-   primitives.
-2. **Primary sources are first-class.** Public claims should be traceable to
-   source documents or authoritative external records when configured.
-3. **Published changes are auditable.** Downstream applications must be able to
-   preserve meaningful record history instead of silently rewriting public
-   records.
+1. **The engine is domain neutral.** Named applications and policy-specific
+   concepts live in separate downstream repositories.
+2. **Primary sources are first-class.** Public claims can be traced to source
+   documents or authoritative external records when configured.
+3. **Published changes are auditable.** Applications can preserve meaningful
+   record history instead of silently rewriting public records.
 4. **Public data is portable.** Search, APIs, and bulk exports are platform
    responsibilities.
 5. **Specialized infrastructure stays replaceable.** Search, object storage,
-   persistence, queues, and notifications should sit behind interfaces where
+   persistence, queues, and notifications sit behind interfaces where
    practical.
-6. **Configuration before duplication.** Features needed by more than one
-   downstream application should move upstream.
+6. **Configuration before duplication.** Capabilities needed by multiple
+   applications should move upstream.
+7. **No upstream dependency on downstream code.** Packages and the reference
+   web application may not import a named downstream application.
 
-## Planned structure
+## Repository structure
 
 ```text
 apps/
-  web/                 Reference public application
+  web/                 Generic public/admin reference application
 
 packages/
   core/                Generic domain primitives
-  database/            Persistence and migrations
-  registry/            Records, record types, fields, relationships
+  database/            Persistence, migrations, audit and operations
+  registry/            Public record presentation helpers
   search/              Search provider abstraction
-  documents/           Sources, files, citations
+  documents/           Sources, files, citations and PDF extraction
   deadlines/           Configurable clocks and reminders
-  audit/               Immutable event/revision history
-  api/                 Shared API contracts
-  ui/                  Reusable interface components
+  api/                 Shared public API contracts
   config/              Schema/config loading and validation
+  ingestion/           Provider-neutral structured ingestion
+  source-adapters/     Safe public-source retrieval primitives
   sdk/                 External TypeScript client
+
+examples/
+  generic-registry/    Deliberately generic development/test configuration
 ```
 
-## Initial technology choices
+## Technology choices
 
 - TypeScript
-- Next.js for the reference web application
-- PostgreSQL for canonical relational storage
+- Next.js
+- PostgreSQL
 - pnpm workspaces
 - PostgreSQL search initially, behind a provider abstraction
-- Object storage behind a future storage adapter
+- content-addressed document storage behind a replaceable interface
 
-## Application boundary
+## Downstream application boundary
 
-Downstream applications should contain:
+A downstream repository may contain:
 
-- registry schemas;
-- terminology;
-- policy/status rules;
-- application-specific ingestion adapters;
+- domain-specific registry schemas and terminology;
+- application-specific lifecycle or status policy;
+- provider-specific source adapters and refresh-job definitions;
 - branding and presentation overrides;
+- application-specific external integrations; and
 - genuinely specialized behavior.
 
-They should not reimplement generic search, record storage, audit history,
-deadlines, documents, exports, or registry APIs.
+A downstream repository should reuse rather than reimplement:
+
+- canonical record storage;
+- schema validation;
+- search;
+- relationship graphs;
+- publication lifecycle;
+- disclosure/redaction;
+- evidence and document storage;
+- deadline calculation;
+- notifications;
+- immutable history and integrity checks;
+- ingestion orchestration;
+- source-refresh leasing/health;
+- public APIs and exports; and
+- the administrator console.
+
+## Upstream/downstream evolution
+
+If a downstream application needs a capability that is broadly reusable, the
+capability should be generalized and contributed upstream without bringing the
+application's nouns, provider assumptions, fixtures, or presentation into this
+repository.
+
+The generic example exists only to prove that the engine can operate without
+custom application code. It is not a production use case.

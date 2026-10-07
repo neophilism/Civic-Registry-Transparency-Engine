@@ -1,7 +1,5 @@
 import assert from "node:assert/strict";
-import {
-  readFile,
-} from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -15,9 +13,6 @@ import {
   serializeAdapterRows,
 } from "../packages/source-adapters/src/index.ts";
 import {
-  parseDojOlcOpinion,
-} from "../examples/open-legal-interpretations/adapters/doj-olc.ts";
-import {
   createDatabasePool,
   PostgresIngestionService,
   PostgresIntegrityService,
@@ -27,8 +22,7 @@ import {
   seedRegistry,
 } from "../packages/database/src/index.ts";
 
-const databaseUrl =
-  process.env.DATABASE_URL;
+const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error(
@@ -36,47 +30,33 @@ if (!databaseUrl) {
   );
 }
 
-const [
-  configSource,
-  seedSource,
-  profileSource,
-  detailHtml,
-] = await Promise.all([
-  readFile(
-    "examples/open-legal-interpretations/registry.yaml",
-    "utf8",
-  ),
-  readFile(
-    "examples/open-legal-interpretations/seed.json",
-    "utf8",
-  ),
-  readFile(
-    "examples/open-legal-interpretations/adapter-import-profile.yaml",
-    "utf8",
-  ),
-  readFile(
-    "tests/fixtures/source-adapters/doj-olc-detail.html",
-    "utf8",
-  ),
-]);
+const [configSource, seedSource, profileSource] =
+  await Promise.all([
+    readFile(
+      "examples/generic-registry/registry.yaml",
+      "utf8",
+    ),
+    readFile(
+      "examples/generic-registry/seed.json",
+      "utf8",
+    ),
+    readFile(
+      "examples/generic-registry/import-profile.yaml",
+      "utf8",
+    ),
+  ]);
 
-const config = parseRegistryConfig(
-  configSource,
-  {
-    sourceName:
-      "examples/open-legal-interpretations/registry.yaml",
-  },
-);
-const compiled =
-  compileRegistryConfig(config);
+const config = parseRegistryConfig(configSource, {
+  sourceName: "examples/generic-registry/registry.yaml",
+});
+const compiled = compileRegistryConfig(config);
 const seed = JSON.parse(seedSource);
-const profile =
-  parseIngestionProfile(
-    profileSource,
-    compiled,
-  );
+const profile = parseIngestionProfile(
+  profileSource,
+  compiled,
+);
 
-test("official source adapter output ingests through the existing registry pipeline", async () => {
+test("generic source adapter output ingests through the standard registry pipeline", async () => {
   const pool = createDatabasePool({
     connectionString: databaseUrl,
     applicationName:
@@ -88,120 +68,66 @@ test("official source adapter output ingests through the existing registry pipel
     await pool.query(
       "TRUNCATE civic_registry_configurations CASCADE",
     );
-    await seedRegistry(
-      pool,
-      config,
-      seed,
-    );
+    await seedRegistry(pool, config, seed);
 
-    const row = parseDojOlcOpinion(
-      detailHtml,
-      "https://www.justice.gov/olc/opinion/example-separation-powers-opinion",
-      "2026-10-06T17:00:00.000Z",
-    );
-    const input =
-      serializeAdapterRows([row]);
-    const service =
-      new PostgresIngestionService(pool);
-    const before =
-      await new PostgresIntegrityService(
-        pool,
-      ).verifyRegistry(
-        config.registry.id,
-      );
+    const row = {
+      id: "adapter-example-report",
+      external_id: "example-source:adapter-report",
+      title: "Adapter Example Report",
+      summary: "Imported through the generic adapter boundary.",
+      type: "report",
+      published_on: "2026-10-07",
+      canonical_url:
+        "https://example.gov/reports/adapter-example",
+      source_adapter: "example-adapter",
+      retrieved_at: "2026-10-07T16:00:00.000Z",
+    };
+    const input = serializeAdapterRows([row]);
+    const service = new PostgresIngestionService(pool);
+    const before = await new PostgresIntegrityService(
+      pool,
+    ).verifyRegistry(config.registry.id);
 
     const result = await service.run({
-      registryId:
-        config.registry.id,
+      registryId: config.registry.id,
       profile,
       format: "ndjson",
       input,
-      sourceLabel:
-        "DOJ OLC source adapter fixture",
-      sourceUri:
-        "https://www.justice.gov/olc/opinions",
-      actorId:
-        "system:public-source-adapter-test",
+      sourceLabel: "Generic adapter fixture",
+      sourceUri: "https://example.gov/reports",
+      actorId: "system:public-source-adapter-test",
       reason:
-        "Verify public source adapter rows use the generic ingestion boundary.",
-      now:
-        "2026-10-06T17:05:00.000Z",
+        "Verify provider-neutral adapter rows use the generic ingestion boundary.",
+      now: "2026-10-07T16:05:00.000Z",
     });
 
-    assert.equal(
-      result.run.status,
-      "completed",
-    );
-    assert.equal(
-      result.run.createdItems,
-      1,
-    );
-    assert.equal(
-      result.run.failedItems,
-      0,
-    );
+    assert.equal(result.run.status, "completed");
+    assert.equal(result.run.createdItems, 1);
+    assert.equal(result.run.failedItems, 0);
 
     const configs =
-      new PostgresRegistryConfigRepository(
-        pool,
-      );
+      new PostgresRegistryConfigRepository(pool);
     const records =
-      new PostgresRecordRepository(
-        pool,
-        configs,
-      );
+      new PostgresRecordRepository(pool, configs);
     const record = await records.get(
       config.registry.id,
-      "doj-olc-example-separation-powers-opinion",
+      row.id,
     );
 
     assert.ok(record);
     assert.equal(
-      record.fields.issuing_body,
-      "usdoj-office-of-legal-counsel",
+      record.fields.title,
+      "Adapter Example Report",
     );
-    assert.equal(
-      record.fields.issued_on,
-      "2026-09-17",
-    );
-    assert.equal(
-      record.status,
-      "published",
-    );
-    assert.equal(
-      record.visibility,
-      "public",
-    );
-    assert.equal(
-      record.publishedAt,
-      undefined,
-    );
-    assert.deepEqual(
-      record.externalIdentifiers,
-      [
-        {
-          scheme:
-            "official-source",
-          value:
-            "doj-olc:example-separation-powers-opinion",
-          url:
-            "https://www.justice.gov/olc/opinion/example-separation-powers-opinion",
-        },
-      ],
-    );
+    assert.equal(record.status, "published");
+    assert.equal(record.visibility, "public");
 
-    const after =
-      await new PostgresIntegrityService(
-        pool,
-      ).verifyRegistry(
-        config.registry.id,
-      );
+    const after = await new PostgresIntegrityService(
+      pool,
+    ).verifyRegistry(config.registry.id);
 
     assert.equal(after.valid, true);
-    assert.ok(
-      after.entryCount >
-        before.entryCount,
-    );
+    assert.ok(after.entryCount > before.entryCount);
   } finally {
     await pool.end();
   }
