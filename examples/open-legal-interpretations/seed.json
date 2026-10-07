@@ -183,7 +183,17 @@
         "name": "Administrative Procedure Act",
         "authority_type": "statute",
         "canonical_url": "https://www.govinfo.gov/link/uscode/5/551",
-        "description": "Federal statutory framework for agency procedure and adjudication."
+        "description": "Federal statutory framework for agency procedure and adjudication.",
+        "citation_aliases": [
+          "5 U.S.C. § 551",
+          "5 U.S.C. § 553",
+          "5 U.S.C. § 554",
+          "5 U.S.C. § 555",
+          "5 U.S.C. § 556",
+          "5 U.S.C. § 557",
+          "5 U.S.C. § 558",
+          "5 U.S.C. § 559"
+        ]
       },
       "status": "published",
       "visibility": "public",
