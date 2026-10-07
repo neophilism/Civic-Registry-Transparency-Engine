@@ -1,0 +1,547 @@
+{
+  "sources": [
+    {
+      "id": "demo-smart-city-transparency-portal",
+      "registryId": "smart-cities-surveillance-registry",
+      "title": "Demonstration Smart City Transparency Portal",
+      "sourceType": "webpage",
+      "visibility": "public",
+      "canonicalUrl": "https://example.gov/surveillance-transparency",
+      "publishedAt": "2026-09-01T12:00:00.000Z",
+      "retrievedAt": "2026-10-01T12:00:00.000Z",
+      "description": "Synthetic demonstration source for the Smart Cities Surveillance Registry. It is not an actual municipal surveillance record.",
+      "createdAt": "2026-10-01T12:00:00.000Z"
+    }
+  ],
+  "documents": [
+    {
+      "id": "demo-camera-policy-pdf",
+      "registryId": "smart-cities-surveillance-registry",
+      "title": "Demonstration Public Camera Use Policy",
+      "visibility": "public",
+      "sourceId": "demo-smart-city-transparency-portal",
+      "fileName": "demo-camera-use-policy.pdf",
+      "mimeType": "application/pdf",
+      "canonicalUrl": "https://example.gov/surveillance-transparency/camera-use-policy.pdf",
+      "pageCount": 12,
+      "language": "en",
+      "createdAt": "2026-01-15T12:00:00.000Z"
+    },
+    {
+      "id": "demo-alpr-policy-pdf",
+      "registryId": "smart-cities-surveillance-registry",
+      "title": "Demonstration ALPR Retention and Sharing Policy",
+      "visibility": "public",
+      "sourceId": "demo-smart-city-transparency-portal",
+      "fileName": "demo-alpr-retention-policy.pdf",
+      "mimeType": "application/pdf",
+      "canonicalUrl": "https://example.gov/surveillance-transparency/alpr-retention-policy.pdf",
+      "pageCount": 9,
+      "language": "en",
+      "createdAt": "2026-02-10T12:00:00.000Z"
+    },
+    {
+      "id": "demo-alpr-audit-pdf",
+      "registryId": "smart-cities-surveillance-registry",
+      "title": "Demonstration 2026 ALPR Audit",
+      "visibility": "public",
+      "sourceId": "demo-smart-city-transparency-portal",
+      "fileName": "demo-2026-alpr-audit.pdf",
+      "mimeType": "application/pdf",
+      "canonicalUrl": "https://example.gov/surveillance-transparency/2026-alpr-audit.pdf",
+      "pageCount": 18,
+      "language": "en",
+      "createdAt": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "demo-alpr-violation-pdf",
+      "registryId": "smart-cities-surveillance-registry",
+      "title": "Demonstration ALPR Retention Finding",
+      "visibility": "public",
+      "sourceId": "demo-smart-city-transparency-portal",
+      "fileName": "demo-alpr-retention-finding.pdf",
+      "mimeType": "application/pdf",
+      "canonicalUrl": "https://example.gov/surveillance-transparency/alpr-retention-finding.pdf",
+      "pageCount": 5,
+      "language": "en",
+      "createdAt": "2026-09-22T12:00:00.000Z"
+    }
+  ],
+  "records": [
+    {
+      "id": "agency-metropolis-public-safety",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "agency",
+      "fields": {
+        "name": "Metropolis Department of Public Safety",
+        "jurisdiction": "Metropolis",
+        "agency_type": "public_safety",
+        "website": "https://example.gov/public-safety",
+        "description": "Synthetic municipal public-safety agency used only to demonstrate the reusable registry."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "agency"
+      ],
+      "createdAt": "2026-01-01T12:00:00.000Z",
+      "updatedAt": "2026-01-01T12:00:00.000Z",
+      "publishedAt": "2026-01-01T12:00:00.000Z"
+    },
+    {
+      "id": "agency-metropolis-transportation",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "agency",
+      "fields": {
+        "name": "Metropolis Department of Transportation",
+        "jurisdiction": "Metropolis",
+        "agency_type": "transportation",
+        "website": "https://example.gov/transportation",
+        "description": "Synthetic municipal transportation agency used only for the reference application."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "agency"
+      ],
+      "createdAt": "2026-01-01T12:05:00.000Z",
+      "updatedAt": "2026-01-01T12:05:00.000Z",
+      "publishedAt": "2026-01-01T12:05:00.000Z"
+    },
+    {
+      "id": "vendor-civic-vision",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "vendor",
+      "fields": {
+        "name": "Civic Vision Systems",
+        "website": "https://vendor.example/civic-vision",
+        "description": "Synthetic vendor of fixed-camera management software."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "vendor"
+      ],
+      "createdAt": "2026-01-01T12:10:00.000Z",
+      "updatedAt": "2026-01-01T12:10:00.000Z",
+      "publishedAt": "2026-01-01T12:10:00.000Z"
+    },
+    {
+      "id": "vendor-roadwatch",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "vendor",
+      "fields": {
+        "name": "RoadWatch Technologies",
+        "website": "https://vendor.example/roadwatch",
+        "description": "Synthetic vendor of automated license plate reader equipment."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "vendor"
+      ],
+      "createdAt": "2026-01-01T12:11:00.000Z",
+      "updatedAt": "2026-01-01T12:11:00.000Z",
+      "publishedAt": "2026-01-01T12:11:00.000Z"
+    },
+    {
+      "id": "technology-fixed-video-analytics",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "technology",
+      "fields": {
+        "name": "Fixed Public-Space Video Analytics",
+        "category": "camera",
+        "sensors": [
+          "fixed video camera"
+        ],
+        "data_categories": [
+          "video imagery",
+          "event metadata"
+        ],
+        "manufacturer_model": "Civic Vision CV-200 (synthetic)",
+        "description": "Synthetic fixed-camera system used for public-space traffic and safety analysis. This record intentionally omits precise operational placement."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "camera"
+      ],
+      "createdAt": "2026-01-02T12:00:00.000Z",
+      "updatedAt": "2026-01-02T12:00:00.000Z",
+      "publishedAt": "2026-01-02T12:00:00.000Z"
+    },
+    {
+      "id": "technology-alpr",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "technology",
+      "fields": {
+        "name": "Automated License Plate Reader",
+        "category": "automated_license_plate_reader",
+        "sensors": [
+          "roadside imaging sensor"
+        ],
+        "data_categories": [
+          "license plate text",
+          "timestamp",
+          "coarse public-road location"
+        ],
+        "manufacturer_model": "RoadWatch RW-100 (synthetic)",
+        "description": "Synthetic ALPR technology record used to demonstrate retention, sharing, audit, and violation workflows."
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "alpr"
+      ],
+      "createdAt": "2026-01-02T12:05:00.000Z",
+      "updatedAt": "2026-01-02T12:05:00.000Z",
+      "publishedAt": "2026-01-02T12:05:00.000Z"
+    },
+    {
+      "id": "policy-camera-use-2026",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "policy",
+      "fields": {
+        "title": "Demonstration Public Camera Approved-Use Policy",
+        "policy_type": "approved_use",
+        "summary": "Limits the synthetic camera deployment to documented traffic-safety and public-safety purposes, requires access logging, and prohibits use for unrelated monitoring.",
+        "adopted_on": "2026-01-15",
+        "effective_on": "2026-02-01",
+        "review_due_on": "2027-02-01",
+        "canonical_url": "https://example.gov/surveillance-transparency/camera-use-policy.pdf"
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "policy"
+      ],
+      "createdAt": "2026-01-15T12:00:00.000Z",
+      "updatedAt": "2026-01-15T12:00:00.000Z",
+      "publishedAt": "2026-01-15T12:00:00.000Z"
+    },
+    {
+      "id": "policy-alpr-retention-2026",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "policy",
+      "fields": {
+        "title": "Demonstration ALPR Retention, Sharing, and Legal-Process Policy",
+        "policy_type": "retention",
+        "summary": "Sets a 30-day ordinary retention limit, requires documented legal process for identified-person searches outside enumerated emergencies, and restricts external sharing to approved recipients.",
+        "adopted_on": "2026-02-10",
+        "effective_on": "2026-03-01",
+        "review_due_on": "2027-03-01",
+        "canonical_url": "https://example.gov/surveillance-transparency/alpr-retention-policy.pdf"
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "policy",
+        "retention"
+      ],
+      "createdAt": "2026-02-10T12:00:00.000Z",
+      "updatedAt": "2026-02-10T12:00:00.000Z",
+      "publishedAt": "2026-02-10T12:00:00.000Z"
+    },
+    {
+      "id": "deployment-downtown-traffic-cameras",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "deployment",
+      "fields": {
+        "name": "Downtown Traffic-Safety Camera Program",
+        "jurisdiction": "Metropolis",
+        "deployment_status": "active",
+        "purpose": "Traffic-flow analysis, collision response, and documented public-safety investigations within the approved-use policy.",
+        "public_summary": "Synthetic fixed-camera deployment used to demonstrate public registry controls without publishing precise operational positions.",
+        "location_scope": "Downtown public road corridors; exact device positions intentionally omitted from the demonstration record.",
+        "data_collected": [
+          "video imagery",
+          "event metadata"
+        ],
+        "retention_days": 7,
+        "sharing_rules": "External sharing is limited to documented public-safety or legal-process purposes under the approved policy.",
+        "warrant_requirement": "legal_process_required",
+        "approved_on": "2026-02-01",
+        "deployed_on": "2026-03-01",
+        "next_audit_due_on": "2027-03-01",
+        "compliance_resource_id": "11111111-1111-4111-8111-111111111111"
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "deployment",
+        "camera"
+      ],
+      "createdAt": "2026-02-01T12:00:00.000Z",
+      "updatedAt": "2026-03-01T12:00:00.000Z",
+      "publishedAt": "2026-03-01T12:00:00.000Z"
+    },
+    {
+      "id": "deployment-municipal-alpr-pilot",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "deployment",
+      "fields": {
+        "name": "Municipal ALPR Accountability Pilot",
+        "jurisdiction": "Metropolis",
+        "deployment_status": "pilot",
+        "purpose": "Time-limited evaluation for stolen-vehicle alerts and specifically authorized investigative queries.",
+        "public_summary": "Synthetic ALPR pilot used to demonstrate retention/deletion controls, audit reporting, and remediation tracking.",
+        "location_scope": "Selected public road entrances described only at aggregate level.",
+        "data_collected": [
+          "license plate text",
+          "timestamp",
+          "coarse public-road location"
+        ],
+        "retention_days": 30,
+        "sharing_rules": "Sharing is restricted to approved public agencies with a documented purpose and logged request.",
+        "warrant_requirement": "legal_process_required",
+        "approved_on": "2026-03-01",
+        "deployed_on": "2026-04-01",
+        "next_audit_due_on": "2027-04-01",
+        "compliance_resource_id": "22222222-2222-4222-8222-222222222222"
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "deployment",
+        "alpr",
+        "pilot"
+      ],
+      "createdAt": "2026-03-01T12:00:00.000Z",
+      "updatedAt": "2026-09-22T12:00:00.000Z",
+      "publishedAt": "2026-04-01T12:00:00.000Z"
+    },
+    {
+      "id": "audit-alpr-2026",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "audit",
+      "fields": {
+        "title": "2026 Demonstration ALPR Retention Audit",
+        "audit_type": "retention",
+        "period_start": "2026-04-01",
+        "period_end": "2026-08-31",
+        "completed_on": "2026-09-20",
+        "overall_status": "compliant_with_findings",
+        "summary": "Synthetic audit found the control framework generally operating as designed but identified a small set of records retained beyond the stated ordinary retention period.",
+        "next_audit_due_on": "2027-04-01"
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "audit",
+        "alpr"
+      ],
+      "createdAt": "2026-09-20T12:00:00.000Z",
+      "updatedAt": "2026-09-20T12:00:00.000Z",
+      "publishedAt": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "violation-alpr-retention-2026",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordTypeId": "violation",
+      "fields": {
+        "title": "Demonstration ALPR Retention Exception",
+        "category": "retention",
+        "reported_on": "2026-09-20",
+        "status": "substantiated",
+        "summary": "Synthetic audit finding: a limited set of test records exceeded the published ordinary retention window because a deletion job failed. No real individuals or operational data are represented.",
+        "remediation_due_on": "2026-11-15"
+      },
+      "status": "published",
+      "visibility": "public",
+      "externalIdentifiers": [],
+      "tags": [
+        "demo",
+        "violation",
+        "retention"
+      ],
+      "createdAt": "2026-09-20T12:10:00.000Z",
+      "updatedAt": "2026-09-22T12:00:00.000Z",
+      "publishedAt": "2026-09-22T12:00:00.000Z"
+    }
+  ],
+  "citations": [
+    {
+      "id": "citation-camera-policy-summary",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordId": "policy-camera-use-2026",
+      "fieldId": "summary",
+      "sourceId": "demo-smart-city-transparency-portal",
+      "documentId": "demo-camera-policy-pdf",
+      "locator": {
+        "page": 2,
+        "section": "Approved uses"
+      },
+      "note": "Synthetic demonstration citation.",
+      "visibility": "public",
+      "createdAt": "2026-01-15T12:05:00.000Z"
+    },
+    {
+      "id": "citation-alpr-policy-summary",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordId": "policy-alpr-retention-2026",
+      "fieldId": "summary",
+      "sourceId": "demo-smart-city-transparency-portal",
+      "documentId": "demo-alpr-policy-pdf",
+      "locator": {
+        "page": 3,
+        "section": "Retention and sharing"
+      },
+      "note": "Synthetic demonstration citation.",
+      "visibility": "public",
+      "createdAt": "2026-02-10T12:05:00.000Z"
+    },
+    {
+      "id": "citation-alpr-audit-summary",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordId": "audit-alpr-2026",
+      "fieldId": "summary",
+      "sourceId": "demo-smart-city-transparency-portal",
+      "documentId": "demo-alpr-audit-pdf",
+      "locator": {
+        "page": 4,
+        "section": "Executive summary"
+      },
+      "note": "Synthetic demonstration citation.",
+      "visibility": "public",
+      "createdAt": "2026-09-20T12:05:00.000Z"
+    },
+    {
+      "id": "citation-alpr-violation-summary",
+      "registryId": "smart-cities-surveillance-registry",
+      "recordId": "violation-alpr-retention-2026",
+      "fieldId": "summary",
+      "sourceId": "demo-smart-city-transparency-portal",
+      "documentId": "demo-alpr-violation-pdf",
+      "locator": {
+        "page": 2,
+        "section": "Finding"
+      },
+      "note": "Synthetic demonstration citation.",
+      "visibility": "public",
+      "createdAt": "2026-09-22T12:05:00.000Z"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "downtown-cameras-use-fixed-video",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "uses-technology",
+      "fromRecordId": "deployment-downtown-traffic-cameras",
+      "toRecordId": "technology-fixed-video-analytics",
+      "createdAt": "2026-03-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "downtown-cameras-operated-by-transportation",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "operated-by",
+      "fromRecordId": "deployment-downtown-traffic-cameras",
+      "toRecordId": "agency-metropolis-transportation",
+      "createdAt": "2026-03-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "fixed-video-supplied-by-civic-vision",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "supplied-by",
+      "fromRecordId": "technology-fixed-video-analytics",
+      "toRecordId": "vendor-civic-vision",
+      "createdAt": "2026-03-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "downtown-cameras-governed-by-policy",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "governed-by",
+      "fromRecordId": "deployment-downtown-traffic-cameras",
+      "toRecordId": "policy-camera-use-2026",
+      "createdAt": "2026-03-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "alpr-pilot-uses-alpr",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "uses-technology",
+      "fromRecordId": "deployment-municipal-alpr-pilot",
+      "toRecordId": "technology-alpr",
+      "createdAt": "2026-04-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "alpr-pilot-operated-by-public-safety",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "operated-by",
+      "fromRecordId": "deployment-municipal-alpr-pilot",
+      "toRecordId": "agency-metropolis-public-safety",
+      "createdAt": "2026-04-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "alpr-supplied-by-roadwatch",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "supplied-by",
+      "fromRecordId": "technology-alpr",
+      "toRecordId": "vendor-roadwatch",
+      "createdAt": "2026-04-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "alpr-pilot-governed-by-retention-policy",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "governed-by",
+      "fromRecordId": "deployment-municipal-alpr-pilot",
+      "toRecordId": "policy-alpr-retention-2026",
+      "createdAt": "2026-04-01T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "audit-2026-audits-alpr-pilot",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "audits-deployment",
+      "fromRecordId": "audit-alpr-2026",
+      "toRecordId": "deployment-municipal-alpr-pilot",
+      "createdAt": "2026-09-20T12:00:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "violation-2026-concerns-alpr-pilot",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "concerns-deployment",
+      "fromRecordId": "violation-alpr-retention-2026",
+      "toRecordId": "deployment-municipal-alpr-pilot",
+      "createdAt": "2026-09-20T12:10:00.000Z",
+      "metadata": {}
+    },
+    {
+      "id": "audit-2026-identified-retention-violation",
+      "registryId": "smart-cities-surveillance-registry",
+      "relationshipTypeId": "identified-violation",
+      "fromRecordId": "audit-alpr-2026",
+      "toRecordId": "violation-alpr-retention-2026",
+      "createdAt": "2026-09-20T12:10:00.000Z",
+      "metadata": {}
+    }
+  ]
+}
