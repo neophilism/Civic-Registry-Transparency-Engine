@@ -239,8 +239,12 @@ The PostgreSQL integration test verifies:
 - prevention of redundant full-text revisions; and
 - valid cryptographic integrity after enrichment.
 
+## Structured authority extraction
+
+PR 23 builds on this page-level PDF corpus with reviewable relationship candidates. The extractor records exact document/page/excerpt provenance and cannot materialize a canonical relationship without explicit review.
+
+See [Relationship candidates and authority extraction](RELATIONSHIP-CANDIDATES.md).
+
 ## Next milestone
 
-PR 23 can build structured legal-authority extraction on top of the trustworthy PDF/full-text corpus created here.
-
-That work should produce candidate authority relationships with explicit provenance and confidence/review state rather than silently asserting relationships inferred from unstructured text.
+A later milestone can expand the legal-authority catalog, unresolved-citation triage, richer case-citation normalization, and additional source adapters without weakening the explicit review boundary.

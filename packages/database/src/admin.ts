@@ -21,6 +21,7 @@ export interface AdminRegistrySummary {
   overdueDeadlineCount: number;
   sourceRefreshJobCount: number;
   sourceRefreshIssueCount: number;
+  pendingRelationshipCandidateCount: number;
 }
 
 export interface AdminTransitionRequestListOptions {
@@ -47,6 +48,7 @@ interface SummaryRow extends QueryResultRow {
   overdue_deadline_count: number;
   source_refresh_job_count: number;
   source_refresh_issue_count: number;
+  pending_relationship_candidate_count: number;
 }
 
 interface RequestRow extends QueryResultRow {
@@ -213,7 +215,13 @@ export class PostgresAdminRepository {
                     )
                 )
               )
-          ) AS source_refresh_issue_count
+          ) AS source_refresh_issue_count,
+          (
+            SELECT COUNT(*)::int
+            FROM civic_registry_relationship_candidates
+            WHERE registry_id = $1
+              AND status = 'pending'
+          ) AS pending_relationship_candidate_count
       `,
       [registryId],
     );
@@ -233,6 +241,8 @@ export class PostgresAdminRepository {
         row?.source_refresh_job_count ?? 0,
       sourceRefreshIssueCount:
         row?.source_refresh_issue_count ?? 0,
+      pendingRelationshipCandidateCount:
+        row?.pending_relationship_candidate_count ?? 0,
     };
   }
 

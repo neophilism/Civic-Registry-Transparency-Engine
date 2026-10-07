@@ -10,6 +10,7 @@ import {
   PostgresRecordHistoryRepository,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
+  PostgresRelationshipCandidateService,
   PostgresRelationshipGraphRepository,
   PostgresRelationshipRepository,
   PostgresSearchProvider,
@@ -47,6 +48,8 @@ export function getRepositories() {
     deadlines,
   );
   const history = new PostgresRecordHistoryRepository(pool);
+  const relationshipCandidates =
+    new PostgresRelationshipCandidateService(pool);
   const relationships = new PostgresRelationshipRepository(
     pool,
     configs,
@@ -88,6 +91,7 @@ export function getRepositories() {
     records,
     history,
     relationships,
+    relationshipCandidates,
     relationshipGraph,
     sources,
     documents,

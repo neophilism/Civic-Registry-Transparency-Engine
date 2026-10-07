@@ -51,6 +51,13 @@ export interface DocumentExtraction {
   extractedAt: string;
 }
 
+export interface RecordDocumentExtraction {
+  citationId: string;
+  fieldId?: string;
+  documentId: string;
+  extraction: DocumentExtraction;
+}
+
 export interface PdfAttachmentIngestionInput {
   registryId: string;
   recordId: string;
@@ -293,6 +300,56 @@ export class PostgresPdfAttachmentService {
     return result.rows[0]
       ? mapExtraction(result.rows[0])
       : null;
+  }
+
+  async listExtractionsForRecord(
+    registryId: string,
+    recordId: string,
+    extractor = "pdfjs",
+  ): Promise<RecordDocumentExtraction[]> {
+    const result =
+      await this.pool.query<
+        ExtractionRow & {
+          citation_id: string;
+          field_id: string | null;
+        }
+      >(
+        `
+          SELECT
+            extraction.*,
+            citation.id AS citation_id,
+            citation.field_id
+          FROM civic_registry_citations
+            AS citation
+          JOIN civic_registry_document_extractions
+            AS extraction
+            ON extraction.registry_id =
+              citation.registry_id
+            AND extraction.document_id =
+              citation.document_id
+          WHERE citation.registry_id = $1
+            AND citation.record_id = $2
+            AND extraction.extractor = $3
+          ORDER BY
+            extraction.extracted_at ASC,
+            extraction.document_id ASC,
+            citation.id ASC
+        `,
+        [
+          registryId,
+          recordId,
+          extractor,
+        ],
+      );
+
+    return result.rows.map((row) => ({
+      citationId: row.citation_id,
+      fieldId:
+        row.field_id ?? undefined,
+      documentId: row.document_id,
+      extraction:
+        mapExtraction(row),
+    }));
   }
 
   private async saveExtraction(

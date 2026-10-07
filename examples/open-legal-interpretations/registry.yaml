@@ -176,6 +176,11 @@ registry:
           type: text
           searchable: true
 
+        - id: citation_aliases
+          label: Citation aliases
+          description: Explicit alternative citation forms that may be matched by authority extraction. Stored as a JSON array of strings.
+          type: json
+
         - id: authority_type
           label: Authority type
           type: enum
@@ -427,6 +432,7 @@ presentation:
       detailFields:
         - citation
         - name
+        - citation_aliases
         - authority_type
         - canonical_url
         - description

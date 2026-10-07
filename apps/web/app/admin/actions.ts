@@ -948,3 +948,79 @@ export async function queueAdminSourceRefreshNow(
     ),
   );
 }
+
+
+export async function reviewAdminRelationshipCandidate(
+  formData: FormData,
+): Promise<void> {
+  const session = await requireAdminSession();
+  const registryId = text(
+    formData,
+    "registryId",
+  );
+  const candidateId = text(
+    formData,
+    "candidateId",
+  );
+  const decision =
+    text(formData, "decision") ===
+      "rejected"
+      ? "rejected"
+      : "approved";
+  const returnTo = safeReturnTo(
+    text(formData, "returnTo"),
+    "/admin/registries/" +
+      encodeURIComponent(registryId) +
+      "/relationship-candidates",
+  );
+  let failure: string | undefined;
+
+  try {
+    await getRepositories()
+      .relationshipCandidates.review({
+        registryId,
+        candidateId,
+        decision,
+        actorId: session.actorId,
+        note:
+          text(formData, "note") ||
+          undefined,
+        reason:
+          "Administrator " +
+          decision +
+          " relationship candidate " +
+          candidateId +
+          ".",
+      });
+  } catch (error) {
+    failure = errorMessage(
+      error,
+      "Relationship candidate review failed.",
+    );
+  }
+
+  if (failure) {
+    redirect(
+      destination(
+        returnTo,
+        "error",
+        failure,
+      ),
+    );
+  }
+
+  revalidatePath(returnTo);
+  revalidatePath(
+    "/admin/registries/" +
+      encodeURIComponent(registryId),
+  );
+  redirect(
+    destination(
+      returnTo,
+      "notice",
+      decision === "approved"
+        ? "Relationship candidate approved and materialized."
+        : "Relationship candidate rejected.",
+    ),
+  );
+}

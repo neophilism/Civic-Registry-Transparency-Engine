@@ -179,6 +179,15 @@ export default async function RegistryAdminPage({
           </strong>
           <span>Refresh issues</span>
         </div>
+        <div>
+          <strong>
+            {
+              registry.summary
+                .pendingRelationshipCandidateCount
+            }
+          </strong>
+          <span>Relationship reviews</span>
+        </div>
       </section>
 
       <section className="section-block">
