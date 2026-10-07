@@ -16,16 +16,8 @@ const EXTRACTOR =
   "known-legal-authority-citation";
 const EXTRACTOR_VERSION = "1.0.0";
 
-interface ParsedCitation {
-  system: "usc" | "cfr";
-  title: number;
-  start: number;
-  end: number;
-}
-
 interface AuthorityForm {
   citation: string;
-  parsed: ParsedCitation | undefined;
 }
 
 interface AuthorityDescriptor {
@@ -42,9 +34,7 @@ interface CitationMention {
   matchedText: string;
   matchedAuthorityCitation: string;
   excerpt: string;
-  matchKind:
-    | "structured_exact"
-    | "configured_exact";
+  matchKind: "configured_exact";
   confidence: number;
 }
 
@@ -66,75 +56,27 @@ function sha256(
     .digest("hex");
 }
 
-function parseSectionNumber(
+function structuredCitationRegex(): RegExp {
+  return /\b\d+\s+(?:U\.?\s*S\.?\s*C\.?|C\.?\s*F\.?\s*R\.?)\s+§{1,2}\s*[0-9A-Za-z][0-9A-Za-z().-]*(?:\s*[-–—]\s*[0-9A-Za-z][0-9A-Za-z().-]*)?/gi;
+}
+
+function citationKey(
   value: string,
-): number | undefined {
-  const match = value.match(/^\d+/);
-
-  if (!match) return undefined;
-
-  const parsed = Number(match[0]);
-
-  return Number.isFinite(parsed)
-    ? parsed
-    : undefined;
-}
-
-function parseKnownCitation(
-  citation: string,
-): ParsedCitation | undefined {
-  const normalized = citation
+): string {
+  return value
+    .replace(/[.,;:]+$/g, "")
     .replace(/[–—]/g, "-")
+    .replace(
+      /U\.?\s*S\.?\s*C\.?/gi,
+      "USC",
+    )
+    .replace(
+      /C\.?\s*F\.?\s*R\.?/gi,
+      "CFR",
+    )
     .replace(/\s+/g, " ")
-    .trim();
-  const match = normalized.match(
-    /^(\d+)\s+(U\.?\s*S\.?\s*C\.?|C\.?\s*F\.?\s*R\.?)\s+§{1,2}\s*(\d+[A-Za-z0-9().-]*)(?:\s*-\s*(\d+[A-Za-z0-9().-]*))?$/i,
-  );
-
-  if (!match) return undefined;
-
-  const start =
-    parseSectionNumber(match[3]);
-  const end =
-    parseSectionNumber(
-      match[4] ?? match[3],
-    );
-
-  if (
-    start === undefined ||
-    end === undefined
-  ) {
-    return undefined;
-  }
-
-  return {
-    system:
-      /^U/i.test(match[2])
-        ? "usc"
-        : "cfr",
-    title: Number(match[1]),
-    start: Math.min(start, end),
-    end: Math.max(start, end),
-  };
-}
-
-function structuredCitationRegex(
-  system: "usc" | "cfr",
-): RegExp {
-  const middle =
-    system === "usc"
-      ? "U\\.?\\s*S\\.?\\s*C\\.?"
-      : "C\\.?\\s*F\\.?\\s*R\\.?";
-
-  return new RegExp(
-    "\\b(\\d+)\\s+" +
-      middle +
-      "\\s+§{1,2}\\s*" +
-      "(\\d+[A-Za-z0-9().-]*)" +
-      "(?:\\s*[-–—]\\s*" +
-      "(\\d+[A-Za-z0-9().-]*))?",
-    "gi",
-  );
+    .trim()
+    .toLowerCase();
 }
 
 function escapeRegex(
@@ -266,123 +208,6 @@ function sameParsedCitation(
   );
 }
 
-function collectStructuredMentions(
-  extraction: RecordDocumentExtraction,
-  authorities: AuthorityDescriptor[],
-  mentions:
-    Map<string, CitationMention[]>,
-  recognizedMentions: Set<string>,
-): number {
-  let structuredTotal = 0;
-
-  for (const page of
-    extraction.extraction.pages) {
-    for (const system of [
-      "usc",
-      "cfr",
-    ] as const) {
-      const regex =
-        structuredCitationRegex(
-          system,
-        );
-
-      for (
-        let match =
-          regex.exec(page.text);
-        match;
-        match =
-          regex.exec(page.text)
-      ) {
-        structuredTotal += 1;
-        const title =
-          Number(match[1]);
-        const start =
-          parseSectionNumber(
-            match[2],
-          );
-        const end =
-          parseSectionNumber(
-            match[3] ?? match[2],
-          );
-
-        if (
-          start === undefined ||
-          end === undefined
-        ) {
-          continue;
-        }
-
-        const parsedMatch: ParsedCitation = {
-          system,
-          title,
-          start:
-            Math.min(start, end),
-          end:
-            Math.max(start, end),
-        };
-        const matched =
-          match[0];
-        let recognized = false;
-
-        for (const authority of
-          authorities) {
-          for (const form of
-            authority.forms) {
-            if (
-              !form.parsed ||
-              !sameParsedCitation(
-                form.parsed,
-                parsedMatch,
-              )
-            ) {
-              continue;
-            }
-
-            recognized = true;
-            addMention(
-              mentions,
-              authority.id,
-              {
-                documentId:
-                  extraction.documentId,
-                citationId:
-                  extraction.citationId,
-                page:
-                  page.page,
-                matchedText: matched,
-                matchedAuthorityCitation:
-                  form.citation,
-                excerpt:
-                  excerptAround(
-                    page.text,
-                    match.index,
-                    matched.length,
-                  ),
-                matchKind:
-                  "structured_exact",
-                confidence: 0.995,
-              },
-            );
-          }
-        }
-
-        if (recognized) {
-          recognizedMentions.add(
-            [
-              extraction.documentId,
-              page.page,
-              match.index,
-              matched,
-            ].join("|"),
-          );
-        }
-      }
-    }
-  }
-
-  return structuredTotal;
-}
-
 function collectConfiguredExactMentions(
   extraction: RecordDocumentExtraction,
   authorities: AuthorityDescriptor[],
@@ -438,6 +263,37 @@ function collectConfiguredExactMentions(
       }
     }
   }
+}
+
+function countUnresolvedStructuredMentions(
+  extractions: RecordDocumentExtraction[],
+  configuredForms: Set<string>,
+): number {
+  let unresolved = 0;
+
+  for (const extraction of extractions) {
+    for (const page of extraction.extraction.pages) {
+      const regex =
+        structuredCitationRegex();
+
+      for (
+        let match = regex.exec(page.text);
+        match;
+        match = regex.exec(page.text)
+      ) {
+        const key =
+          citationKey(match[0]);
+
+        if (
+          !configuredForms.has(key)
+        ) {
+          unresolved += 1;
+        }
+      }
+    }
+  }
+
+  return unresolved;
 }
 
 function candidateId(
@@ -548,10 +404,6 @@ export async function proposeOpenLegalInterpretationAuthorityCandidates(
           ),
         ].map((form) => ({
           citation: form,
-          parsed:
-            parseKnownCitation(
-              form,
-            ),
         }));
 
         return {
@@ -585,25 +437,33 @@ export async function proposeOpenLegalInterpretationAuthorityCandidates(
       string,
       CitationMention[]
     >();
-  const recognizedStructured =
-    new Set<string>();
-  let structuredTotal = 0;
+  const configuredForms =
+    new Set(
+      authorities.flatMap(
+        (authority) =>
+          authority.forms.map(
+            (form) =>
+              citationKey(
+                form.citation,
+              ),
+          ),
+      ),
+    );
 
   for (const extraction of
     extractions) {
-    structuredTotal +=
-      collectStructuredMentions(
-        extraction,
-        authorities,
-        mentions,
-        recognizedStructured,
-      );
     collectConfiguredExactMentions(
       extraction,
       authorities,
       mentions,
     );
   }
+
+  const unresolvedStructuredMentions =
+    countUnresolvedStructuredMentions(
+      extractions,
+      configuredForms,
+    );
 
   let candidatesCreated = 0;
   let candidatesExisting = 0;
@@ -730,12 +590,7 @@ export async function proposeOpenLegalInterpretationAuthorityCandidates(
     candidatesCreated,
     candidatesExisting,
     relationshipsAlreadyPresent,
-    unresolvedStructuredMentions:
-      Math.max(
-        0,
-        structuredTotal -
-          recognizedStructured.size,
-      ),
+    unresolvedStructuredMentions,
   };
 }
 
