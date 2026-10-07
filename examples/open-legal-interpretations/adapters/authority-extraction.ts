@@ -31,7 +31,7 @@ interface AuthorityForm {
 interface AuthorityDescriptor {
   id: string;
   citation: string;
-  authorityType?: string;
+  authorityType: string | undefined;
   forms: AuthorityForm[];
 }
 
@@ -348,7 +348,7 @@ function collectStructuredMentions(
                 citationId:
                   extraction.citationId,
                 page:
-                  page.pageNumber,
+                  page.page,
                 matchedText: matched,
                 matchedAuthorityCitation:
                   form.citation,
@@ -370,7 +370,7 @@ function collectStructuredMentions(
           recognizedMentions.add(
             [
               extraction.documentId,
-              page.pageNumber,
+              page.page,
               match.index,
               matched,
             ].join("|"),
@@ -419,7 +419,7 @@ function collectConfiguredExactMentions(
               citationId:
                 extraction.citationId,
               page:
-                page.pageNumber,
+                page.page,
               matchedText: matched,
               matchedAuthorityCitation:
                 form.citation,
