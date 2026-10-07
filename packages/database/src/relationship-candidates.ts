@@ -634,144 +634,173 @@ export class PostgresRelationshipCandidateService {
       relationshipCandidateEvidenceHash(
         normalized.evidence,
       );
-    const result =
-      await this.pool.query<CandidateRow>(
-        `
-          INSERT INTO civic_registry_relationship_candidates (
-            registry_id,
+    const client =
+      await this.pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const result =
+        await client.query<CandidateRow>(
+          `
+            INSERT INTO civic_registry_relationship_candidates (
+              registry_id,
+              id,
+              relationship_type_id,
+              from_record_id,
+              to_record_id,
+              status,
+              extractor,
+              extractor_version,
+              confidence,
+              evidence,
+              evidence_sha256,
+              metadata,
+              proposed_at,
+              proposed_by
+            )
+            VALUES (
+              $1, $2, $3, $4, $5,
+              'pending',
+              $6, $7, $8,
+              $9::jsonb, $10,
+              $11::jsonb,
+              $12::timestamptz,
+              $13
+            )
+            ON CONFLICT (
+              registry_id,
+              id
+            )
+            DO NOTHING
+            RETURNING *
+          `,
+          [
+            registryId,
             id,
-            relationship_type_id,
-            from_record_id,
-            to_record_id,
-            status,
+            relationshipTypeId,
+            fromRecordId,
+            toRecordId,
             extractor,
-            extractor_version,
-            confidence,
-            evidence,
-            evidence_sha256,
-            metadata,
-            proposed_at,
-            proposed_by
+            extractorVersion,
+            normalized.confidence,
+            JSON.stringify(
+              normalized.evidence,
+            ),
+            evidenceSha256,
+            JSON.stringify(
+              normalized.metadata,
+            ),
+            normalized.proposedAt,
+            proposedBy ?? null,
+          ],
+        );
+
+      if (!result.rows[0]) {
+        const existingResult =
+          await client.query<CandidateRow>(
+            `
+              SELECT *
+              FROM civic_registry_relationship_candidates
+              WHERE registry_id = $1
+                AND id = $2
+            `,
+            [
+              registryId,
+              id,
+            ],
+          );
+        const existing =
+          existingResult.rows[0];
+
+        if (!existing) {
+          throw new Error(
+            "Relationship candidate conflict could not be resolved.",
+          );
+        }
+
+        await client.query("COMMIT");
+
+        return {
+          kind: "candidate",
+          candidate:
+            mapCandidate(
+              existing,
+            ),
+          created: false,
+        };
+      }
+
+      const candidate =
+        mapCandidate(
+          result.rows[0],
+        );
+
+      await client.query(
+        `
+          INSERT INTO civic_registry_audit_events (
+            registry_id,
+            subject_type,
+            subject_id,
+            event_type,
+            occurred_at,
+            visibility,
+            actor_id,
+            reason,
+            metadata
           )
           VALUES (
-            $1, $2, $3, $4, $5,
-            'pending',
-            $6, $7, $8,
-            $9::jsonb, $10,
-            $11::jsonb,
-            $12::timestamptz,
-            $13
+            $1,
+            'record',
+            $2,
+            'relationship_candidate.proposed',
+            $3::timestamptz,
+            'private',
+            $4,
+            $5,
+            $6::jsonb
           )
-          ON CONFLICT (
-            registry_id,
-            id
-          )
-          DO NOTHING
-          RETURNING *
         `,
         [
           registryId,
-          id,
-          relationshipTypeId,
           fromRecordId,
-          toRecordId,
-          extractor,
-          extractorVersion,
-          normalized.confidence,
-          JSON.stringify(
-            normalized.evidence,
-          ),
-          evidenceSha256,
-          JSON.stringify(
-            normalized.metadata,
-          ),
-          normalized.proposedAt,
+          candidate.proposedAt,
           proposedBy ?? null,
+          "Relationship candidate proposed by " +
+            extractor +
+            ".",
+          JSON.stringify({
+            candidateId:
+              candidate.id,
+            relationshipTypeId:
+              candidate.relationshipTypeId,
+            toRecordId:
+              candidate.toRecordId,
+            extractor:
+              candidate.extractor,
+            extractorVersion:
+              candidate.extractorVersion,
+            confidence:
+              candidate.confidence,
+            evidenceSha256:
+              candidate.evidenceSha256,
+          }),
         ],
       );
 
-    if (!result.rows[0]) {
-      const existing =
-        await this.get(
-          registryId,
-          id,
-        );
-
-      if (!existing) {
-        throw new Error(
-          "Relationship candidate conflict could not be resolved.",
-        );
-      }
+      await client.query("COMMIT");
 
       return {
         kind: "candidate",
-        candidate: existing,
-        created: false,
+        candidate,
+        created: true,
       };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
     }
-
-    const candidate =
-      mapCandidate(
-        result.rows[0],
-      );
-
-    await this.pool.query(
-      `
-        INSERT INTO civic_registry_audit_events (
-          registry_id,
-          subject_type,
-          subject_id,
-          event_type,
-          occurred_at,
-          visibility,
-          actor_id,
-          reason,
-          metadata
-        )
-        VALUES (
-          $1,
-          'record',
-          $2,
-          'relationship_candidate.proposed',
-          $3::timestamptz,
-          'private',
-          $4,
-          $5,
-          $6::jsonb
-        )
-      `,
-      [
-        registryId,
-        fromRecordId,
-        candidate.proposedAt,
-        proposedBy ?? null,
-        "Relationship candidate proposed by " +
-          extractor +
-          ".",
-        JSON.stringify({
-          candidateId:
-            candidate.id,
-          relationshipTypeId:
-            candidate.relationshipTypeId,
-          toRecordId:
-            candidate.toRecordId,
-          extractor:
-            candidate.extractor,
-          extractorVersion:
-            candidate.extractorVersion,
-          confidence:
-            candidate.confidence,
-          evidenceSha256:
-            candidate.evidenceSha256,
-        }),
-      ],
-    );
-
-    return {
-      kind: "candidate",
-      candidate,
-      created: true,
-    };
   }
 
   async review(
