@@ -1,18 +1,21 @@
-# Public source adapters
+# @civic-registry/source-adapters
 
-Safe, provider-neutral HTTP retrieval and deterministic normalization primitives for civic source adapters.
+Provider-neutral primitives for safely retrieving public web sources and
+producing deterministic normalized rows for the Civic Registry ingestion
+pipeline.
 
-This package is intentionally small. It owns transport and deterministic adapter-run behavior, not source-specific civic policy.
+The package provides:
 
-Key guarantees:
-
-- HTTPS only;
-- adapter-defined host allowlists;
-- private/reserved network rejection after DNS resolution;
-- redirect revalidation;
-- response byte limits and timeouts;
-- deterministic NDJSON output;
+- hardened HTTP retrieval with host allowlists and SSRF protections;
+- text and binary fetch support;
+- lightweight HTML extraction helpers;
+- the generic `SourceAdapter` contract;
+- deterministic NDJSON serialization;
 - canonical-URL deduplication; and
 - SHA-256 run manifests.
 
-Source-specific adapters live with their thin applications. See `examples/open-legal-interpretations/adapters` and `docs/PUBLIC-SOURCE-ADAPTERS.md`.
+Provider-specific adapters do **not** belong in this package or repository.
+They live with the downstream application that understands the provider's
+markup, identifiers, semantics, cadence, and failure behavior.
+
+See [Public source adapters](../../docs/PUBLIC-SOURCE-ADAPTERS.md).

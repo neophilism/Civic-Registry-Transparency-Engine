@@ -1,6 +1,7 @@
 # PDF attachment ingestion and extraction
 
-PR 22 adds generic document-ingestion primitives for official PDF attachments and wires them into the Open Legal Interpretations refresh pipeline.
+The engine provides generic document-ingestion primitives for public PDF
+attachments.
 
 The architecture is:
 
@@ -13,7 +14,6 @@ source adapter row
   -> content-addressed storage
   -> PDF text extraction
   -> Source + Document + Citation evidence records
-  -> optional full-text enrichment of the canonical record
   -> ordinary history/search/integrity behavior
 ```
 
@@ -31,25 +31,23 @@ source adapter row
 - extracted-text SHA-256; and
 - extraction warnings.
 
-The storage interface is deliberately generic so later deployments can add object-storage implementations without changing the attachment-ingestion service.
+The storage interface is replaceable so deployments can add object storage or
+other durable backends without changing evidence records.
 
 ## Safe binary retrieval
 
-PR 22 extends the existing hardened public-source client with `fetchBytes`.
+Binary fetching uses the same protections as text source retrieval:
 
-Binary fetches preserve the same protections used by HTML source adapters:
-
-- HTTPS only;
+- HTTPS for non-local sources;
 - per-adapter host allowlists;
-- DNS rejection of loopback/private/link-local/reserved destinations;
+- rejection of loopback/private/link-local/reserved destinations;
 - redirect revalidation;
 - request timeout;
-- response-size cap; and
-- deterministic final URL/provenance metadata.
+- response-size caps; and
+- deterministic provenance metadata.
 
-The attachment service defaults to a 25 MiB response limit and a 30-second timeout.
-
-A remote `Content-Type` header is treated as advisory. PDF processing still requires a real `%PDF-` file signature.
+A remote content-type header is advisory. PDF processing still requires a real
+PDF signature.
 
 ## Content-addressed storage
 
@@ -59,192 +57,43 @@ The filesystem implementation stores documents under:
 sha256/<first-two-hash-characters>/<full-sha256>.pdf
 ```
 
-Writing the same content repeatedly is idempotent.
+Repeated identical bytes are idempotent. Changed bytes at the same source URL
+create a new immutable document version while preserving earlier evidence.
 
-For local development the default directory is:
-
-```text
-./data/documents
-```
-
-Configure it with:
+Configure the local storage root with:
 
 ```bash
 CIVIC_REGISTRY_DOCUMENT_STORAGE_DIR=/persistent/path
 ```
 
-### Deployment requirement
-
-The filesystem directory must live on persistent storage.
-
-Do **not** point production ingestion at an ephemeral container filesystem unless loss of the stored document bytes is acceptable. On platforms such as Render, mount a persistent disk/volume or implement another `DocumentStorage` backend.
-
-Database evidence rows store the content hash and storage key, so the backing bytes can remain outside PostgreSQL.
+Production deployments using filesystem storage must mount durable storage.
 
 ## Evidence model
 
-For each retrieved attachment, the generic attachment service materializes:
+For each retrieved attachment, the generic attachment service can materialize:
 
-- a `Source` representing the official attachment URL;
-- a versioned `Document` representing the exact retrieved bytes;
-- a PDF extraction row; and
-- a `Citation` linking the document to the canonical registry record/field.
+- a `Source` representing the public URL;
+- a versioned `Document` representing exact retrieved bytes;
+- a PDF extraction record; and
+- a `Citation` linking the document to a configured registry record/field.
 
-The document id includes both the stable source URL identity and the content SHA-256.
+Application-specific decisions about which URLs to fetch and which canonical
+field, if any, should be enriched from extracted text remain downstream.
 
-Therefore:
+## OCR boundary
 
-- fetching the same URL with identical bytes reuses the existing document/citation;
-- fetching the same URL after the official bytes change creates a new immutable document version;
-- prior versions remain available as evidence rather than being silently overwritten.
-
-## Extraction persistence
-
-Migration `0012_document_extractions.sql` adds:
-
-`civic_registry_document_extractions`
-
-Each extraction stores:
-
-- document id;
-- extractor name;
-- extractor version;
-- full extracted text;
-- extracted-text SHA-256;
-- page-level text;
-- warnings; and
-- extraction timestamp.
-
-The extraction is separate from the document metadata so a future extractor/OCR implementation can coexist with the same immutable source document.
-
-## PDF extraction
-
-The current extractor is `pdfjs-dist`.
-
-Security-oriented settings disable JavaScript evaluation and font rendering requirements used only for display.
-
-For each page the extractor collects textual content in reading order as exposed by PDF.js.
-
-If a page contains no extractable text, the extraction records a warning.
-
-If the entire document contains no extractable text, the result is retained with an explicit warning that OCR may be required.
-
-PR 22 does **not** silently OCR scanned documents. OCR should be a separate follow-on capability with its own provenance/extractor metadata.
-
-## Open Legal Interpretations integration
-
-The DOJ OLC and OGE adapters already emit `attachment_urls` when official PDF/download links are available.
-
-After the normal adapter row is ingested, the scheduled refresh worker now:
-
-1. processes each attachment URL through the generic PDF service;
-2. uses the adapter's same official-host allowlist;
-3. persists source/document/citation/extraction evidence;
-4. aggregates attachment warnings into the source-refresh run; and
-5. updates the configured `full_text` field when extracted text is available.
-
-Full-text updates use the ordinary record repository with:
-
-- actor: `system:source-refresh-worker`;
-- reason: `Refresh full text from retrieved PDF attachment.`
-
-That means the enrichment automatically participates in:
-
-- immutable record history;
-- search-index maintenance;
-- notifications where configured;
-- deadline reconciliation where applicable; and
-- PR 18 cryptographic audit integrity.
-
-## Failure behavior
-
-Attachment processing is intentionally isolated per URL.
-
-One broken or malformed attachment does not discard a successful source-adapter/record ingestion.
-
-Instead the refresh accumulates structured warnings such as:
-
-- `pdf_attachment_failed`
-- `pdf_attachment_warning`
-
-This causes the source refresh to surface a warning state while preserving successfully ingested metadata and documents.
-
-## Idempotency and changed source files
-
-The attachment integration test proves three cases.
-
-### First retrieval
-
-A new PDF creates:
-
-- source;
-- document;
-- extraction;
-- citation; and
-- extracted full text.
-
-### Repeated retrieval, unchanged bytes
-
-A second fetch of the same URL/bytes:
-
-- does not create a duplicate document;
-- does not create a duplicate citation; and
-- does not create a redundant full-text record revision.
-
-### Same official URL, changed bytes
-
-If the remote file later changes:
-
-- SHA-256 changes;
-- a new document id/version is created;
-- the old document remains;
-- a second citation preserves the new evidence version; and
-- the canonical record can be enriched with the new extracted text.
-
-## Current storage boundary
-
-PR 22 ships a filesystem `DocumentStorage` implementation because it is deterministic, testable, and works with mounted persistent volumes.
-
-The interface is intentionally not filesystem-specific.
-
-Future implementations can add S3-compatible/object storage, cloud blob storage, or WORM archives without changing:
-
-- attachment retrieval;
-- PDF extraction;
-- database evidence records; or
-- thin-application processing.
+The built-in extractor handles textual PDFs. Scanned documents with no
+extractable text retain explicit warnings. OCR is intentionally a separate
+capability so its extractor identity and provenance can be recorded.
 
 ## Tests
 
-PR 22 adds offline tests only. CI does not download real government PDFs.
+Engine tests use generated PDFs and synthetic public URLs. They verify:
 
-Unit tests verify:
-
-- text extraction from a generated PDF fixture;
-- deterministic extracted-text hashes;
-- page extraction;
-- content-addressed storage idempotency;
-- hardened binary source fetching; and
-- host-allowlist enforcement.
-
-The PostgreSQL integration test verifies:
-
-- first attachment materialization;
-- extraction persistence;
-- source/document/citation linkage;
-- field-level page locator creation;
-- same-content idempotency;
-- changed-content version preservation;
-- full-text enrichment;
-- prevention of redundant full-text revisions; and
-- valid cryptographic integrity after enrichment.
-
-## Structured authority extraction
-
-PR 23 builds on this page-level PDF corpus with reviewable relationship candidates. The extractor records exact document/page/excerpt provenance and cannot materialize a canonical relationship without explicit review.
-
-See [Relationship candidates and authority extraction](RELATIONSHIP-CANDIDATES.md).
-
-## Next milestone
-
-A later milestone can expand the legal-authority catalog, unresolved-citation triage, richer case-citation normalization, and additional source adapters without weakening the explicit review boundary.
+- extraction;
+- content-addressed storage;
+- safe binary retrieval;
+- evidence materialization;
+- idempotency;
+- changed-content version preservation; and
+- cryptographic integrity after evidence changes.

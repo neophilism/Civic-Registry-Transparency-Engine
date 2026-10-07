@@ -5,9 +5,6 @@ import test from "node:test";
 import {
   PostgresSourceRefreshService,
 } from "../packages/database/src/index.ts";
-import {
-  openLegalInterpretationsRefreshJobs,
-} from "../examples/open-legal-interpretations/adapters/refresh-jobs.ts";
 
 function job(overrides = {}) {
   return {
@@ -24,25 +21,21 @@ function job(overrides = {}) {
     adapterOptions: {},
     emptyResultBehavior: "warning",
     rowCountDropWarningPercent: 50,
-    nextRunAt:
-      "2026-10-06T12:00:00.000Z",
+    nextRunAt: "2026-10-07T12:00:00.000Z",
     consecutiveFailures: 0,
-    createdAt:
-      "2026-10-06T10:00:00.000Z",
-    updatedAt:
-      "2026-10-06T10:00:00.000Z",
+    createdAt: "2026-10-07T10:00:00.000Z",
+    updatedAt: "2026-10-07T10:00:00.000Z",
     ...overrides,
   };
 }
 
 test("source refresh health states are deterministic", () => {
-  const service =
-    new PostgresSourceRefreshService({});
+  const service = new PostgresSourceRefreshService({});
 
   assert.equal(
     service.getHealth(
       job({ enabled: false }),
-      "2026-10-06T13:00:00.000Z",
+      "2026-10-07T13:00:00.000Z",
     ).status,
     "disabled",
   );
@@ -50,7 +43,7 @@ test("source refresh health states are deterministic", () => {
   assert.equal(
     service.getHealth(
       job(),
-      "2026-10-06T13:00:00.000Z",
+      "2026-10-07T13:00:00.000Z",
     ).status,
     "never_run",
   );
@@ -59,10 +52,9 @@ test("source refresh health states are deterministic", () => {
     service.getHealth(
       job({
         leaseToken: "lease",
-        leaseExpiresAt:
-          "2026-10-06T14:00:00.000Z",
+        leaseExpiresAt: "2026-10-07T14:00:00.000Z",
       }),
-      "2026-10-06T13:00:00.000Z",
+      "2026-10-07T13:00:00.000Z",
     ).status,
     "running",
   );
@@ -71,11 +63,10 @@ test("source refresh health states are deterministic", () => {
     service.getHealth(
       job({
         lastStatus: "completed",
-        lastCompletedAt:
-          "2026-10-06T12:30:00.000Z",
+        lastCompletedAt: "2026-10-07T12:30:00.000Z",
         lastWarningCount: 0,
       }),
-      "2026-10-06T13:00:00.000Z",
+      "2026-10-07T13:00:00.000Z",
     ).status,
     "healthy",
   );
@@ -83,13 +74,11 @@ test("source refresh health states are deterministic", () => {
   assert.equal(
     service.getHealth(
       job({
-        lastStatus:
-          "completed_with_warnings",
-        lastCompletedAt:
-          "2026-10-06T12:30:00.000Z",
+        lastStatus: "completed_with_warnings",
+        lastCompletedAt: "2026-10-07T12:30:00.000Z",
         lastWarningCount: 1,
       }),
-      "2026-10-06T13:00:00.000Z",
+      "2026-10-07T13:00:00.000Z",
     ).status,
     "warning",
   );
@@ -98,11 +87,10 @@ test("source refresh health states are deterministic", () => {
     service.getHealth(
       job({
         lastStatus: "failed",
-        lastCompletedAt:
-          "2026-10-06T12:30:00.000Z",
+        lastCompletedAt: "2026-10-07T12:30:00.000Z",
         lastError: "Source failed.",
       }),
-      "2026-10-06T13:00:00.000Z",
+      "2026-10-07T13:00:00.000Z",
     ).status,
     "failing",
   );
@@ -111,51 +99,12 @@ test("source refresh health states are deterministic", () => {
     service.getHealth(
       job({
         lastStatus: "completed",
-        lastCompletedAt:
-          "2026-10-06T10:00:00.000Z",
+        lastCompletedAt: "2026-10-07T10:00:00.000Z",
       }),
-      "2026-10-06T13:00:01.000Z",
+      "2026-10-07T13:00:01.000Z",
     ).status,
     "stale",
   );
-});
-
-test("Open Legal Interpretations refresh definitions are conservative and source-specific", () => {
-  assert.equal(
-    openLegalInterpretationsRefreshJobs.length,
-    2,
-  );
-
-  const ids = new Set(
-    openLegalInterpretationsRefreshJobs.map(
-      (definition) =>
-        definition.adapterId,
-    ),
-  );
-
-  assert.deepEqual(
-    [...ids].sort(),
-    [
-      "doj-olc",
-      "oge-legal-advisories",
-    ],
-  );
-
-  for (const definition of
-    openLegalInterpretationsRefreshJobs) {
-    assert.equal(
-      definition.registryId,
-      "open-legal-interpretations",
-    );
-    assert.equal(
-      definition.intervalSeconds,
-      86_400,
-    );
-    assert.ok(
-      definition.staleAfterSeconds >
-        definition.intervalSeconds,
-    );
-  }
 });
 
 test("source refresh migration and admin UI expose leases, health, and worker-only execution", () => {
@@ -180,24 +129,9 @@ test("source refresh migration and admin UI expose leases, health, and worker-on
     migration,
     /civic_registry_source_refresh_runs/,
   );
-  assert.match(
-    service,
-    /FOR UPDATE SKIP LOCKED/,
-  );
-  assert.match(
-    service,
-    /failureBackoffBaseSeconds/,
-  );
-  assert.match(
-    page,
-    /Queue now/,
-  );
-  assert.match(
-    page,
-    /never fetches remote source sites/i,
-  );
-  assert.doesNotMatch(
-    page,
-    /runSourceAdapter/,
-  );
+  assert.match(service, /FOR UPDATE SKIP LOCKED/);
+  assert.match(service, /failureBackoffBaseSeconds/);
+  assert.match(page, /Queue now/);
+  assert.match(page, /never fetches remote source sites/i);
+  assert.doesNotMatch(page, /runSourceAdapter/);
 });

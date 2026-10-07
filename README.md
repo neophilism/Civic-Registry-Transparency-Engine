@@ -2,46 +2,39 @@
 
 Reusable civic infrastructure for searchable public registries, transparency
 workflows, statutory deadlines, source documents, APIs, and downstream
-legislative applications.
+applications.
 
-## Why this repository exists
+## Purpose
 
-Many civic and legislative applications need the same technical primitives:
-structured public records, primary-source documents, search, relationships,
-publication workflows, deadline tracking, auditable history, APIs, and exports.
+Many civic applications need the same technical primitives:
 
-This repository provides those capabilities once. Downstream applications
-should be thin layers composed from the engine rather than long-lived forks
-that duplicate core logic.
+- structured public records;
+- configurable schemas and publication workflows;
+- primary-source evidence and document provenance;
+- search, relationships, and graph traversal;
+- deadlines and notifications;
+- immutable revision and audit history;
+- structured ingestion and source-refresh orchestration;
+- public APIs and bulk exports; and
+- an administrator console.
 
-## Current milestone
+This repository provides those capabilities once.
 
-**PR 24 — Smart Cities Surveillance Registry**
+## Repository boundary
 
-The engine now powers a second major thin reference application in a very
-different civic domain: public surveillance accountability.
+This repository is the **domain-neutral engine**.
 
-PR 24 adds:
+It deliberately does not contain a named policy application, agency-specific
+registry, surveillance registry, legal-interpretation registry, or other
+production use case. Downstream applications belong in their own repositories
+and should consume or copy the engine as an upstream foundation.
 
-- a seven-record-type Smart Cities registry for deployments, technologies,
-  agencies, vendors, policies, audits, and reported violations;
-- relationships from deployments to technology, agency, vendor supply chains,
-  governing policies, audits, and violations;
-- public audit, policy-review, and remediation deadlines;
-- synthetic source documents and field-level evidence citations;
-- a dedicated public presentation with search and accountability metrics;
-- public-safe demonstration data that intentionally excludes live operational
-  surveillance details;
-- a portable Compliance Engine resource-import bundle;
-- stable external-reference mapping instead of cross-engine UUID coupling;
-- a server-only Compliance Engine registry-projection bridge over the stable
-  integration API;
-- service-token/HTTPS boundary enforcement and graceful integration failure
-  isolation; and
-- end-to-end tests for search, relationships, evidence, deadlines, compliance
-  mapping, and cryptographic integrity.
+The only bundled application configuration is
+`examples/generic-registry`, a deliberately generic public-document catalog
+used for development, documentation, and regression tests.
 
-See [Smart Cities Surveillance Registry](docs/SMART-CITIES-SURVEILLANCE-REGISTRY.md).
+Provider-specific source adapters, branding, domain schemas, application
+workflows, and domain-specific integrations belong downstream.
 
 ## Local development
 
@@ -60,13 +53,23 @@ Run all quality gates with:
 pnpm ci
 ```
 
+Seed the generic example with:
+
+```bash
+pnpm db:seed-generic
+```
+
 See [Development](docs/DEVELOPMENT.md) and
 [Architecture](docs/ARCHITECTURE.md) for details.
 
 ## Core rule
 
-> No bill-specific concept belongs in the engine core unless it can be expressed
-> as a generic capability useful to multiple downstream applications.
+> No domain-specific concept belongs in the engine core unless it can be
+> expressed as a generic capability useful to multiple downstream
+> applications.
+
+The repository includes a core-purity regression test so named downstream
+applications cannot silently become dependencies of the reusable engine.
 
 ## License
 

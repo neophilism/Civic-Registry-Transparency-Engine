@@ -40,16 +40,9 @@ export default async function HomePage() {
           <div className="registry-grid">
             {registries.map(({ config }) => {
               const definition = config.definition;
-              const href =
-                definition.id ===
-                "open-legal-interpretations"
-                  ? "/open-legal-interpretations"
-                  : definition.id ===
-                      "smart-cities-surveillance-registry"
-                    ? "/smart-cities-surveillance-registry"
-                    : `/registries/${encodeURIComponent(
-                        definition.id,
-                      )}`;
+              const href = `/registries/${encodeURIComponent(
+                definition.id,
+              )}`;
 
               return (
                 <Link
@@ -88,8 +81,7 @@ export default async function HomePage() {
               configuration to make it available here.
             </p>
             <code>
-              pnpm db:seed -- examples/generic-registry/registry.yaml
-              examples/generic-registry/seed.json
+              pnpm db:seed-generic
             </code>
           </div>
         )}
@@ -106,7 +98,7 @@ export default async function HomePage() {
         </div>
         <div>
           <strong>Reusable</strong>
-          <span>One engine can power many civic applications.</span>
+          <span>Named applications live in downstream repositories.</span>
         </div>
       </section>
     </main>
