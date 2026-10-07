@@ -122,7 +122,7 @@ test("Smart Cities Surveillance Registry runs end-to-end on the generic engine",
             config.registry.id,
           projection: "public",
           text:
-            "retention deletion",
+            "retention",
           statuses:
             publicStatuses,
           visibility: "public",
