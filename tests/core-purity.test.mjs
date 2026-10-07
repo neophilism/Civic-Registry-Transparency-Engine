@@ -47,6 +47,7 @@ test("workspace contains only generic apps, packages, and the generic example", 
 
 test("generic engine code cannot import from downstream application directories", () => {
   const roots = ["apps", "packages", "tests"];
+  const self = path.normalize("tests/core-purity.test.mjs");
 
   function walk(current) {
     return fs
@@ -59,7 +60,8 @@ test("generic engine code cannot import from downstream application directories"
 
   const files = roots
     .flatMap((root) => walk(root))
-    .filter((file) => /\.(?:ts|tsx|mjs|js)$/.test(file));
+    .filter((file) => /\.(?:ts|tsx|mjs|js)$/.test(file))
+    .filter((file) => path.normalize(file) !== self);
 
   for (const file of files) {
     const source = fs.readFileSync(file, "utf8");
