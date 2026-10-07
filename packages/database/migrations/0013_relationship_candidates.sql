@@ -19,76 +19,7 @@ CREATE TABLE IF NOT EXISTS civic_registry_relationship_candidates (
   ),
   evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
   evidence_sha256 TEXT NOT NULL CHECK (
-    evidence_sha256 ~ '^[0-9a-f]{64}
-  proposed_at TIMESTAMPTZ NOT NULL,
-  proposed_by TEXT,
-  reviewed_at TIMESTAMPTZ,
-  reviewed_by TEXT,
-  review_note TEXT,
-  relationship_id TEXT,
-  PRIMARY KEY (registry_id, id),
-  CONSTRAINT civic_registry_relationship_candidates_registry_fk
-    FOREIGN KEY (registry_id)
-    REFERENCES civic_registry_configurations(registry_id)
-    ON DELETE CASCADE,
-  CONSTRAINT civic_registry_relationship_candidates_from_fk
-    FOREIGN KEY (registry_id, from_record_id)
-    REFERENCES civic_registry_records(registry_id, id)
-    ON DELETE CASCADE,
-  CONSTRAINT civic_registry_relationship_candidates_to_fk
-    FOREIGN KEY (registry_id, to_record_id)
-    REFERENCES civic_registry_records(registry_id, id)
-    ON DELETE CASCADE,
-  CONSTRAINT civic_registry_relationship_candidates_review_check
-    CHECK (
-      (
-        status = 'pending'
-        AND reviewed_at IS NULL
-        AND reviewed_by IS NULL
-        AND relationship_id IS NULL
-      )
-      OR (
-        status = 'approved'
-        AND reviewed_at IS NOT NULL
-        AND reviewed_by IS NOT NULL
-        AND relationship_id IS NOT NULL
-      )
-      OR (
-        status = 'rejected'
-        AND reviewed_at IS NOT NULL
-        AND reviewed_by IS NOT NULL
-        AND relationship_id IS NULL
-      )
-    )
-);
-
-CREATE INDEX IF NOT EXISTS
-  civic_registry_relationship_candidates_pending_idx
-  ON civic_registry_relationship_candidates (
-    registry_id,
-    status,
-    proposed_at DESC,
-    id
-  );
-
-CREATE INDEX IF NOT EXISTS
-  civic_registry_relationship_candidates_from_idx
-  ON civic_registry_relationship_candidates (
-    registry_id,
-    from_record_id,
-    status,
-    proposed_at DESC
-  );
-
-CREATE INDEX IF NOT EXISTS
-  civic_registry_relationship_candidates_to_idx
-  ON civic_registry_relationship_candidates (
-    registry_id,
-    to_record_id,
-    status,
-    proposed_at DESC
-  );
-
+    evidence_sha256 ~ '^[0-9a-f]{64}$'
   ),
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   proposed_at TIMESTAMPTZ NOT NULL,
@@ -159,7 +90,6 @@ CREATE INDEX IF NOT EXISTS
     status,
     proposed_at DESC
   );
-
 
 CREATE OR REPLACE FUNCTION
   civic_registry_guard_relationship_candidate_proposal()
