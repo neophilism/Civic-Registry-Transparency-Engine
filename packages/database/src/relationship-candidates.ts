@@ -854,6 +854,32 @@ export class PostgresRelationshipCandidateService {
         );
       }
 
+      await this.validateProposal({
+        id: candidate.id,
+        registryId:
+          candidate.registryId,
+        relationshipTypeId:
+          candidate.relationshipTypeId,
+        fromRecordId:
+          candidate.fromRecordId,
+        toRecordId:
+          candidate.toRecordId,
+        extractor:
+          candidate.extractor,
+        extractorVersion:
+          candidate.extractorVersion,
+        confidence:
+          candidate.confidence,
+        evidence:
+          candidate.evidence,
+        metadata:
+          candidate.metadata,
+        proposedAt:
+          candidate.proposedAt,
+        proposedBy:
+          candidate.proposedBy,
+      });
+
       const currentEvidenceHash =
         relationshipCandidateEvidenceHash(
           candidate.evidence,
@@ -983,6 +1009,16 @@ export class PostgresRelationshipCandidateService {
           );
         }
       }
+
+      await client.query(
+        `
+          SELECT set_config(
+            'civic_registry.relationship_candidate_review',
+            'allowed',
+            true
+          )
+        `,
+      );
 
       const updated =
         await client.query<CandidateRow>(
