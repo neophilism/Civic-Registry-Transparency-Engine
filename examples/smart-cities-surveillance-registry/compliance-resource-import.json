@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1",
+  "source": "smart-cities-surveillance-registry-demo",
+  "items": [
+    {
+      "externalId": "deployment-downtown-traffic-cameras",
+      "resourceType": "surveillance-deployment",
+      "name": "Downtown Traffic-Safety Camera Program",
+      "externalRef": "registry:smart-cities-surveillance-registry:deployment-downtown-traffic-cameras",
+      "status": "active",
+      "attributes": {
+        "jurisdiction": "Metropolis",
+        "technologyCategory": "camera",
+        "retentionDays": 7,
+        "warrantRequirement": "legal_process_required",
+        "nextAuditDueOn": "2027-03-01",
+        "policyIds": [
+          "policy-camera-use-2026"
+        ]
+      },
+      "metadata": {
+        "registryId": "smart-cities-surveillance-registry",
+        "registryRecordId": "deployment-downtown-traffic-cameras",
+        "synthetic": true
+      }
+    },
+    {
+      "externalId": "deployment-municipal-alpr-pilot",
+      "resourceType": "surveillance-deployment",
+      "name": "Municipal ALPR Accountability Pilot",
+      "externalRef": "registry:smart-cities-surveillance-registry:deployment-municipal-alpr-pilot",
+      "status": "active",
+      "attributes": {
+        "jurisdiction": "Metropolis",
+        "technologyCategory": "automated_license_plate_reader",
+        "retentionDays": 30,
+        "warrantRequirement": "legal_process_required",
+        "nextAuditDueOn": "2027-04-01",
+        "policyIds": [
+          "policy-alpr-retention-2026"
+        ]
+      },
+      "metadata": {
+        "registryId": "smart-cities-surveillance-registry",
+        "registryRecordId": "deployment-municipal-alpr-pilot",
+        "synthetic": true
+      }
+    }
+  ]
+}
