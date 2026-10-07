@@ -25,7 +25,7 @@ interface ParsedCitation {
 
 interface AuthorityForm {
   citation: string;
-  parsed?: ParsedCitation;
+  parsed: ParsedCitation | undefined;
 }
 
 interface AuthorityDescriptor {
