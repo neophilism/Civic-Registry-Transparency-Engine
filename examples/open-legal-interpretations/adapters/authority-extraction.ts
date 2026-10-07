@@ -196,18 +196,6 @@ function citationAliases(
   ];
 }
 
-function sameParsedCitation(
-  left: ParsedCitation,
-  right: ParsedCitation,
-): boolean {
-  return (
-    left.system === right.system &&
-    left.title === right.title &&
-    left.start === right.start &&
-    left.end === right.end
-  );
-}
-
 function collectConfiguredExactMentions(
   extraction: RecordDocumentExtraction,
   authorities: AuthorityDescriptor[],
