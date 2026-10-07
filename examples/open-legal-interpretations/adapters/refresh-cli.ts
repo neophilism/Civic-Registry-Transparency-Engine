@@ -15,6 +15,8 @@ import {
   PostgresIngestionService,
   PostgresRecordRepository,
   PostgresRegistryConfigRepository,
+  PostgresRelationshipCandidateService,
+  PostgresRelationshipRepository,
   PostgresSourceRefreshService,
   runMigrations,
   type SourceRefreshClaim,
@@ -40,6 +42,9 @@ import {
 import {
   processOpenLegalInterpretationAttachments,
 } from "./attachment-processing.ts";
+import {
+  proposeOpenLegalInterpretationAuthorityCandidates,
+} from "./authority-extraction.ts";
 
 const REGISTRY_ID =
   "open-legal-interpretations";
@@ -109,6 +114,16 @@ async function makeExecutor(
       pool,
       attachmentStorage,
     );
+  const relationships =
+    new PostgresRelationshipRepository(
+      pool,
+      configs,
+      records,
+    );
+  const relationshipCandidates =
+    new PostgresRelationshipCandidateService(
+      pool,
+    );
 
   return async (
     claim: SourceRefreshClaim,
@@ -175,6 +190,11 @@ async function makeExecutor(
     let attachmentFailed = 0;
     let attachmentWarnings = 0;
     let fullTextUpdates = 0;
+    let authorityMentions = 0;
+    let authorityCandidatesCreated = 0;
+    let authorityCandidatesExisting = 0;
+    let authorityRelationshipsExisting = 0;
+    let authorityUnresolvedMentions = 0;
 
     for (const row of adapterRun.rows) {
       const processed =
@@ -203,6 +223,29 @@ async function makeExecutor(
       refreshWarnings.push(
         ...processed.warnings,
       );
+
+      const authorityExtraction =
+        await proposeOpenLegalInterpretationAuthorityCandidates({
+          registryId:
+            claim.job.registryId,
+          recordId: row.id,
+          attachments,
+          records,
+          relationships,
+          candidates:
+            relationshipCandidates,
+        });
+
+      authorityMentions +=
+        authorityExtraction.mentionsFound;
+      authorityCandidatesCreated +=
+        authorityExtraction.candidatesCreated;
+      authorityCandidatesExisting +=
+        authorityExtraction.candidatesExisting;
+      authorityRelationshipsExisting +=
+        authorityExtraction.relationshipsAlreadyPresent;
+      authorityUnresolvedMentions +=
+        authorityExtraction.unresolvedStructuredMentions;
     }
 
     return {
@@ -231,6 +274,11 @@ async function makeExecutor(
         attachmentFailed,
         attachmentWarnings,
         fullTextUpdates,
+        authorityMentions,
+        authorityCandidatesCreated,
+        authorityCandidatesExisting,
+        authorityRelationshipsExisting,
+        authorityUnresolvedMentions,
       },
     };
   };
