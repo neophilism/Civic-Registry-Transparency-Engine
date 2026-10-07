@@ -640,6 +640,43 @@ export class PostgresRelationshipCandidateService {
     try {
       await client.query("BEGIN");
 
+      const lockKey = [
+        registryId,
+        relationshipTypeId,
+        fromRecordId,
+        toRecordId,
+      ].join("|");
+
+      await client.query(
+        `
+          SELECT pg_advisory_xact_lock(
+            724918535,
+            hashtext($1)
+          )
+        `,
+        [lockKey],
+      );
+
+      const existingRelationship =
+        await this.equivalentRelationshipId(
+          registryId,
+          relationshipTypeId,
+          fromRecordId,
+          toRecordId,
+          client,
+        );
+
+      if (existingRelationship) {
+        await client.query("COMMIT");
+
+        return {
+          kind:
+            "relationship_exists",
+          relationshipId:
+            existingRelationship,
+        };
+      }
+
       const result =
         await client.query<CandidateRow>(
           `
@@ -697,7 +734,7 @@ export class PostgresRelationshipCandidateService {
         );
 
       if (!result.rows[0]) {
-        const existingResult =
+        const existing =
           await client.query<CandidateRow>(
             `
               SELECT *
@@ -710,10 +747,8 @@ export class PostgresRelationshipCandidateService {
               id,
             ],
           );
-        const existing =
-          existingResult.rows[0];
 
-        if (!existing) {
+        if (!existing.rows[0]) {
           throw new Error(
             "Relationship candidate conflict could not be resolved.",
           );
@@ -725,7 +760,7 @@ export class PostgresRelationshipCandidateService {
           kind: "candidate",
           candidate:
             mapCandidate(
-              existing,
+              existing.rows[0],
             ),
           created: false,
         };
