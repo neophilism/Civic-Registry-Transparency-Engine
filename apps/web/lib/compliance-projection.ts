@@ -64,6 +64,19 @@ interface ComplianceResourceListPage {
   nextCursor: string | null;
 }
 
+interface ComplianceResourceListPage {
+  items: Array<{
+    id: string;
+    resourceType: string;
+    externalRef: string | null;
+    status:
+      | "active"
+      | "inactive"
+      | "archived";
+  }>;
+  nextCursor: string | null;
+}
+
 function normalizeBaseUrl(
   value: string,
 ): string {
