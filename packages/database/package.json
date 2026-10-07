@@ -5,7 +5,8 @@
   "type": "module",
   "description": "PostgreSQL persistence, migrations, repositories, and seed support for the Civic Registry & Transparency Engine.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./attachments": "./src/attachments.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json"
