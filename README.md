@@ -16,29 +16,32 @@ that duplicate core logic.
 
 ## Current milestone
 
-**PR 23 — Structured relationship candidates and legal-authority extraction**
+**PR 24 — Smart Cities Surveillance Registry**
 
-The engine now supports generic machine-proposed relationships with an explicit
-human review boundary, and Open Legal Interpretations uses that capability to
-propose authority links from page-level primary-source PDF text.
+The engine now powers a second major thin reference application in a very
+different civic domain: public surveillance accountability.
 
-PR 23 adds:
+PR 24 adds:
 
-- immutable, evidence-hashed relationship candidates;
-- proposal/approval/rejection audit events covered by PR 18 integrity chaining;
-- transaction-safe approve/reject materialization;
-- direct-SQL review bypass protection;
-- concurrent duplicate-relationship protection;
-- an administrator relationship-review queue;
-- pending-review metrics;
-- exact canonical/explicit-alias legal citation matching;
-- explicit U.S.C./C.F.R. recognition without unsafe range-membership inference;
-- page/document/excerpt provenance for every proposed authority link; and
-- source-refresh metrics for candidate and unresolved citation activity.
+- a seven-record-type Smart Cities registry for deployments, technologies,
+  agencies, vendors, policies, audits, and reported violations;
+- relationships from deployments to technology, agency, vendor supply chains,
+  governing policies, audits, and violations;
+- public audit, policy-review, and remediation deadlines;
+- synthetic source documents and field-level evidence citations;
+- a dedicated public presentation with search and accountability metrics;
+- public-safe demonstration data that intentionally excludes live operational
+  surveillance details;
+- a portable Compliance Engine resource-import bundle;
+- stable external-reference mapping instead of cross-engine UUID coupling;
+- a server-only Compliance Engine registry-projection bridge over the stable
+  integration API;
+- service-token/HTTPS boundary enforcement and graceful integration failure
+  isolation; and
+- end-to-end tests for search, relationships, evidence, deadlines, compliance
+  mapping, and cryptographic integrity.
 
-See [Relationship candidates and authority extraction](docs/RELATIONSHIP-CANDIDATES.md),
-[PDF attachment ingestion](docs/PDF-ATTACHMENTS.md), and
-[Open Legal Interpretations](docs/OPEN-LEGAL-INTERPRETATIONS.md).
+See [Smart Cities Surveillance Registry](docs/SMART-CITIES-SURVEILLANCE-REGISTRY.md).
 
 ## Local development
 

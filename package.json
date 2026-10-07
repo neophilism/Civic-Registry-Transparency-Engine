@@ -31,6 +31,7 @@
     "db:ingest-open-legal-interpretations-source": "node packages/database/src/cli.ts ingest open-legal-interpretations examples/open-legal-interpretations/adapter-import-profile.yaml",
     "source:refresh-open-legal-interpretations": "node examples/open-legal-interpretations/adapters/refresh-cli.ts run",
     "source:refresh-sync-open-legal-interpretations": "node examples/open-legal-interpretations/adapters/refresh-cli.ts sync",
-    "source:refresh-status-open-legal-interpretations": "node examples/open-legal-interpretations/adapters/refresh-cli.ts status"
+    "source:refresh-status-open-legal-interpretations": "node examples/open-legal-interpretations/adapters/refresh-cli.ts status",
+    "db:seed-smart-cities-surveillance-registry": "node packages/database/src/cli.ts seed examples/smart-cities-surveillance-registry/registry.yaml examples/smart-cities-surveillance-registry/seed.json"
   }
 }

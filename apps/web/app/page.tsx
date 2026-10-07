@@ -44,9 +44,12 @@ export default async function HomePage() {
                 definition.id ===
                 "open-legal-interpretations"
                   ? "/open-legal-interpretations"
-                  : `/registries/${encodeURIComponent(
-                      definition.id,
-                    )}`;
+                  : definition.id ===
+                      "smart-cities-surveillance-registry"
+                    ? "/smart-cities-surveillance-registry"
+                    : `/registries/${encodeURIComponent(
+                        definition.id,
+                      )}`;
 
               return (
                 <Link
