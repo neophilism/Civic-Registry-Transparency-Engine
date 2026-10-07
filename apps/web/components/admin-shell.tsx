@@ -74,6 +74,15 @@ export function AdminShell({
               </Link>
               <Link
                 href={
+                  "/admin/registries/" +
+                  encodeURIComponent(registryId) +
+                  "/relationship-candidates"
+                }
+              >
+                Relationship review
+              </Link>
+              <Link
+                href={
                   "/registries/" +
                   encodeURIComponent(registryId)
                 }
