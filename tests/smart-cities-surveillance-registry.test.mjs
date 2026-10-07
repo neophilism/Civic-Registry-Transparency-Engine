@@ -163,7 +163,7 @@ test("Smart Cities presentation reuses generic registry services and server-side
   );
   assert.match(
     page,
-    /intentionally excludes sensitive operational details/i,
+    /intentionally excludes sensitive\s+operational details/i,
   );
   assert.doesNotMatch(
     page,
@@ -407,7 +407,7 @@ test("installed-registry home routes Smart Cities to its dedicated presentation"
   );
   assert.match(
     home,
-    //smart-cities-surveillance-registry/,
+    /\/smart-cities-surveillance-registry/,
   );
 });
 
