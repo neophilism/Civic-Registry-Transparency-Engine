@@ -48,6 +48,8 @@ export function getRepositories() {
     deadlines,
   );
   const history = new PostgresRecordHistoryRepository(pool);
+  const relationshipCandidates =
+    new PostgresRelationshipCandidateService(pool);
   const relationships = new PostgresRelationshipRepository(
     pool,
     configs,
