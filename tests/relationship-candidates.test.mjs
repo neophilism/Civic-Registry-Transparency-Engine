@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import test from "node:test";
 
 import {
@@ -267,4 +268,42 @@ test("legal authority extraction skips already-materialized relationships", asyn
     0,
   );
   assert.equal(proposals.length, 0);
+});
+
+
+test("generic relationship-candidate engine remains domain neutral", () => {
+  const service = fs.readFileSync(
+    "packages/database/src/relationship-candidates.ts",
+    "utf8",
+  );
+  const migration = fs.readFileSync(
+    "packages/database/migrations/0013_relationship_candidates.sql",
+    "utf8",
+  );
+  const admin = fs.readFileSync(
+    "apps/web/app/admin/registries/[registryId]/relationship-candidates/page.tsx",
+    "utf8",
+  );
+  const generic = [
+    service,
+    migration,
+    admin,
+  ].join("\n");
+
+  assert.doesNotMatch(
+    generic,
+    /DOJ|OGE|OLC|legal_authority|Office of Legal Counsel|Government Ethics/i,
+  );
+  assert.match(
+    service,
+    /relationship_candidate\.proposed/,
+  );
+  assert.match(
+    service,
+    /pg_advisory_xact_lock/,
+  );
+  assert.match(
+    admin,
+    /Approve relationship/,
+  );
 });
