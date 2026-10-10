@@ -58,3 +58,6 @@ not contact live government websites.
 Downstream applications should test their provider-specific parsers in their
 own repositories while continuing to rely on the engine tests for retrieval,
 serialization, and ingestion boundaries.
+
+Canonical URL deduplication normalizes URL schemes and hostnames, while
+preserving case-sensitive path and query values to avoid losing distinct records.
