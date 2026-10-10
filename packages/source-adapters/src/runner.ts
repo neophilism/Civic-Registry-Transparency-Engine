@@ -94,7 +94,7 @@ export async function runSourceAdapter(
 
   for (const row of collection.rows) {
     const key =
-      row.canonical_url.trim().toLowerCase();
+      new URL(row.canonical_url.trim()).toString();
 
     if (!deduped.has(key)) {
       deduped.set(key, row);
