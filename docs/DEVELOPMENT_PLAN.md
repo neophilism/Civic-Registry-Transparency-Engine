@@ -1,3 +1,5 @@
+> **Canonical PR roadmap:** [`registry/roadmap.json`](../registry/roadmap.json). Historical complete development specifications remain below; new PRs and counts must be entered only in the canonical file.
+
 # Civic Registry & Transparency Engine — recovered complete development plan
 
 **Provenance:** Original October 5 original 22-PR generic registry plan; October 6-7 separate core-cleanup and public source ingestion decisions. **22 original milestone titles recovered**, mapped in original order. Scopes and acceptance criteria below are a careful synthesis of the original conversations and existing repository architecture; they are **not** a verbatim export of the old chat. This is the historical approved scope plus explicit subsequent amendments, not a declaration that unmerged tasks are complete.
