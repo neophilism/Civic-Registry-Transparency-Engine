@@ -1,0 +1,584 @@
+{
+  "schemaVersion": 1,
+  "repository": "neophilism/Civic-Registry-Transparency-Engine",
+  "roadmapVersion": 2,
+  "planVerified": true,
+  "plannedPrCount": 22,
+  "observedAt": "2026-10-11T17:39:11.685Z",
+  "units": [
+    {
+      "id": "CRT-01",
+      "title": "Repository foundation",
+      "origin": "original",
+      "prs": [
+        1
+      ]
+    },
+    {
+      "id": "CRT-02",
+      "title": "Core domain model",
+      "origin": "original",
+      "prs": [
+        2
+      ]
+    },
+    {
+      "id": "CRT-03",
+      "title": "Configuration system",
+      "origin": "original",
+      "prs": [
+        3
+      ]
+    },
+    {
+      "id": "CRT-04",
+      "title": "Database and migrations",
+      "origin": "original",
+      "prs": [
+        4
+      ]
+    },
+    {
+      "id": "CRT-05",
+      "title": "Public registry UI",
+      "origin": "original",
+      "prs": [
+        5
+      ]
+    },
+    {
+      "id": "CRT-06",
+      "title": "Search and filter engine",
+      "origin": "original",
+      "prs": [
+        6
+      ]
+    },
+    {
+      "id": "CRT-07",
+      "title": "Relationships",
+      "origin": "original",
+      "prs": [
+        7
+      ]
+    },
+    {
+      "id": "CRT-08",
+      "title": "Documents and citations",
+      "origin": "original",
+      "prs": [
+        8
+      ]
+    },
+    {
+      "id": "CRT-09",
+      "title": "Version history",
+      "origin": "original",
+      "prs": [
+        9
+      ]
+    },
+    {
+      "id": "CRT-10",
+      "title": "Publication workflow",
+      "origin": "original",
+      "prs": [
+        10
+      ]
+    },
+    {
+      "id": "CRT-11",
+      "title": "Redactions",
+      "origin": "original",
+      "prs": [
+        11
+      ]
+    },
+    {
+      "id": "CRT-12",
+      "title": "Deadline engine",
+      "origin": "original",
+      "prs": [
+        12
+      ]
+    },
+    {
+      "id": "CRT-13",
+      "title": "Import and ingestion framework",
+      "origin": "original",
+      "prs": [
+        13
+      ]
+    },
+    {
+      "id": "CRT-14",
+      "title": "Public API and exports",
+      "origin": "original",
+      "prs": [
+        14
+      ]
+    },
+    {
+      "id": "CRT-15",
+      "title": "Administrative console",
+      "origin": "original",
+      "prs": [
+        15
+      ]
+    },
+    {
+      "id": "CRT-16",
+      "title": "Analytics/transparency dashboards",
+      "origin": "original",
+      "prs": [
+        16
+      ]
+    },
+    {
+      "id": "CRT-17",
+      "title": "Notifications and subscriptions",
+      "origin": "original",
+      "prs": [
+        17
+      ]
+    },
+    {
+      "id": "CRT-18",
+      "title": "Security and production hardening",
+      "origin": "original",
+      "prs": [
+        18
+      ]
+    },
+    {
+      "id": "CRT-19",
+      "title": "Open Legal Interpretations reference application",
+      "origin": "original",
+      "prs": [
+        19,
+        25
+      ]
+    },
+    {
+      "id": "CRT-20",
+      "title": "Legal interpretation ingestion",
+      "origin": "original",
+      "prs": [
+        20,
+        21,
+        22,
+        23,
+        25
+      ]
+    },
+    {
+      "id": "CRT-21",
+      "title": "Sam Ervin reference application",
+      "origin": "original",
+      "prs": [
+        25
+      ]
+    },
+    {
+      "id": "CRT-22",
+      "title": "Smart Cities Surveillance Registry reference",
+      "origin": "original",
+      "prs": [
+        24,
+        25
+      ]
+    }
+  ],
+  "pullRequests": [
+    {
+      "id": 4816611923,
+      "number": 26,
+      "title": "docs: reconcile roadmap IDs with merged work",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/26",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-11T04:38:23.000Z",
+      "updatedAt": "2026-10-11T04:40:51.000Z",
+      "closedAt": "2026-10-11T04:40:51.000Z",
+      "mergedAt": "2026-10-11T04:40:51.000Z",
+      "headSha": "15b6f62baebfb8cad67e065be9e4f4b95416b4f4",
+      "baseRef": "main",
+      "mergeCommitSha": "f6a4c58c57c9f83dbefbc6a98cd1212e6c4157db"
+    },
+    {
+      "id": 4777250367,
+      "number": 25,
+      "title": "PR 25: Restore core-engine purity and remove downstream applications",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/25",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-07T19:10:39.000Z",
+      "updatedAt": "2026-10-07T19:56:28.000Z",
+      "closedAt": "2026-10-07T19:56:28.000Z",
+      "mergedAt": "2026-10-07T19:56:28.000Z",
+      "headSha": "d2fa6dbf41efaea689bd9b35fd5e5248f75b4750",
+      "baseRef": "main",
+      "mergeCommitSha": "49bd3248dc976c6a56fbd2db949ad579579787dd"
+    },
+    {
+      "id": 4775491344,
+      "number": 24,
+      "title": "PR 24: Add Smart Cities Surveillance Registry",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/24",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-07T16:28:28.000Z",
+      "updatedAt": "2026-10-07T16:41:39.000Z",
+      "closedAt": "2026-10-07T16:41:38.000Z",
+      "mergedAt": "2026-10-07T16:41:38.000Z",
+      "headSha": "e8e3cf81376b2c7a25e3ddcaa14e2189bf000d53",
+      "baseRef": "main",
+      "mergeCommitSha": "2ce403afa0676e3a61a68d4f29f974b3bfd281ff"
+    },
+    {
+      "id": 4774937387,
+      "number": 23,
+      "title": "PR 23: Add structured relationship candidates and legal-authority extraction",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/23",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-07T15:40:40.000Z",
+      "updatedAt": "2026-10-07T16:16:50.000Z",
+      "closedAt": "2026-10-07T16:16:50.000Z",
+      "mergedAt": "2026-10-07T16:16:50.000Z",
+      "headSha": "97d04153b769e0a6c5c537006d581c8da0dc31b5",
+      "baseRef": "main",
+      "mergeCommitSha": "02048b19aa9bff2dd459c051e5070e86d8fe46d6"
+    },
+    {
+      "id": 4765557220,
+      "number": 22,
+      "title": "PR 22: Add PDF attachment ingestion and extraction",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/22",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T22:56:25.000Z",
+      "updatedAt": "2026-10-07T15:06:02.000Z",
+      "closedAt": "2026-10-07T15:06:02.000Z",
+      "mergedAt": "2026-10-07T15:06:02.000Z",
+      "headSha": "cd80861a4b7b41c5db2937218ac1b257310877f7",
+      "baseRef": "main",
+      "mergeCommitSha": "4038d4974d92c80ffd331bf460339cd12e27f8c1"
+    },
+    {
+      "id": 4762590810,
+      "number": 21,
+      "title": "PR 21: Add scheduled source refresh orchestration",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/21",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T17:49:58.000Z",
+      "updatedAt": "2026-10-06T18:02:10.000Z",
+      "closedAt": "2026-10-06T18:02:10.000Z",
+      "mergedAt": "2026-10-06T18:02:10.000Z",
+      "headSha": "d8af58c555dd3ba657364383e7ed506a88881740",
+      "baseRef": "main",
+      "mergeCommitSha": "ca2b83a063f2db31ffe4376fc9ccc11da535bbf7"
+    },
+    {
+      "id": 4762345709,
+      "number": 20,
+      "title": "PR 20: Add public source adapters",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/20",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T17:27:42.000Z",
+      "updatedAt": "2026-10-06T17:35:26.000Z",
+      "closedAt": "2026-10-06T17:35:26.000Z",
+      "mergedAt": "2026-10-06T17:35:26.000Z",
+      "headSha": "4ddc56fb3f3a7fc7fbd68af7307a51963f9324a0",
+      "baseRef": "main",
+      "mergeCommitSha": "3b8ceda8696e2df5cafafc47690d2240818ac1c0"
+    },
+    {
+      "id": 4761940188,
+      "number": 19,
+      "title": "PR 19: Add Open Legal Interpretations reference application",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/19",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T16:51:03.000Z",
+      "updatedAt": "2026-10-06T17:12:41.000Z",
+      "closedAt": "2026-10-06T17:12:41.000Z",
+      "mergedAt": "2026-10-06T17:12:41.000Z",
+      "headSha": "907d0f3d087ecaad6d15be4eca3761c3ba5ce85a",
+      "baseRef": "main",
+      "mergeCommitSha": "e92c0bfe0bc7f32775484d92a693b47b85ddad75"
+    },
+    {
+      "id": 4761641153,
+      "number": 18,
+      "title": "PR 18: Add cryptographic audit integrity",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/18",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T16:23:26.000Z",
+      "updatedAt": "2026-10-06T16:41:22.000Z",
+      "closedAt": "2026-10-06T16:41:22.000Z",
+      "mergedAt": "2026-10-06T16:41:22.000Z",
+      "headSha": "780a901fde23ac87bf257b0b2fe794e29d95e39c",
+      "baseRef": "main",
+      "mergeCommitSha": "4593fb78e39dec5054b9d3c9fe7441e8ed1ce90a"
+    },
+    {
+      "id": 4761374281,
+      "number": 17,
+      "title": "PR 17: Add notifications and subscriptions",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/17",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T16:00:41.000Z",
+      "updatedAt": "2026-10-06T16:10:34.000Z",
+      "closedAt": "2026-10-06T16:10:34.000Z",
+      "mergedAt": "2026-10-06T16:10:34.000Z",
+      "headSha": "d16aefd05b8dc26f2f676945292337fe351bb772",
+      "baseRef": "main",
+      "mergeCommitSha": "c2bc586b5205e1b17917d9c4b13115ac236873a8"
+    },
+    {
+      "id": 4760995900,
+      "number": 16,
+      "title": "PR 16: Add reusable registry analytics",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/16",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T15:29:33.000Z",
+      "updatedAt": "2026-10-06T15:39:17.000Z",
+      "closedAt": "2026-10-06T15:39:17.000Z",
+      "mergedAt": "2026-10-06T15:39:17.000Z",
+      "headSha": "caaadacd3d12e37a1620ada5bc2f042c42006c79",
+      "baseRef": "main",
+      "mergeCommitSha": "0d1976e0102d6ec6edec9317c3432903363233cf"
+    },
+    {
+      "id": 4760152683,
+      "number": 15,
+      "title": "PR 15: Add administrator console",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/15",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T14:25:16.000Z",
+      "updatedAt": "2026-10-06T14:36:11.000Z",
+      "closedAt": "2026-10-06T14:36:11.000Z",
+      "mergedAt": "2026-10-06T14:36:11.000Z",
+      "headSha": "efa71a4f12cea7dfdda1cf35f39ceac7d2a5263a",
+      "baseRef": "main",
+      "mergeCommitSha": "8b796be4e68b5fd3831efb860c87dbdfd7e8d679"
+    },
+    {
+      "id": 4759718434,
+      "number": 14,
+      "title": "PR 14: Add public API, TypeScript SDK, and exports",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/14",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T13:52:25.000Z",
+      "updatedAt": "2026-10-06T13:56:26.000Z",
+      "closedAt": "2026-10-06T13:56:26.000Z",
+      "mergedAt": "2026-10-06T13:56:26.000Z",
+      "headSha": "ce6b41d97424bc53efd0eac86b100a30aa88b1d4",
+      "baseRef": "main",
+      "mergeCommitSha": "69e0bd0144a94718b2826e6cdb719fe40106de16"
+    },
+    {
+      "id": 4759373922,
+      "number": 13,
+      "title": "PR 13: Add import and ingestion pipelines",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/13",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T13:24:40.000Z",
+      "updatedAt": "2026-10-06T13:27:43.000Z",
+      "closedAt": "2026-10-06T13:27:43.000Z",
+      "mergedAt": "2026-10-06T13:27:43.000Z",
+      "headSha": "688aedc4fc54b56684a9f0516d09e3c37b87fe59",
+      "baseRef": "main",
+      "mergeCommitSha": "4fc2435a5a84275b783165d36c4e45787d7b2514"
+    },
+    {
+      "id": 4758796366,
+      "number": 12,
+      "title": "PR 12: Add configurable deadline engine",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/12",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T12:36:58.000Z",
+      "updatedAt": "2026-10-06T12:55:49.000Z",
+      "closedAt": "2026-10-06T12:55:48.000Z",
+      "mergedAt": "2026-10-06T12:55:48.000Z",
+      "headSha": "ec51b19e474dec54613cad567c158209f10ddd57",
+      "baseRef": "main",
+      "mergeCommitSha": "adffa3c84c7724b17e46cf0ada853371ad4ba0ee"
+    },
+    {
+      "id": 4754553852,
+      "number": 11,
+      "title": "PR 11: Add disclosure and redaction controls",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/11",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T05:28:29.000Z",
+      "updatedAt": "2026-10-06T05:36:45.000Z",
+      "closedAt": "2026-10-06T05:36:45.000Z",
+      "mergedAt": "2026-10-06T05:36:45.000Z",
+      "headSha": "b817dfb3126a47bdf1a92be74ed777c3397f3c8b",
+      "baseRef": "main",
+      "mergeCommitSha": "4dbac7770313b60d8653f958b574fad8549f9348"
+    },
+    {
+      "id": 4754189885,
+      "number": 10,
+      "title": "PR 10: Add configurable publication lifecycle",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/10",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T04:35:23.000Z",
+      "updatedAt": "2026-10-06T04:59:22.000Z",
+      "closedAt": "2026-10-06T04:59:22.000Z",
+      "mergedAt": "2026-10-06T04:59:22.000Z",
+      "headSha": "5d9103f9d2a16ec180548caba43028adba7a5462",
+      "baseRef": "main",
+      "mergeCommitSha": "1f394e3c4d476f5bf713d445473b255e44596415"
+    },
+    {
+      "id": 4753042183,
+      "number": 9,
+      "title": "PR 9: Add immutable record revision history and public change tracking",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/9",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T01:48:15.000Z",
+      "updatedAt": "2026-10-06T01:53:24.000Z",
+      "closedAt": "2026-10-06T01:53:23.000Z",
+      "mergedAt": "2026-10-06T01:53:23.000Z",
+      "headSha": "d7dd987ce887687f136755e5bd18b8ab36e72578",
+      "baseRef": "main",
+      "mergeCommitSha": "fe0d0b8c9767239ef07d5607c32781205ada84c2"
+    },
+    {
+      "id": 4752857847,
+      "number": 8,
+      "title": "PR 8: Add source documents, citations, and evidence traceability",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/8",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T01:20:45.000Z",
+      "updatedAt": "2026-10-06T01:29:55.000Z",
+      "closedAt": "2026-10-06T01:29:55.000Z",
+      "mergedAt": "2026-10-06T01:29:55.000Z",
+      "headSha": "dc66cdea5f13614e9622f0710cb415ee101024cb",
+      "baseRef": "main",
+      "mergeCommitSha": "743ec71385c564f53adc61616ff836f1419071aa"
+    },
+    {
+      "id": 4752760945,
+      "number": 7,
+      "title": "PR 7: Add typed relationship browsing and graph traversal",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/7",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T01:07:16.000Z",
+      "updatedAt": "2026-10-06T01:13:47.000Z",
+      "closedAt": "2026-10-06T01:13:47.000Z",
+      "mergedAt": "2026-10-06T01:13:47.000Z",
+      "headSha": "632eed281677282d8647bcc2fb28b39eda67c1a2",
+      "baseRef": "main",
+      "mergeCommitSha": "563b3001f353aa9a57e2a517870c34b051121050"
+    },
+    {
+      "id": 4752686834,
+      "number": 6,
+      "title": "PR 6: Add full-text search and faceted discovery",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/6",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T00:57:16.000Z",
+      "updatedAt": "2026-10-06T01:02:03.000Z",
+      "closedAt": "2026-10-06T01:02:03.000Z",
+      "mergedAt": "2026-10-06T01:02:03.000Z",
+      "headSha": "60b6badc71c51f06a9f382f5e69ad703a3b8ac16",
+      "baseRef": "main",
+      "mergeCommitSha": "245a467ca31c235c9346bbe20f645179e2710677"
+    },
+    {
+      "id": 4752568488,
+      "number": 5,
+      "title": "PR 5: Add configurable public registry interface",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/5",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T00:41:00.000Z",
+      "updatedAt": "2026-10-06T00:49:33.000Z",
+      "closedAt": "2026-10-06T00:49:33.000Z",
+      "mergedAt": "2026-10-06T00:49:33.000Z",
+      "headSha": "baa346f214d1e5bbadac783950cad9c711d2559a",
+      "baseRef": "main",
+      "mergeCommitSha": "73fba27e1a8da182163ae18234926acbf7ae0447"
+    },
+    {
+      "id": 4752516149,
+      "number": 4,
+      "title": "PR 4: Add PostgreSQL persistence, migrations, repositories, and seeds",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/4",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T00:33:46.000Z",
+      "updatedAt": "2026-10-06T00:36:30.000Z",
+      "closedAt": "2026-10-06T00:36:30.000Z",
+      "mergedAt": "2026-10-06T00:36:29.000Z",
+      "headSha": "42946d9c9c0ccfd54d7c84e56d65a83facd7e7f9",
+      "baseRef": "main",
+      "mergeCommitSha": "2d98c43a5f67c9e88c119368842303cf16e4a551"
+    },
+    {
+      "id": 4752419554,
+      "number": 3,
+      "title": "PR 3: Add declarative registry configuration engine",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/3",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T00:21:05.000Z",
+      "updatedAt": "2026-10-06T00:29:33.000Z",
+      "closedAt": "2026-10-06T00:29:32.000Z",
+      "mergedAt": "2026-10-06T00:29:32.000Z",
+      "headSha": "35b0c267aefa13a1c6449b0c79fd17dd76e43394",
+      "baseRef": "main",
+      "mergeCommitSha": "203cb1ae02a27b53d0e82636e51510a6165e7fe4"
+    },
+    {
+      "id": 4752331259,
+      "number": 2,
+      "title": "PR 2: Add generic registry domain model",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/2",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-06T00:09:33.000Z",
+      "updatedAt": "2026-10-06T00:18:51.000Z",
+      "closedAt": "2026-10-06T00:18:51.000Z",
+      "mergedAt": "2026-10-06T00:18:51.000Z",
+      "headSha": "170defc1bb90288f39f1c928b0d4bdb6392f891f",
+      "baseRef": "main",
+      "mergeCommitSha": "6caa52a404375f7333bea3c4a846b3c3d5f26689"
+    },
+    {
+      "id": 4752240196,
+      "number": 1,
+      "title": "PR 1: Initialize Civic Registry & Transparency Engine foundation",
+      "url": "https://github.com/neophilism/Civic-Registry-Transparency-Engine/pull/1",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-05T23:57:51.000Z",
+      "updatedAt": "2026-10-06T00:07:06.000Z",
+      "closedAt": "2026-10-06T00:07:06.000Z",
+      "mergedAt": "2026-10-06T00:07:06.000Z",
+      "headSha": "92b1d99082377e46ed46752b888854adb7626949",
+      "baseRef": "main",
+      "mergeCommitSha": "c1ff6d5811b75d38e7e04ba65d16452b6af300f7"
+    }
+  ]
+}
