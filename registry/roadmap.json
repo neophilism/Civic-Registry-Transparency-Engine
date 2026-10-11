@@ -1,0 +1,122 @@
+{
+  "repository": "neophilism/Civic-Registry-Transparency-Engine",
+  "title": "Civic-Registry-Transparency-Engine",
+  "version": 1,
+  "planVerified": true,
+  "plannedPrCount": 22,
+  "sourceFiles": [
+    "docs/DEVELOPMENT_PLAN.md"
+  ],
+  "milestones": [
+    {
+      "id": "CRT-01",
+      "title": "Repository foundation",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-02",
+      "title": "Core domain model",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-03",
+      "title": "Configuration system",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-04",
+      "title": "Database and migrations",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-05",
+      "title": "Public registry UI",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-06",
+      "title": "Search and filter engine",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-07",
+      "title": "Relationships",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-08",
+      "title": "Documents and citations",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-09",
+      "title": "Version history",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-10",
+      "title": "Publication workflow",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-11",
+      "title": "Redactions",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-12",
+      "title": "Deadline engine",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-13",
+      "title": "Import and ingestion framework",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-14",
+      "title": "Public API and exports",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-15",
+      "title": "Administrative console",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-16",
+      "title": "Analytics/transparency dashboards",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-17",
+      "title": "Notifications and subscriptions",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-18",
+      "title": "Security and production hardening",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-19",
+      "title": "Open Legal Interpretations reference application",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-20",
+      "title": "Legal interpretation ingestion",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-21",
+      "title": "Sam Ervin reference application",
+      "origin": "original"
+    },
+    {
+      "id": "CRT-22",
+      "title": "Smart Cities Surveillance Registry reference",
+      "origin": "original"
+    }
+  ]
+}
