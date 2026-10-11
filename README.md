@@ -1,6 +1,6 @@
 # Civic Registry & Transparency Engine
 
-**Complete development and handoff plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
+**Development plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md). **Verified code-to-roadmap mapping:** [docs/ROADMAP_STATUS.md](docs/ROADMAP_STATUS.md).
 
 Reusable civic infrastructure for searchable public registries, transparency
 workflows, statutory deadlines, source documents, APIs, and downstream
