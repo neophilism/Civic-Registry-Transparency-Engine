@@ -1,3 +1,5 @@
+> **Canonical PR status and totals:** [`registry/roadmap.json`](../registry/roadmap.json). The table below is retained historical evidence; update all current PR mappings only in the registry file.
+
 # Roadmap implementation status
 
 This file maps the stable `CRT-01` through `CRT-22` roadmap identifiers to repository evidence. GitHub pull-request numbers are implementation references, not replacements for roadmap IDs.
