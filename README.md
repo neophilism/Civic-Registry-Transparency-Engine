@@ -77,3 +77,7 @@ applications cannot silently become dependencies of the reusable engine.
 
 A project license has not yet been selected. Do not assume reuse rights beyond
 those provided by GitHub or applicable law until a license is added.
+
+## End-to-End Everywhere progress
+
+The canonical [security/e2eesa-status.json](security/e2eesa-status.json) records standard implementation, complete testing and independent expert review separately. Engine Room reads it automatically from GitHub. All initial stages are pending; existing profile locks and approved decisions remain authoritative. Read [adoption and independent-account instructions](docs/E2EESA_ADOPTION.md), and run `python3 scripts/validate_e2eesa_status.py`. Record validation does not establish product security or certification.
