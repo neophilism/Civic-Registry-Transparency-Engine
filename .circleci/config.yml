@@ -1,0 +1,46 @@
+version: 2.1
+
+# Same complete lint, typed build, real Postgres 18 and integration tests
+# as .github/workflows/ci.yml; no CI job may claim product certification.
+jobs:
+  full-ci:
+    docker:
+      - image: cimg/node:24.21.0
+      - image: postgres:18-alpine
+        environment:
+          POSTGRES_DB: civic_registry
+          POSTGRES_USER: civic_registry
+          POSTGRES_PASSWORD: civic_registry
+    resource_class: large
+    environment:
+      CI: "true"
+      DATABASE_URL: postgresql://civic_registry:civic_registry@127.0.0.1:5432/civic_registry
+    steps:
+      - checkout
+      - run:
+          name: Install repo-pinned pnpm
+          command: sudo npm install --global pnpm@12.7.0
+      - run:
+          name: Install production and test dependencies
+          command: pnpm install --no-frozen-lockfile --allow-build=unrs-resolver
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm db:migrate
+      - run: pnpm test:db
+      - run: pnpm build
+  security-status-record:
+    docker:
+      - image: cimg/python:3.12
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: E2EESA status integrity only (not security certification)
+          command: python3 scripts/validate_e2eesa_status.py
+
+workflows:
+  required-verification:
+    jobs:
+      - full-ci
+      - security-status-record
