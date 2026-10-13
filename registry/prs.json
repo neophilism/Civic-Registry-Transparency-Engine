@@ -1,9 +1,15 @@
 {
-  "schemaVersion": 1,
   "repository": "neophilism/Civic-Registry-Transparency-Engine",
-  "roadmapVersion": 2,
+  "title": "Civic-Registry-Transparency-Engine",
   "planVerified": true,
   "plannedPrCount": 22,
+  "sourceFiles": [
+    "docs/DEVELOPMENT_PLAN.md",
+    "docs/ROADMAP_STATUS.md"
+  ],
+  "scopeNote": "Explicit mapping from reviewed docs/ROADMAP_STATUS.md implementation evidence, not inferred from roadmap ordinals; historical status document remains a cited source.",
+  "schemaVersion": 1,
+  "roadmapVersion": 2,
   "observedAt": "2026-10-11T17:39:11.685Z",
   "units": [
     {
@@ -12,7 +18,10 @@
       "origin": "original",
       "prs": [
         1
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-02",
@@ -20,7 +29,10 @@
       "origin": "original",
       "prs": [
         2
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-03",
@@ -28,7 +40,10 @@
       "origin": "original",
       "prs": [
         3
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-04",
@@ -36,7 +51,10 @@
       "origin": "original",
       "prs": [
         4
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-05",
@@ -44,7 +62,10 @@
       "origin": "original",
       "prs": [
         5
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-06",
@@ -52,7 +73,10 @@
       "origin": "original",
       "prs": [
         6
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-07",
@@ -60,7 +84,10 @@
       "origin": "original",
       "prs": [
         7
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-08",
@@ -68,7 +95,10 @@
       "origin": "original",
       "prs": [
         8
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-09",
@@ -76,7 +106,10 @@
       "origin": "original",
       "prs": [
         9
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-10",
@@ -84,7 +117,10 @@
       "origin": "original",
       "prs": [
         10
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-11",
@@ -92,7 +128,10 @@
       "origin": "original",
       "prs": [
         11
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-12",
@@ -100,7 +139,10 @@
       "origin": "original",
       "prs": [
         12
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-13",
@@ -108,7 +150,10 @@
       "origin": "original",
       "prs": [
         13
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-14",
@@ -116,7 +161,10 @@
       "origin": "original",
       "prs": [
         14
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-15",
@@ -124,7 +172,10 @@
       "origin": "original",
       "prs": [
         15
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-16",
@@ -132,7 +183,10 @@
       "origin": "original",
       "prs": [
         16
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-17",
@@ -140,7 +194,10 @@
       "origin": "original",
       "prs": [
         17
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-18",
@@ -148,7 +205,10 @@
       "origin": "original",
       "prs": [
         18
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-19",
@@ -157,7 +217,10 @@
       "prs": [
         19,
         25
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-20",
@@ -169,7 +232,10 @@
         22,
         23,
         25
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-21",
@@ -177,7 +243,10 @@
       "origin": "original",
       "prs": [
         25
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "CRT-22",
@@ -186,7 +255,10 @@
       "prs": [
         24,
         25
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     }
   ],
   "pullRequests": [
